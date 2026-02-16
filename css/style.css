@@ -531,3 +531,16 @@ body {
     font-size: 12px;
     letter-spacing: 2px;
 }
+/* Makes the entire big image clickable */
+.masthead-full-link {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    height: 100%;
+    text-decoration: none !important;
+    color: white !important;
+}
+
+.masthead-content {
+    pointer-events: none; /* This makes sure the text doesn't block the click */
+}
