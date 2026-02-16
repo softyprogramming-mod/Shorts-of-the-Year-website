@@ -91,16 +91,12 @@ body {
   display: flex;
   align-items: flex-end;
   margin-bottom: 60px;
-  background-color: var(--black); /* Added to keep it dark while loading */
 }
 
 .masthead::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 100%);
 }
 
@@ -113,35 +109,29 @@ body {
   width: 100%;
 }
 
-/* FIX: This stops the purple visited link color and makes the title white */
-.masthead-play {
-  display: block; /* Changes to block to make the whole area easier to click */
-  cursor: pointer;
-  text-decoration: none;
-  color: var(--white) !important; /* Forces white even if you've clicked it before */
+/* FIX: Forces text to stay white and removes "link" styling */
+#featuredFilmLink {
+  text-decoration: none !important;
+  color: #ffffff !important;
+  display: block;
   transition: opacity 0.3s;
 }
 
-.masthead-play:hover {
+#featuredFilmLink:hover {
   opacity: 0.8;
 }
 
-.masthead h1 {
-  font-size: 56px; /* Slightly larger for that 'Big' look you wanted */
+#featuredTitle {
+  font-size: 56px; /* Makes it big */
   font-weight: 700;
   margin-bottom: 10px;
   line-height: 1.1;
-  color: var(--white);
+  color: #ffffff !important;
 }
 
 .masthead-meta {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.9); /* Slightly brighter meta text */
-}
-
-.meta-separator {
-  margin: 0 8px;
-  opacity: 0.5;
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 /* Film Grid */
