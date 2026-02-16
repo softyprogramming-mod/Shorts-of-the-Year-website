@@ -1,3 +1,78 @@
+/* ================================================
+   HEADER STYLES - ADD THIS TO THE TOP OF YOUR style.css
+   ================================================ */
+
+.header {
+    background: linear-gradient(to right, #6B3E2E, #8B5A3C, #A08B5C, #5B8B8B, #2E6B6B);
+    padding: 40px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-text {
+    color: white;
+    font-size: 28px;
+    font-weight: normal;
+    letter-spacing: 1px;
+}
+
+.center-logo {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.center-logo svg {
+    width: 73px;
+    height: 68px;
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+}
+
+.nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    letter-spacing: 2px;
+    font-weight: 500;
+}
+
+.nav a:hover {
+    opacity: 0.8;
+}
+
+.search-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.search-icon:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.search-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: white;
+}
+
+/* ================================================
+   END OF HEADER STYLES
+   Your existing CSS continues below
+   ================================================ */
 /* Shorts of the Year - Main Stylesheet */
 /* Dark & Minimal Aesthetic */
 
