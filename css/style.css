@@ -1,13 +1,37 @@
-/* ================================================
-   HEADER STYLES - ADD THIS TO THE TOP OF YOUR style.css
-   ================================================ */
+/* Shorts of the Year - Main Stylesheet */
+/* Dark & Minimal Aesthetic */
 
+:root {
+  --black: #000000;
+  --white: #ffffff;
+  --gray: #333333;
+  --light-gray: #666666;
+  --overlay: rgba(0, 0, 0, 0.45);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--black);
+  color: var(--white);
+  line-height: 1.6;
+}
+
+/* NEW GRADIENT HEADER (replaces old navbar) */
 .header {
     background: linear-gradient(to right, #6B3E2E, #8B5A3C, #A08B5C, #5B8B8B, #2E6B6B);
     padding: 40px 60px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
 .logo-text {
@@ -69,53 +93,8 @@
     fill: white;
 }
 
-/* ================================================
-   END OF HEADER STYLES
-   Your existing CSS continues below
-   ================================================ */
-/* Shorts of the Year - Main Stylesheet */
-/* Dark & Minimal Aesthetic */
-
-:root {
-  --black: #000000;
-  --white: #ffffff;
-  --gray: #333333;
-  --light-gray: #666666;
-  --overlay: rgba(0, 0, 0, 0.45);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: var(--black);
-  color: var(--white);
-  line-height: 1.6;
-}
-
-/* Navigation */
-.navbar {
-  background-color: var(--black);
-  padding: 20px 0;
-  border-bottom: 1px solid var(--gray);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.navbar .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
+/* OLD NAVBAR STYLES - REMOVED/REPLACED BY HEADER ABOVE */
+/* Keeping brand class for backward compatibility if needed elsewhere */
 .brand {
   font-size: 24px;
   font-weight: 700;
@@ -124,6 +103,7 @@ body {
   letter-spacing: -0.5px;
 }
 
+/* OLD NAVBAR STYLES - COMMENTED OUT, NOW USING HEADER STYLES ABOVE
 .nav-menu {
   display: flex;
   gap: 30px;
@@ -154,6 +134,7 @@ body {
 .search-icon:hover {
   opacity: 1;
 }
+*/
 
 /* Hero/Masthead - Featured Film */
 .masthead {
@@ -243,11 +224,13 @@ body {
   overflow: hidden;
   text-decoration: none;
   color: var(--white);
-  transition: transform 0.3s;
+  transition: transform 0.3s, opacity 0.3s;
+  display: block;
 }
 
 .film-item:hover {
   transform: scale(1.02);
+  opacity: 0.95;
 }
 
 .film-item::before {
@@ -338,6 +321,20 @@ body {
 }
 
 /* Individual Film Page */
+.back-link {
+  display: inline-block;
+  color: var(--white);
+  text-decoration: none;
+  font-size: 16px;
+  margin-bottom: 30px;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+
+.back-link:hover {
+  opacity: 1;
+}
+
 .film-page {
   max-width: 900px;
   margin: 60px auto;
@@ -418,119 +415,7 @@ body {
   color: var(--white);
 }
 
-/* Store Page */
-.store-grid {
-  max-width: 1200px;
-  margin: 60px auto;
-  padding: 0 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 40px;
-}
-
-.product-item {
-  text-align: center;
-}
-
-.product-image {
-  width: 100%;
-  height: 350px;
-  object-fit: cover;
-  margin-bottom: 20px;
-  background-color: var(--gray);
-}
-
-.product-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.product-price {
-  font-size: 16px;
-  color: var(--light-gray);
-  margin-bottom: 15px;
-}
-
-.sold-out {
-  display: inline-block;
-  padding: 10px 30px;
-  background-color: var(--gray);
-  color: var(--light-gray);
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  cursor: not-allowed;
-}
-
-/* Submit Page */
-.submit-container {
-  max-width: 800px;
-  margin: 60px auto;
-  padding: 0 20px;
-}
-
-.submit-container h1 {
-  font-size: 48px;
-  font-weight: 700;
-  margin-bottom: 30px;
-}
-
-.submit-container p {
-  font-size: 18px;
-  line-height: 1.6;
-  margin-bottom: 40px;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.form-embed {
-  width: 100%;
-  min-height: 800px;
-  border: none;
-}
-
-/* Mobile Menu */
-.menu-button {
-  display: none;
-  background: none;
-  border: none;
-  color: var(--white);
-  font-size: 24px;
-  cursor: pointer;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .nav-menu {
-    display: none;
-  }
-  
-  .menu-button {
-    display: block;
-  }
-  
-  .masthead h1 {
-    font-size: 32px;
-  }
-  
-  .films-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .film-page h1 {
-    font-size: 32px;
-  }
-  
-  .footer .container {
-    flex-direction: column;
-    gap: 20px;
-    text-align: center;
-  }
-}
-/* ================================================
-   STORE PAGE STYLES - ADD THIS TO YOUR style.css
-   ================================================ */
-
+/* NEW STORE PAGE STYLES */
 .store-container {
     max-width: 1400px;
     margin: 0 auto;
@@ -628,40 +513,298 @@ body {
     background: #4a1919;
 }
 
-/* Responsive Design */
-@media (max-width: 1200px) {
-    .products-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
+/* OLD STORE STYLES - KEEPING FOR BACKWARD COMPATIBILITY IF NEEDED */
+.store-grid {
+  max-width: 1200px;
+  margin: 60px auto;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 40px;
 }
 
-@media (max-width: 900px) {
-    .products-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 30px;
-    }
-    
-    .store-title {
-        font-size: 36px;
-    }
+.product-item {
+  text-align: center;
+}
+
+.product-item .product-image {
+  width: 100%;
+  height: 350px;
+  object-fit: cover;
+  margin-bottom: 20px;
+  background-color: var(--gray);
+}
+
+.product-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.product-item .product-price {
+  font-size: 16px;
+  color: var(--light-gray);
+  margin-bottom: 15px;
+}
+
+.sold-out {
+  display: inline-block;
+  padding: 10px 30px;
+  background-color: var(--gray);
+  color: var(--light-gray);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: not-allowed;
+}
+
+/* Submit Page */
+.submit-container {
+  max-width: 800px;
+  margin: 60px auto;
+  padding: 0 20px;
+}
+
+.submit-container h1 {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 30px;
+}
+
+.submit-container p {
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.form-embed {
+  width: 100%;
+  min-height: 800px;
+  border: none;
+}
+
+/* Mobile Menu */
+.menu-button {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--white);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav-menu {
+    display: none;
+  }
+  
+  .menu-button {
+    display: block;
+  }
+  
+  .masthead h1 {
+    font-size: 32px;
+  }
+  
+  .films-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .film-page h1 {
+    font-size: 32px;
+  }
+  
+  .footer .container {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+  }
+  
+  .store-title {
+    font-size: 36px;
+  }
 }
 
 @media (max-width: 600px) {
-    .products-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-    
-    .store-container {
-        padding: 40px 20px;
-    }
-    
-    .store-title {
-        font-size: 32px;
-        margin-bottom: 40px;
-    }
-    
-    .product-image {
-        height: 300px;
-    }
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .store-container {
+    padding: 40px 20px;
+  }
+  
+  .store-title {
+    font-size: 32px;
+    margin-bottom: 40px;
+  }
+  
+  .product-image {
+    height: 300px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+  .products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* SEARCH OVERLAY */
+.search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 10000;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.search-overlay.active {
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+}
+
+.search-container {
+  padding: 40px 20px 20px;
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  padding: 20px 60px 20px 20px;
+  font-size: 24px;
+  background: white;
+  border: none;
+  border-radius: 0;
+  color: #333;
+}
+
+.search-input:focus {
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+.search-close {
+  position: absolute;
+  right: 30px;
+  top: 50px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 48px;
+  cursor: pointer;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.search-close:hover {
+  opacity: 0.7;
+}
+
+.search-results {
+  max-width: 800px;
+  width: 100%;
+  margin: 20px auto;
+  padding: 0 20px;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+}
+
+.search-result-item {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 10px;
+  text-decoration: none;
+  color: white;
+  transition: background 0.3s;
+}
+
+.search-result-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.search-result-thumb {
+  width: 120px;
+  height: 80px;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.search-result-info h3 {
+  font-size: 20px;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.search-result-info p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-result-info mark {
+  background: rgba(255, 255, 0, 0.3);
+  color: white;
+  padding: 2px 4px;
+}
+
+.no-results,
+.search-error {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 18px;
+}
+
+@media (max-width: 768px) {
+  .search-input {
+    font-size: 18px;
+    padding: 15px 50px 15px 15px;
+  }
+  
+  .search-close {
+    right: 25px;
+    top: 45px;
+    font-size: 36px;
+  }
+  
+  .search-result-thumb {
+    width: 80px;
+    height: 60px;
+  }
+  
+  .search-result-info h3 {
+    font-size: 16px;
+  }
+  
+  .search-result-info p {
+    font-size: 12px;
+  }
 }
