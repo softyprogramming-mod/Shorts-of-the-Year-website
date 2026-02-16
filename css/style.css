@@ -521,7 +521,7 @@ body {
     padding: 10px;
     cursor: not-allowed;
 }
-/* FINAL FIX: Centered & Fully Clickable */
+/* --- THE ULTIMATE HERO FIX --- */
 .masthead {
     position: relative;
     width: 100%;
@@ -530,13 +530,22 @@ body {
     background-size: cover;
     background-position: center;
     display: flex;
-    align-items: center; /* Vertical center */
-    justify-content: center; /* Horizontal center */
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    overflow: hidden;
+    background-color: #000; /* Backup color while loading */
 }
 
-/* 1. The Invisible "Glass" Link (MUST BE Z-INDEX 10) */
+/* 1. The Text Layer */
+.masthead-content {
+    position: relative;
+    z-index: 1; /* Sits on the bottom */
+    max-width: 800px;
+    padding: 20px;
+    color: white !important; /* Forces text to be white */
+}
+
+/* 2. The Invisible "Clicker" Link */
 #featuredFilmLink.masthead-full-link {
     position: absolute !important;
     top: 0 !important;
@@ -544,39 +553,29 @@ body {
     width: 100% !important;
     height: 100% !important;
     display: block !important;
-    z-index: 10 !important; /* This puts it on top of everything */
-    text-indent: -9999px; /* Hides any accidental text */
+    z-index: 10 !important; /* Sits on top of the text */
+    background: rgba(0,0,0,0) !important; /* MUST BE COMPLETELY CLEAR */
+    text-decoration: none !important;
 }
 
-/* 2. The Text Layer (MUST BE Z-INDEX 5) */
-.masthead-content {
-    position: relative;
-    z-index: 5; /* Sits UNDER the link */
-    max-width: 800px;
-    padding: 20px;
-    /* We don't need pointer-events: none here anymore because the link is on top */
-}
-
+/* 3. The Title Styling */
 #featuredTitle {
-    color: white !important;
+    color: #ffffff !important;
     font-size: 64px;
+    font-weight: 800;
     margin: 0 0 15px 0;
-    line-height: 1.1;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    display: block !important; /* Makes sure it doesn't hide */
+    visibility: visible !important;
 }
 
 .masthead-meta {
     display: flex;
     justify-content: center;
     gap: 15px;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.9) !important;
     font-size: 14px;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
 }
 
-/* Hide the "..." Menu Button */
-.menu-button {
-    display: none !important;
-}
+.menu-button { display: none !important; }
