@@ -1,0 +1,26 @@
+{
+  "films": [
+    {
+      "id": "example-film-1",
+      "timestamp": "2024-02-16T12:00:00Z",
+      "title": "Example Short Film",
+      "director": "Jane Director",
+      "writer": "Jane Director",
+      "producer": "Producer Name",
+      "genre": "Drama",
+      "runtime": "12:30",
+      "logline": "A compelling story about human connection in modern times.",
+      "directorStatement": "This film explores themes of isolation and hope.",
+      "email": "filmmaker@example.com",
+      "filmLink": "https://vimeo.com/123456789",
+      "password": "",
+      "twitter": "@filmmaker",
+      "onlinePremiere": "Yes",
+      "thumbnail": "https://i.vimeocdn.com/video/1092705247_1080.png",
+      "review": "Jane Director brings us Example Short Film, a compelling exploration of human connection that resonates with authentic emotion. The film showcases remarkable restraint in its storytelling, allowing moments of silence to speak volumes. Through intimate cinematography and nuanced performances, Director crafts a narrative that feels both personal and universal. The pacing is deliberate yet engaging, drawing viewers into a world that feels lived-in and real. A confident debut that marks Director as a filmmaker to watch.",
+      "slug": "example-film-1",
+      "accepted": true,
+      "live": true
+    }
+  ]
+}
