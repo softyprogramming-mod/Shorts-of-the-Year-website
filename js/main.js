@@ -33,7 +33,6 @@ function displayFeaturedFilm() {
     
     const featured = allFilms[0];
     const masthead = document.getElementById('masthead');
-    const featuredLink = document.getElementById('featuredFilmLink');
     
     // Set background image
     masthead.style.backgroundImage = `url(${featured.thumbnail})`;
@@ -44,8 +43,8 @@ function displayFeaturedFilm() {
     document.getElementById('featuredGenre').textContent = featured.genre;
     document.getElementById('featuredRuntime').textContent = featured.runtime + ' min';
     
-    // Set link
-    featuredLink.href = `film.html?id=${featured.slug}`;
+    // Set link on the masthead itself
+    masthead.href = `film.html?id=${featured.slug}`;
 }
 
 // Display film grid (excluding featured film)
