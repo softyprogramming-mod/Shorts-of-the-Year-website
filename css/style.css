@@ -91,6 +91,7 @@ body {
   display: flex;
   align-items: flex-end;
   margin-bottom: 60px;
+  background-color: var(--black); /* Added to keep it dark while loading */
 }
 
 .masthead::before {
@@ -112,36 +113,30 @@ body {
   width: 100%;
 }
 
+/* FIX: This stops the purple visited link color and makes the title white */
 .masthead-play {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+  display: block; /* Changes to block to make the whole area easier to click */
   cursor: pointer;
   text-decoration: none;
-  color: var(--white);
+  color: var(--white) !important; /* Forces white even if you've clicked it before */
   transition: opacity 0.3s;
 }
 
 .masthead-play:hover {
-  opacity: 0.9;
-}
-
-.play-icon {
-  width: 60px;
-  height: 60px;
-  flex-shrink: 0;
+  opacity: 0.8;
 }
 
 .masthead h1 {
-  font-size: 48px;
+  font-size: 56px; /* Slightly larger for that 'Big' look you wanted */
   font-weight: 700;
   margin-bottom: 10px;
-  line-height: 1.2;
+  line-height: 1.1;
+  color: var(--white);
 }
 
 .masthead-meta {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9); /* Slightly brighter meta text */
 }
 
 .meta-separator {
