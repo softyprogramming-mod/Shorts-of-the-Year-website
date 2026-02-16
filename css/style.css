@@ -521,16 +521,50 @@ body {
     padding: 10px;
     cursor: not-allowed;
 }
-/* Makes the entire big image clickable */
-.masthead-full-link {
+/* FINAL FIX FOR CLICKABLE HERO */
+.masthead {
+    position: relative;
+    width: 100%;
+    height: 70vh;
+    min-height: 500px;
+    background-size: cover;
+    background-position: center;
     display: flex;
     align-items: flex-end;
+    margin-bottom: 60px;
+}
+
+/* This is the magic part that makes the whole image a button */
+.masthead-full-link {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
+    z-index: 10; /* Put the link on the very top layer */
+    display: flex;
+    align-items: flex-end;
     text-decoration: none !important;
-    color: white !important;
 }
 
 .masthead-content {
-    pointer-events: none; /* This makes sure the text doesn't block the click */
+    position: relative;
+    z-index: 5; /* Text stays visible */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    width: 100%;
+    pointer-events: none; /* Mouse clicks 'pass through' text to the link behind it */
+}
+
+/* Keeps your titles white and big */
+#featuredTitle {
+    color: white !important;
+    font-size: 56px;
+    margin-bottom: 10px;
+    text-decoration: none !important;
+}
+
+.masthead-meta {
+    color: rgba(255, 255, 255, 0.8) !important;
 }
