@@ -22,16 +22,18 @@ body {
   line-height: 1.6;
 }
 
-/* NEW GRADIENT HEADER (replaces old navbar) */
+/* HEADER FLOATING OVER MASTHEAD */
 .header {
-    background: linear-gradient(to right, #6B3E2E, #8B5A3C, #A08B5C, #5B8B8B, #2E6B6B);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: transparent;
     padding: 40px 60px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    z-index: 100;
 }
 
 .logo-text {
@@ -39,6 +41,7 @@ body {
     font-size: 28px;
     font-weight: normal;
     letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .center-logo {
@@ -51,6 +54,7 @@ body {
 .center-logo svg {
     width: 73px;
     height: 68px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
 .nav {
@@ -65,32 +69,11 @@ body {
     font-size: 16px;
     letter-spacing: 2px;
     font-weight: 500;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .nav a:hover {
     opacity: 0.8;
-}
-
-.search-icon {
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.search-icon:hover {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.search-icon svg {
-    width: 20px;
-    height: 20px;
-    fill: white;
 }
 
 /* OLD NAVBAR STYLES - REMOVED/REPLACED BY HEADER ABOVE */
@@ -103,50 +86,26 @@ body {
   letter-spacing: -0.5px;
 }
 
-/* OLD NAVBAR STYLES - COMMENTED OUT, NOW USING HEADER STYLES ABOVE
-.nav-menu {
-  display: flex;
-  gap: 30px;
-  align-items: center;
-}
-
-.nav-link {
-  color: var(--white);
-  text-decoration: none;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: opacity 0.3s;
-}
-
-.nav-link:hover {
-  opacity: 0.7;
-}
-
-.search-icon {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  opacity: 0.8;
-  transition: opacity 0.3s;
-}
-
-.search-icon:hover {
-  opacity: 1;
-}
-*/
-
-/* Hero/Masthead - Featured Film */
+/* Hero/Masthead - Featured Film - ENTIRE AREA CLICKABLE */
 .masthead {
   width: 100%;
-  height: 70vh;
-  min-height: 500px;
+  height: 100vh;
+  min-height: 600px;
   background-size: cover;
   background-position: center;
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 60px;
+  text-decoration: none;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.masthead:hover {
+  opacity: 0.95;
 }
 
 .masthead::before {
@@ -156,48 +115,35 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 100%);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%);
 }
 
 .masthead-content {
   position: relative;
   z-index: 2;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px 60px;
-  width: 100%;
+  text-align: center;
+  padding: 0 20px;
 }
 
-.masthead-play {
+.masthead-text {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 20px;
-  cursor: pointer;
-  text-decoration: none;
-  color: var(--white);
-  transition: opacity 0.3s;
-}
-
-.masthead-play:hover {
-  opacity: 0.9;
-}
-
-.play-icon {
-  width: 60px;
-  height: 60px;
-  flex-shrink: 0;
 }
 
 .masthead h1 {
-  font-size: 48px;
+  font-size: 72px;
   font-weight: 700;
-  margin-bottom: 10px;
+  margin: 0;
   line-height: 1.2;
+  text-shadow: 0 4px 8px rgba(0,0,0,0.5);
 }
 
 .masthead-meta {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .meta-separator {
@@ -656,155 +602,52 @@ body {
   .products-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-}
-
-/* SEARCH OVERLAY */
-.search-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.95);
-  z-index: 10000;
-  display: none;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.search-overlay.active {
-  display: flex;
-  flex-direction: column;
-  opacity: 1;
-}
-
-.search-container {
-  padding: 40px 20px 20px;
-  max-width: 800px;
-  width: 100%;
-  margin: 0 auto;
-  position: relative;
-}
-
-.search-input {
-  width: 100%;
-  padding: 20px 60px 20px 20px;
-  font-size: 24px;
-  background: white;
-  border: none;
-  border-radius: 0;
-  color: #333;
-}
-
-.search-input:focus {
-  outline: none;
-}
-
-.search-input::placeholder {
-  color: #999;
-}
-
-.search-close {
-  position: absolute;
-  right: 30px;
-  top: 50px;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 48px;
-  cursor: pointer;
-  padding: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-}
-
-.search-close:hover {
-  opacity: 0.7;
-}
-
-.search-results {
-  max-width: 800px;
-  width: 100%;
-  margin: 20px auto;
-  padding: 0 20px;
-  overflow-y: auto;
-  max-height: calc(100vh - 200px);
-}
-
-.search-result-item {
-  display: flex;
-  gap: 20px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.05);
-  margin-bottom: 10px;
-  text-decoration: none;
-  color: white;
-  transition: background 0.3s;
-}
-
-.search-result-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.search-result-thumb {
-  width: 120px;
-  height: 80px;
-  background-size: cover;
-  background-position: center;
-  flex-shrink: 0;
-}
-
-.search-result-info h3 {
-  font-size: 20px;
-  margin-bottom: 5px;
-  font-weight: 600;
-}
-
-.search-result-info p {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.search-result-info mark {
-  background: rgba(255, 255, 0, 0.3);
-  color: white;
-  padding: 2px 4px;
-}
-
-.no-results,
-.search-error {
-  text-align: center;
-  padding: 40px 20px;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 18px;
+  
+  .header {
+    padding: 30px 40px;
+  }
+  
+  .logo-text {
+    font-size: 24px;
+  }
+  
+  .nav {
+    gap: 30px;
+  }
+  
+  .nav a {
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 768px) {
-  .search-input {
-    font-size: 18px;
-    padding: 15px 50px 15px 15px;
+  .header {
+    padding: 20px;
   }
   
-  .search-close {
-    right: 25px;
-    top: 45px;
+  .logo-text {
+    font-size: 18px;
+  }
+  
+  .center-logo svg {
+    width: 50px;
+    height: 47px;
+  }
+  
+  .nav {
+    gap: 20px;
+  }
+  
+  .nav a {
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+  
+  .masthead h1 {
     font-size: 36px;
   }
   
-  .search-result-thumb {
-    width: 80px;
-    height: 60px;
-  }
-  
-  .search-result-info h3 {
-    font-size: 16px;
-  }
-  
-  .search-result-info p {
-    font-size: 12px;
+  .masthead-meta {
+    font-size: 14px;
   }
 }
