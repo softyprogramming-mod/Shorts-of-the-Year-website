@@ -43,8 +43,8 @@ function displayFeaturedFilm() {
     document.getElementById('featuredGenre').textContent = featured.genre;
     document.getElementById('featuredRuntime').textContent = featured.runtime + ' min';
     
-    // Set link on the masthead itself
-    masthead.href = `film.html?id=${featured.slug}`;
+    // FIX: Target 'featuredFilmLink' instead of 'masthead'
+    document.getElementById('featuredFilmLink').href = `film.html?id=${featured.slug}`;
 }
 
 // Display film grid (excluding featured film)
