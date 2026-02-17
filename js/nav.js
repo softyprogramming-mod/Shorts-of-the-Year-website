@@ -2,6 +2,7 @@
 (function () {
   var navbar = document.getElementById('navbar');
   var masthead = document.getElementById('masthead');
+  var featuredTitle = document.getElementById('featuredTitle');
   var menuButton = document.getElementById('menuButton');
   var navMenu = document.getElementById('navMenu');
   var progressTarget = 0;
@@ -20,7 +21,8 @@
     navbar.style.setProperty('--logo-progress', String(progressCurrent));
 
     // Fade nav bar in at the same rate as logo shrink
-    var alpha = Math.max(0, Math.min(1, progressCurrent));
+    var maxAlpha = 0.88; // keep homepage nav slightly translucent at full state
+    var alpha = Math.max(0, Math.min(maxAlpha, progressCurrent * maxAlpha));
     if (alpha < 0.01) {
       navbar.classList.remove('navbar--solid');
       navbar.style.background = 'none';
@@ -70,12 +72,17 @@
       return;
     }
 
-    var shrinkDistance = 220;
-    var brandStart = 24;
-    var brandDistance = 180;
-    progressTarget = Math.max(0, Math.min(1, visualScrollY / shrinkDistance));
-    var brandTarget = Math.max(0, Math.min(1, (visualScrollY - brandStart) / brandDistance));
-    navbar.style.setProperty('--brand-progress', String(brandTarget));
+    // Complete the full effect when the top of viewport has passed hero title.
+    // startTop ~= titleTop + scrollY, so this tracks a stable completion distance.
+    var effectDistance = 220;
+    if (featuredTitle) {
+      var titleTop = featuredTitle.getBoundingClientRect().top;
+      var estimatedStartTop = visualScrollY + titleTop;
+      effectDistance = Math.max(220, estimatedStartTop);
+    }
+
+    progressTarget = Math.max(0, Math.min(1, visualScrollY / effectDistance));
+    navbar.style.setProperty('--brand-progress', String(progressTarget));
     if (!rafId) {
       rafId = window.requestAnimationFrame(renderProgress);
     }
