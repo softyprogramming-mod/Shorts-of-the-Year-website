@@ -7,6 +7,7 @@
   // Force background none immediately — fixes iOS Safari black flash on load
   if (navbar && navbar.dataset.overlay === 'true') {
     navbar.classList.remove('navbar--solid');
+    navbar.classList.add('navbar--at-top');
     navbar.style.background = 'none';
     navbar.style.backgroundColor = 'transparent';
   }
@@ -15,10 +16,12 @@
   if (navbar && navbar.dataset.overlay === 'true') {
     function handleScroll() {
       if (window.scrollY > 60) {
+        navbar.classList.remove('navbar--at-top');
         navbar.classList.add('navbar--solid');
         navbar.style.background = '';
         navbar.style.backgroundColor = '';
       } else {
+        navbar.classList.add('navbar--at-top');
         navbar.classList.remove('navbar--solid');
         navbar.style.background = 'none';
         navbar.style.backgroundColor = 'transparent';
