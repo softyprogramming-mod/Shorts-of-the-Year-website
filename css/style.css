@@ -98,6 +98,17 @@ body {
     background: var(--black) !important;
     box-shadow: 0 1px 0 var(--gray) !important;
   }
+
+  /* In this range, place hero below the black nav bar */
+  .navbar[data-overlay="true"] + .masthead {
+    margin-top: var(--nav-height);
+    height: 100vh;
+  }
+
+  /* Keep logo at normal nav size when nav is black in compressed desktop */
+  .navbar[data-overlay="true"] .logo-svg {
+    width: var(--logo-size-desktop) !important;
+  }
 }
 
 .nav-col {
