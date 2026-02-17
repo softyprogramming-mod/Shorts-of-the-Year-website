@@ -10,7 +10,7 @@
   if (!navbar) return;
 
   function renderProgress() {
-    progressCurrent += (progressTarget - progressCurrent) * 0.18;
+    progressCurrent += (progressTarget - progressCurrent) * 0.12;
 
     if (Math.abs(progressTarget - progressCurrent) < 0.002) {
       progressCurrent = progressTarget;
@@ -46,6 +46,24 @@
 
     var scroller = document.scrollingElement || document.documentElement || document.body;
     var scrollY = scroller ? scroller.scrollTop : 0;
+
+    // Always be fully transparent at true top (no lag on return to top)
+    if (scrollY <= 1) {
+      progressTarget = 0;
+      progressCurrent = 0;
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+        rafId = 0;
+      }
+      navbar.style.setProperty('--logo-progress', '0');
+      navbar.style.setProperty('--brand-progress', '0');
+      navbar.classList.remove('navbar--solid');
+      navbar.style.background = 'none';
+      navbar.style.setProperty('background-color', 'transparent', 'important');
+      navbar.style.setProperty('box-shadow', 'none', 'important');
+      return;
+    }
+
     var shrinkDistance = 220;
     progressTarget = Math.max(0, Math.min(1, scrollY / shrinkDistance));
     if (!rafId) {
