@@ -1,6 +1,28 @@
 {
   "films": [
     {
+      "id": "running-a-painting-of-an-angel-through-a-copy-machine-until-it-becomes-invisible-1771288540559",
+      "timestamp": "2026-02-17T00:35:40.559Z",
+      "title": "Running a Painting of an Angel Through a Copy Machine Until It Becomes Invisible",
+      "director": "A copy machine made this movie.",
+      "writer": "Same as Director",
+      "producer": "Epson",
+      "genre": "Documentary",
+      "runtime": "00:19",
+      "logline": "A copy machine makes a movie on a sunny day.",
+      "directorStatement": "A copy machine made this movie.",
+      "email": "noahsolengel@gmail.com",
+      "filmLink": "https://vimeo.com/1088169641?share=copy&fl=sv&fe=ci",
+      "password": "",
+      "twitter": "",
+      "onlinePremiere": "Yes",
+      "thumbnail": "https://vumbnail.com/1088169641.jpg",
+      "review": "A copy machine made this movie.'s Running a Painting of an Angel Through a Copy Machine Until It Becomes Invisible is a revealing achievement with compelling visual metaphors, with a keen sense of atmosphere. that feels urgent and necessary. This establishes A copy machine made this movie. as a serious talent.",
+      "slug": "running-a-painting-of-an-angel-through-a-copy-machine-until-it-becomes-invisible-1771288540571",
+      "accepted": true,
+      "live": true
+    },
+    {
       "id": "bronze-dog-1771287163033",
       "timestamp": "2026-02-17T00:12:43.033Z",
       "title": "Bronze Dog",
