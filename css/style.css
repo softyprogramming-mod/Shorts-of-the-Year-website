@@ -790,6 +790,20 @@ mark {
 
 .store-title { font-size: 48px; font-weight: 700; margin-bottom: 50px; color: white; }
 
+.store-intro {
+  max-width: 920px;
+  margin: 0 auto 44px;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 19px;
+  line-height: 1.75;
+  letter-spacing: 0.1px;
+}
+
+.store-intro strong {
+  color: var(--white);
+  font-weight: 800;
+}
+
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -843,6 +857,14 @@ mark {
   text-transform: uppercase;
   letter-spacing: 1px;
   font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .store-intro {
+    font-size: 16px;
+    line-height: 1.65;
+    margin-bottom: 34px;
+  }
 }
 
 /* meta separator */
