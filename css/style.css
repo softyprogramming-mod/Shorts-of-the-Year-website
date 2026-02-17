@@ -171,6 +171,37 @@ body {
   opacity: calc(1 - var(--brand-progress));
 }
 
+/* Cleaner homepage text morph: full title -> SoftY */
+.brand-home {
+  position: relative;
+  display: inline-block;
+  min-width: 12ch;
+}
+
+.brand-home .brand-full,
+.brand-home .brand-softy-only {
+  display: block;
+  white-space: nowrap;
+}
+
+.brand-home .brand-softy-only {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  letter-spacing: 0.03em;
+}
+
+.navbar[data-overlay="true"] .brand-home .brand-full {
+  opacity: calc(1 - var(--brand-progress));
+  transform: translateY(calc(-2px * var(--brand-progress)));
+}
+
+.navbar[data-overlay="true"] .brand-home .brand-softy-only {
+  opacity: var(--brand-progress);
+  transform: translateY(calc(2px * (1 - var(--brand-progress))));
+}
+
 /* Center logo */
 .nav-logo {
   display: flex;
