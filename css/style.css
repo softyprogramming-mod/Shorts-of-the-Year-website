@@ -140,6 +140,7 @@ body {
   letter-spacing: -0.5px;
   white-space: nowrap;
   display: inline-block;
+  line-height: 1;
   gap: 0;
 }
 
@@ -155,15 +156,19 @@ body {
 
 /* Homepage-only brand morph: "Shorts of the Year" -> "Softy" */
 .brand-softy {
-  display: inline;
-  font-weight: 800;
+  display: inline-block;
+  font-weight: 700;
   color: var(--white);
+  line-height: 1;
+  vertical-align: baseline;
 }
 
 .brand-drop {
   display: inline-block;
   overflow: hidden;
   white-space: pre;
+  line-height: 1;
+  vertical-align: baseline;
 }
 
 .navbar[data-overlay="true"] .brand-drop {
