@@ -1,7 +1,6 @@
 // Nav: transparent overlay → solid on scroll + mobile hamburger
 (function () {
   var navbar = document.getElementById('navbar');
-  var masthead = document.getElementById('masthead');
   var menuButton = document.getElementById('menuButton');
   var navMenu = document.getElementById('navMenu');
 
@@ -16,11 +15,15 @@
 
   // Scroll → solid nav (homepage only)
   if (navbar && navbar.dataset.overlay === 'true') {
+    function getScrollTop() {
+      return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    }
+
     function handleScroll() {
-      var scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
-      var shouldBeSolid = masthead
-        ? masthead.getBoundingClientRect().top < -40
-        : scrollTop > 60;
+      // Single source of truth:
+      // top of page => transparent nav
+      // after any meaningful scroll => solid nav
+      var shouldBeSolid = getScrollTop() > 4;
 
       if (shouldBeSolid) {
         navbar.dataset.atTop = 'false';
