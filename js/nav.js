@@ -22,13 +22,15 @@
     // Fade nav bar in at the same rate as logo shrink
     var alpha = Math.max(0, Math.min(1, progressCurrent));
     if (alpha < 0.01) {
+      navbar.classList.remove('navbar--solid');
       navbar.style.background = 'none';
-      navbar.style.backgroundColor = 'transparent';
-      navbar.style.boxShadow = 'none';
+      navbar.style.setProperty('background-color', 'transparent', 'important');
+      navbar.style.setProperty('box-shadow', 'none', 'important');
     } else {
-      navbar.style.background = 'none';
-      navbar.style.backgroundColor = 'rgba(0, 0, 0, ' + alpha.toFixed(3) + ')';
-      navbar.style.boxShadow = '0 1px 0 rgba(51, 51, 51, ' + alpha.toFixed(3) + ')';
+      navbar.classList.add('navbar--solid');
+      navbar.style.setProperty('background', 'none', 'important');
+      navbar.style.setProperty('background-color', 'rgba(0, 0, 0, ' + alpha.toFixed(3) + ')', 'important');
+      navbar.style.setProperty('box-shadow', '0 1px 0 rgba(51, 51, 51, ' + alpha.toFixed(3) + ')', 'important');
     }
 
     if (progressCurrent !== progressTarget) {
@@ -49,8 +51,7 @@
     if (!rafId) {
       rafId = window.requestAnimationFrame(renderProgress);
     }
-    // Overlay homepage uses progress-based fade; avoid class jumps.
-    navbar.classList.remove('navbar--solid');
+    // Overlay homepage uses progress-based fade driven in renderProgress.
   }
 
   // Run immediately and on page events
