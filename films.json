@@ -1,6 +1,28 @@
 {
   "films": [
     {
+      "id": "submarine-story-1771340061012",
+      "timestamp": "2026-02-17T14:54:21.012Z",
+      "title": "Submarine Story",
+      "director": "Mischa Aletta",
+      "writer": "Same as Director",
+      "producer": "",
+      "genre": "Action/Adventure",
+      "runtime": "16:25",
+      "logline": "A submarine scientists returns to the surface.",
+      "directorStatement": "This is a film about family and bleak futures.",
+      "email": "mischaletta@gmail.com",
+      "filmLink": "https://www.youtube.com/watch?v=Br006oI49SE",
+      "password": "",
+      "twitter": "",
+      "onlinePremiere": "No",
+      "thumbnail": "https://img.youtube.com/vi/Br006oI49SE/hqdefault.jpg",
+      "review": "Director Mischa Aletta presents Submarine Story, a compelling study with strong visual storytelling, that builds tension masterfully. with authentic emotional beats. The film marks Mischa Aletta as an emerging talent.",
+      "slug": "submarine-story-1771340061013",
+      "accepted": true,
+      "live": true
+    },
+    {
       "id": "on-my-days-off-1771338819282",
       "timestamp": "2026-02-17T14:33:39.282Z",
       "title": "On My Days Off",
