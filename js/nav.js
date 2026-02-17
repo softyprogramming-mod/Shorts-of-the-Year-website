@@ -1,6 +1,7 @@
 // Nav: transparent over hero at top, solid after scroll + mobile hamburger
 (function () {
   var navbar = document.getElementById('navbar');
+  var masthead = document.getElementById('masthead');
   var menuButton = document.getElementById('menuButton');
   var navMenu = document.getElementById('navMenu');
   var progressTarget = 0;
@@ -44,10 +45,16 @@
     if (navbar.dataset.overlay !== 'true') return;
 
     var scroller = document.scrollingElement || document.documentElement || document.body;
-    var scrollY = scroller ? scroller.scrollTop : 0;
+    var rawScrollY = scroller ? scroller.scrollTop : 0;
+    var visualScrollY = rawScrollY;
+
+    // Use masthead visual offset when available so "top" is true top of hero.
+    if (masthead) {
+      visualScrollY = Math.max(0, -masthead.getBoundingClientRect().top);
+    }
 
     // Always be fully transparent at true top (no lag on return to top)
-    if (scrollY <= 1) {
+    if (visualScrollY <= 1) {
       progressTarget = 0;
       progressCurrent = 0;
       if (rafId) {
@@ -66,8 +73,8 @@
     var shrinkDistance = 220;
     var brandStart = 24;
     var brandDistance = 180;
-    progressTarget = Math.max(0, Math.min(1, scrollY / shrinkDistance));
-    var brandTarget = Math.max(0, Math.min(1, (scrollY - brandStart) / brandDistance));
+    progressTarget = Math.max(0, Math.min(1, visualScrollY / shrinkDistance));
+    var brandTarget = Math.max(0, Math.min(1, (visualScrollY - brandStart) / brandDistance));
     navbar.style.setProperty('--brand-progress', String(brandTarget));
     if (!rafId) {
       rafId = window.requestAnimationFrame(renderProgress);
@@ -77,6 +84,7 @@
 
   // Run immediately and on page events
   applyNavState();
+  window.addEventListener('resize', applyNavState);
   window.addEventListener('scroll', applyNavState, { passive: true });
   window.addEventListener('pageshow', applyNavState);
 
