@@ -12,6 +12,9 @@
   --logo-size-mobile-top: 52px;
   --logo-top-headroom-desktop: 8px;
   --logo-top-headroom-mobile: 8px;
+  --logo-progress: 0;
+  --brand-progress: 0;
+  --softy-yellow: #f6d44f;
 }
 
 * {
@@ -110,6 +113,13 @@ body {
   /* Keep logo at normal nav size when nav is black in compressed desktop */
   .navbar[data-overlay="true"] .logo-svg {
     width: var(--logo-size-desktop) !important;
+    transform: none !important;
+  }
+
+  .navbar[data-overlay="true"] .brand-accent {
+    color: var(--white) !important;
+    transform: none !important;
+    font-weight: 700;
   }
 }
 
@@ -132,6 +142,19 @@ body {
   white-space: nowrap;
 }
 
+.brand-accent {
+  display: inline-block;
+  font-weight: 800;
+  transform-origin: center bottom;
+  transform: scale(calc(1.04 - (0.04 * var(--brand-progress))));
+  color: color-mix(
+    in srgb,
+    var(--softy-yellow) calc((1 - var(--brand-progress)) * 100%),
+    var(--white) calc(var(--brand-progress) * 100%)
+  );
+  transition: color 0.15s linear;
+}
+
 /* Center logo */
 .nav-logo {
   display: flex;
@@ -145,24 +168,24 @@ body {
 .nav-logo:hover { opacity: 0.75; }
 
 .logo-svg {
-  width: var(--logo-size-desktop);
+  width: var(--logo-size-desktop-top);
   height: auto;
   display: block;
   filter: brightness(0) invert(1);
-  transition: width 0.3s ease;
+  transform-origin: center top;
+  transform: scale(calc(1 - (0.25 * var(--logo-progress))));
+  transition: transform 0.08s linear;
 }
 
 /* Homepage overlay: logo shrinks smoothly with scroll progress (0 -> 1) */
 .navbar[data-overlay="true"] {
   --logo-progress: 0;
-  --logo-current-size: calc(
-    var(--logo-size-desktop-top) -
-    (var(--logo-size-desktop-top) - var(--logo-size-desktop)) * var(--logo-progress)
-  );
+  --brand-progress: 0;
 }
 
 .navbar[data-overlay="true"] .logo-svg {
-  width: var(--logo-current-size);
+  width: var(--logo-size-desktop-top);
+  transform: scale(calc(1 - (0.25 * var(--logo-progress))));
 }
 
 /* Nav links (right) */
@@ -362,7 +385,8 @@ mark {
   }
 
   .logo-svg {
-    width: var(--logo-size-mobile);
+    width: var(--logo-size-mobile-top);
+    transform: scale(calc(1 - (0.2308 * var(--logo-progress))));
   }
 
   .nav-logo {
@@ -370,10 +394,8 @@ mark {
   }
 
   .navbar[data-overlay="true"] {
-    --logo-current-size: calc(
-      var(--logo-size-mobile-top) -
-      (var(--logo-size-mobile-top) - var(--logo-size-mobile)) * var(--logo-progress)
-    );
+    --logo-progress: 0;
+    --brand-progress: 0;
   }
 
   /* Hide the link row, show hamburger */
