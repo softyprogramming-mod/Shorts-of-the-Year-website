@@ -1,50 +1,37 @@
-// Nav: transparent overlay → solid on scroll + mobile hamburger
+// Nav: transparent over hero at top, solid after scroll + mobile hamburger
 (function () {
   var navbar = document.getElementById('navbar');
   var menuButton = document.getElementById('menuButton');
   var navMenu = document.getElementById('navMenu');
-  var SOLID_SCROLL_THRESHOLD = 120;
 
-  // Force background none immediately — fixes iOS Safari black flash on load
-  if (navbar && navbar.dataset.overlay === 'true') {
-    navbar.classList.remove('navbar--solid');
-    navbar.classList.add('navbar--at-top');
-    navbar.dataset.atTop = 'true';
-    navbar.style.background = 'none';
-    navbar.style.backgroundColor = 'transparent';
+  if (!navbar) return;
+
+  function applyNavState() {
+    // Only homepage uses overlay behavior
+    if (navbar.dataset.overlay !== 'true') return;
+
+    var scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+    var shouldBeSolid = scrollY > 100; // turn black only after meaningful scroll
+
+    if (shouldBeSolid) {
+      navbar.classList.add('navbar--solid');
+      navbar.style.background = '';
+      navbar.style.backgroundColor = '';
+      navbar.style.boxShadow = '';
+    } else {
+      navbar.classList.remove('navbar--solid');
+      navbar.style.background = 'none';
+      navbar.style.backgroundColor = 'transparent';
+      navbar.style.boxShadow = 'none';
+    }
   }
 
-  // Scroll → solid nav (homepage only)
-  if (navbar && navbar.dataset.overlay === 'true') {
-    function getScrollTop() {
-      return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-    }
+  // Run immediately and on page events
+  applyNavState();
+  window.addEventListener('scroll', applyNavState, { passive: true });
+  window.addEventListener('pageshow', applyNavState);
 
-    function handleScroll() {
-      // Use a larger threshold because mobile/small viewports can report
-      // small non-zero scroll values even when the page looks at top.
-      var shouldBeSolid = getScrollTop() > SOLID_SCROLL_THRESHOLD;
-
-      if (shouldBeSolid) {
-        navbar.dataset.atTop = 'false';
-        navbar.classList.remove('navbar--at-top');
-        navbar.classList.add('navbar--solid');
-        navbar.style.background = '';
-        navbar.style.backgroundColor = '';
-      } else {
-        navbar.dataset.atTop = 'true';
-        navbar.classList.add('navbar--at-top');
-        navbar.classList.remove('navbar--solid');
-        navbar.style.background = 'none';
-        navbar.style.backgroundColor = 'transparent';
-      }
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('pageshow', handleScroll);
-    handleScroll();
-  }
-
-  // Mobile hamburger
+  // Mobile menu toggle
   if (menuButton && navMenu) {
     menuButton.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -63,7 +50,7 @@
     });
 
     document.addEventListener('click', function (e) {
-      if (navbar && !navbar.contains(e.target)) {
+      if (!navbar.contains(e.target)) {
         navMenu.classList.remove('nav-menu--open');
         menuButton.textContent = '☰';
         menuButton.setAttribute('aria-expanded', 'false');
