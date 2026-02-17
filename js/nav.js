@@ -10,8 +10,9 @@
     // Only homepage uses overlay behavior
     if (navbar.dataset.overlay !== 'true') return;
 
-    var scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
-    var shouldBeSolid = scrollY > 100; // turn black only after meaningful scroll
+    var scroller = document.scrollingElement || document.documentElement || document.body;
+    var scrollY = scroller ? scroller.scrollTop : 0;
+    var shouldBeSolid = scrollY > 140; // keep transparent longer at top on mobile/small viewports
 
     if (shouldBeSolid) {
       navbar.classList.add('navbar--solid');
