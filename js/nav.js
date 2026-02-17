@@ -18,7 +18,9 @@
       progressCurrent = progressTarget;
     }
 
-    navbar.style.setProperty('--logo-progress', String(progressCurrent));
+    // Logo curve: changes quickly at first, then eases into final size.
+    var logoProgress = 1 - Math.pow(1 - progressCurrent, 2.2);
+    navbar.style.setProperty('--logo-progress', String(logoProgress));
 
     // Fade nav bar in at the same rate as logo shrink
     var maxAlpha = 0.88; // keep homepage nav slightly translucent at full state
@@ -65,6 +67,8 @@
       }
       navbar.style.setProperty('--logo-progress', '0');
       navbar.style.setProperty('--brand-progress', '0');
+      navbar.style.setProperty('--brand-fade-progress', '0');
+      navbar.style.setProperty('--brand-condense-progress', '0');
       navbar.classList.remove('navbar--solid');
       navbar.style.background = 'none';
       navbar.style.setProperty('background-color', 'transparent', 'important');
@@ -83,7 +87,18 @@
 
     progressTarget = Math.max(0, Math.min(1, visualScrollY / effectDistance));
     var brandProgress = Math.max(0, Math.min(1, progressTarget * 2));
+    // Two-phase brand animation:
+    // 1) non-SOFTY letters fade out first
+    // 2) remaining letters condense together after fade is mostly complete
+    var brandFadeProgress = Math.max(0, Math.min(1, brandProgress * 2.2));
+    var condenseStart = 0.46;
+    var brandCondenseProgress = Math.max(
+      0,
+      Math.min(1, (brandProgress - condenseStart) / (1 - condenseStart))
+    );
     navbar.style.setProperty('--brand-progress', String(brandProgress));
+    navbar.style.setProperty('--brand-fade-progress', String(brandFadeProgress));
+    navbar.style.setProperty('--brand-condense-progress', String(brandCondenseProgress));
     if (!rafId) {
       rafId = window.requestAnimationFrame(renderProgress);
     }
