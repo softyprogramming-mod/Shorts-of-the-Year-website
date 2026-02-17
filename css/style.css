@@ -239,6 +239,13 @@ mark {
 @media (max-width: 768px) {
   .navbar {
     padding: 0 16px;
+    /* Transparent by default on mobile too — JS adds navbar--solid on scroll */
+    background: transparent;
+  }
+
+  /* When solid (scrolled or inner pages), show black */
+  .navbar--solid {
+    background: var(--black) !important;
   }
 
   .brand {
@@ -256,7 +263,7 @@ mark {
     top: var(--nav-height);
     left: 0;
     right: 0;
-    background: var(--black);
+    background: var(--black); /* dropdown always solid black so links are readable */
     flex-direction: column;
     align-items: stretch;
     gap: 0;
