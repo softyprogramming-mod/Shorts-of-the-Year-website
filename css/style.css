@@ -601,3 +601,6 @@ body {
 .nav-toggle, .menu-button {
     display: none !important;
 }
+@media screen and (max-width: 768px) {
+    #featuredTitle { font-size: 38px !important; }
+}
