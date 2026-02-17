@@ -1,6 +1,28 @@
 {
   "films": [
     {
+      "id": "a-flaw-in-the-system-1771289208389",
+      "timestamp": "2026-02-17T00:46:48.389Z",
+      "title": "A Flaw In The System",
+      "director": "Will Kempner",
+      "writer": "Same as Director",
+      "producer": "Grok",
+      "genre": "Experimental",
+      "runtime": "05:40",
+      "logline": "A flaw wanders...",
+      "directorStatement": "Made this cause i was bored lmao",
+      "email": "willkempner@gmail.com",
+      "filmLink": "https://vimeo.com/manage/videos/409480281",
+      "password": "",
+      "twitter": "",
+      "onlinePremiere": "No",
+      "thumbnail": "https://raw.githubusercontent.com/softyprogramming-mod/Shorts-of-the-Year-website/main/images/placeholder.jpg",
+      "review": "Will Kempner brings us A Flaw In The System, a bold exploration through carefully composed frames, with precise shot composition. through layered storytelling. Will Kempner has created something genuinely memorable.",
+      "slug": "a-flaw-in-the-system-1771289208391",
+      "accepted": true,
+      "live": true
+    },
+    {
       "id": "running-a-painting-of-an-angel-through-a-copy-machine-until-it-becomes-invisible-1771288540559",
       "timestamp": "2026-02-17T00:35:40.559Z",
       "title": "Running a Painting of an Angel Through a Copy Machine Until It Becomes Invisible",
