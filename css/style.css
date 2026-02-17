@@ -139,13 +139,12 @@ body {
   text-decoration: none;
   letter-spacing: -0.5px;
   white-space: nowrap;
-  display: inline-flex;
-  align-items: baseline;
+  display: inline-block;
   gap: 0;
 }
 
 .brand-accent {
-  display: inline-block;
+  display: inline;
   font-weight: 700;
   color: var(--white);
 }
@@ -156,7 +155,7 @@ body {
 
 /* Homepage-only brand morph: "Shorts of the Year" -> "Softy" */
 .brand-softy {
-  display: inline-block;
+  display: inline;
   font-weight: 800;
   color: var(--white);
 }
@@ -717,13 +716,34 @@ mark {
    ============================================= */
 
 .submit-container {
-  max-width: 800px;
+  max-width: 1040px;
   margin: 0 auto;
-  padding: calc(var(--nav-height) + 40px) 20px 60px;
+  padding: calc(var(--nav-height) + 52px) 20px 60px;
 }
 
-.submit-container h1 { font-size: 48px; font-weight: 700; margin-bottom: 30px; }
-.submit-container p { font-size: 18px; line-height: 1.6; margin-bottom: 40px; color: rgba(255,255,255,0.9); }
+.submit-container h1 {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.submit-intro {
+  max-width: 980px;
+  font-size: 19px;
+  line-height: 1.75;
+  margin: 0 auto 48px;
+  color: rgba(255,255,255,0.9);
+}
+
+.submit-intro strong {
+  font-weight: 700;
+  color: var(--white);
+}
+
+.submit-form-wrap {
+  max-width: 800px;
+  margin: 0 auto;
+}
 
 .form-embed { width: 100%; min-height: 800px; border: none; }
 
