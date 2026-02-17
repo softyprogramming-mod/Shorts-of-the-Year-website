@@ -3,8 +3,28 @@
   var navbar = document.getElementById('navbar');
   var menuButton = document.getElementById('menuButton');
   var navMenu = document.getElementById('navMenu');
+  var progressTarget = 0;
+  var progressCurrent = 0;
+  var rafId = 0;
 
   if (!navbar) return;
+
+  function renderProgress() {
+    progressCurrent += (progressTarget - progressCurrent) * 0.18;
+
+    if (Math.abs(progressTarget - progressCurrent) < 0.002) {
+      progressCurrent = progressTarget;
+    }
+
+    navbar.style.setProperty('--logo-progress', String(progressCurrent));
+    navbar.style.setProperty('--brand-progress', String(progressCurrent));
+
+    if (progressCurrent !== progressTarget) {
+      rafId = window.requestAnimationFrame(renderProgress);
+    } else {
+      rafId = 0;
+    }
+  }
 
   function applyNavState() {
     // Only homepage uses overlay behavior
@@ -14,8 +34,10 @@
     var scrollY = scroller ? scroller.scrollTop : 0;
     var shouldBeSolid = scrollY > 140; // keep transparent longer at top on mobile/small viewports
     var shrinkDistance = 220;
-    var progress = Math.max(0, Math.min(1, scrollY / shrinkDistance));
-    navbar.style.setProperty('--logo-progress', String(progress));
+    progressTarget = Math.max(0, Math.min(1, scrollY / shrinkDistance));
+    if (!rafId) {
+      rafId = window.requestAnimationFrame(renderProgress);
+    }
 
     if (shouldBeSolid) {
       navbar.classList.add('navbar--solid');
