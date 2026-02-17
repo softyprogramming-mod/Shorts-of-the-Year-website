@@ -14,7 +14,6 @@
   --logo-top-headroom-mobile: 8px;
   --logo-progress: 1;
   --brand-progress: 1;
-  --softy-yellow: #f6d44f;
 }
 
 * {
@@ -145,18 +144,30 @@ body {
 .brand-accent {
   display: inline-block;
   font-weight: 700;
-  transform-origin: center bottom;
-  transform: scale(calc(1.04 - (0.04 * var(--brand-progress))));
-  color: color-mix(
-    in srgb,
-    var(--white) calc((1 - var(--brand-progress)) * 100%),
-    var(--softy-yellow) calc(var(--brand-progress) * 100%)
-  );
-  transition: color 0.15s linear;
+  color: var(--white);
 }
 
 .navbar[data-overlay="true"] .brand-accent {
   font-weight: 800;
+}
+
+/* Homepage-only brand morph: "Shorts of the Year" -> "Softy" */
+.brand-softy {
+  display: inline-block;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.brand-drop {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+.navbar[data-overlay="true"] .brand-drop {
+  max-width: calc(var(--w, 0ch) * (1 - var(--brand-progress)));
+  opacity: calc(1 - var(--brand-progress));
 }
 
 /* Center logo */
