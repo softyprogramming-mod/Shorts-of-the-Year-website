@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Load films from JSON
 async function loadFilms() {
     try {
-        const response = await fetch('films.json');
+const response = await fetch('films.json?t=' + Date.now());
         const data = await response.json();
         // Filter only live films and sort by timestamp (newest first)
         allFilms = data.films
