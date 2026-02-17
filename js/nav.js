@@ -82,7 +82,8 @@
     }
 
     progressTarget = Math.max(0, Math.min(1, visualScrollY / effectDistance));
-    navbar.style.setProperty('--brand-progress', String(progressTarget));
+    var brandProgress = Math.max(0, Math.min(1, progressTarget * 2));
+    navbar.style.setProperty('--brand-progress', String(brandProgress));
     if (!rafId) {
       rafId = window.requestAnimationFrame(renderProgress);
     }
