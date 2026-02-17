@@ -579,3 +579,22 @@ body {
 }
 
 .menu-button { display: none !important; }
+/* MOBILE OPTIMIZATION */
+@media screen and (max-width: 768px) {
+    #featuredTitle {
+        font-size: 40px !important; /* Half the size so it fits */
+        line-height: 1.1;
+        letter-spacing: -1px;
+        padding: 0 10px; /* Gives it some breathing room on the edges */
+    }
+
+    .masthead-meta {
+        font-size: 12px;
+        flex-wrap: wrap; /* Allows "Action/Adventure" to drop to a new line if needed */
+        gap: 8px;
+    }
+
+    .masthead {
+        height: 60vh; /* Slightly shorter on mobile so the image looks better */
+    }
+}
