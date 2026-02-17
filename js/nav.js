@@ -13,6 +13,9 @@
     var scroller = document.scrollingElement || document.documentElement || document.body;
     var scrollY = scroller ? scroller.scrollTop : 0;
     var shouldBeSolid = scrollY > 140; // keep transparent longer at top on mobile/small viewports
+    var shrinkDistance = 220;
+    var progress = Math.max(0, Math.min(1, scrollY / shrinkDistance));
+    navbar.style.setProperty('--logo-progress', String(progress));
 
     if (shouldBeSolid) {
       navbar.classList.add('navbar--solid');
