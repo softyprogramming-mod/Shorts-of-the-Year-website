@@ -163,19 +163,13 @@ body {
 
 .brand-drop {
   display: inline-block;
-  transform-origin: left center;
+  overflow: hidden;
   white-space: pre;
 }
 
 .navbar[data-overlay="true"] .brand-drop {
-  transform: scaleX(calc(1 - var(--brand-progress)));
+  width: calc(var(--w, 0ch) * (1 - var(--brand-progress)));
   opacity: calc(1 - var(--brand-progress));
-  margin-right: calc(-0.32em * var(--brand-progress));
-}
-
-/* Collapse spacing between SOFTY parts as morph completes */
-.navbar[data-overlay="true"] .brand-softy + .brand-softy {
-  margin-left: calc(0.34em * (1 - var(--brand-progress)));
 }
 
 /* Center logo */
