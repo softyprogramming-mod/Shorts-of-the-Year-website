@@ -170,6 +170,7 @@ body {
   white-space: pre;
   line-height: 1;
   vertical-align: baseline;
+  transform: translateY(calc(-0.7px * (1 - var(--brand-progress))));
 }
 
 .navbar[data-overlay="true"] .brand-drop {
