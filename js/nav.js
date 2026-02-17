@@ -100,15 +100,15 @@
     // 1) non-SOFTY letters fade out first
     // 2) remaining letters condense together after fade is mostly complete
     // Keep full phrase briefly, then fade non-SOFTY letters.
-    var fadeStart = 0.06;
+    var fadeStart = 0.12;
     var brandFadeProgress = Math.max(
       0,
       Math.min(1, ((progressTarget - fadeStart) / (1 - fadeStart)) * 2.2)
     );
-    var condenseStart = 0.46;
+    var condenseStart = 0.6;
     var brandCondenseProgress = Math.max(
       0,
-      Math.min(1, (brandProgress - condenseStart) / (1 - condenseStart))
+      Math.min(1, (brandFadeProgress - condenseStart) / (1 - condenseStart))
     );
     navbar.style.setProperty('--brand-progress', String(brandProgress));
     navbar.style.setProperty('--brand-fade-progress', String(brandFadeProgress));
