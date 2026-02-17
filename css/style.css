@@ -12,8 +12,8 @@
   --logo-size-mobile-top: 52px;
   --logo-top-headroom-desktop: 8px;
   --logo-top-headroom-mobile: 8px;
-  --logo-progress: 0;
-  --brand-progress: 0;
+  --logo-progress: 1;
+  --brand-progress: 1;
   --softy-yellow: #f6d44f;
 }
 
@@ -144,7 +144,7 @@ body {
 
 .brand-accent {
   display: inline-block;
-  font-weight: 800;
+  font-weight: 700;
   transform-origin: center bottom;
   transform: scale(calc(1.04 - (0.04 * var(--brand-progress))));
   color: color-mix(
@@ -153,6 +153,10 @@ body {
     var(--white) calc(var(--brand-progress) * 100%)
   );
   transition: color 0.15s linear;
+}
+
+.navbar[data-overlay="true"] .brand-accent {
+  font-weight: 800;
 }
 
 /* Center logo */
@@ -168,12 +172,12 @@ body {
 .nav-logo:hover { opacity: 0.75; }
 
 .logo-svg {
-  width: var(--logo-size-desktop-top);
+  width: var(--logo-size-desktop);
   height: auto;
   display: block;
   filter: brightness(0) invert(1);
   transform-origin: center top;
-  transform: scale(calc(1 - (0.25 * var(--logo-progress))));
+  transform: none;
   transition: transform 0.08s linear;
 }
 
@@ -385,8 +389,8 @@ mark {
   }
 
   .logo-svg {
-    width: var(--logo-size-mobile-top);
-    transform: scale(calc(1 - (0.2308 * var(--logo-progress))));
+    width: var(--logo-size-mobile);
+    transform: none;
   }
 
   .nav-logo {
@@ -545,7 +549,7 @@ mark {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.75) 100%);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.45) 100%);
 }
 
 .film-content {
