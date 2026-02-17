@@ -17,7 +17,6 @@
     }
 
     navbar.style.setProperty('--logo-progress', String(progressCurrent));
-    navbar.style.setProperty('--brand-progress', String(progressCurrent));
 
     // Fade nav bar in at the same rate as logo shrink
     var alpha = Math.max(0, Math.min(1, progressCurrent));
@@ -65,7 +64,11 @@
     }
 
     var shrinkDistance = 220;
+    var brandStart = 24;
+    var brandDistance = 180;
     progressTarget = Math.max(0, Math.min(1, scrollY / shrinkDistance));
+    var brandTarget = Math.max(0, Math.min(1, (scrollY - brandStart) / brandDistance));
+    navbar.style.setProperty('--brand-progress', String(brandTarget));
     if (!rafId) {
       rafId = window.requestAnimationFrame(renderProgress);
     }
