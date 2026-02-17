@@ -129,7 +129,7 @@ body {
 }
 
 .nav-left  { justify-content: flex-start; }
-.nav-center { justify-content: center; align-items: flex-start; }
+.nav-center { justify-content: center; align-items: center; }
 .nav-right { justify-content: flex-end; gap: 30px; }
 
 /* Brand text (left) */
@@ -166,7 +166,7 @@ body {
   justify-content: center;
   text-decoration: none;
   line-height: 0;
-  padding-top: var(--logo-top-headroom-desktop);
+  padding-top: 0;
   transition: opacity 0.2s;
 }
 .nav-logo:hover { opacity: 0.75; }
@@ -190,6 +190,14 @@ body {
 .navbar[data-overlay="true"] .logo-svg {
   width: var(--logo-size-desktop-top);
   transform: scale(calc(1 - (0.25 * var(--logo-progress))));
+}
+
+.navbar[data-overlay="true"] .nav-center {
+  align-items: flex-start;
+}
+
+.navbar[data-overlay="true"] .nav-logo {
+  padding-top: var(--logo-top-headroom-desktop);
 }
 
 /* Nav links (right) */
@@ -394,12 +402,16 @@ mark {
   }
 
   .nav-logo {
-    padding-top: var(--logo-top-headroom-mobile);
+    padding-top: 0;
   }
 
   .navbar[data-overlay="true"] {
     --logo-progress: 0;
     --brand-progress: 0;
+  }
+
+  .navbar[data-overlay="true"] .nav-logo {
+    padding-top: var(--logo-top-headroom-mobile);
   }
 
   /* Hide the link row, show hamburger */
