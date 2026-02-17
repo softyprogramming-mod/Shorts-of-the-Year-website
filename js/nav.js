@@ -3,7 +3,7 @@
   var navbar = document.getElementById('navbar');
   var menuButton = document.getElementById('menuButton');
   var navMenu = document.getElementById('navMenu');
-  var SOLID_SCROLL_THRESHOLD = 90;
+  var SOLID_SCROLL_THRESHOLD = 120;
 
   // Force background none immediately — fixes iOS Safari black flash on load
   if (navbar && navbar.dataset.overlay === 'true') {
@@ -40,8 +40,6 @@
       }
     }
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleScroll);
-    window.addEventListener('orientationchange', handleScroll);
     window.addEventListener('pageshow', handleScroll);
     handleScroll();
   }
