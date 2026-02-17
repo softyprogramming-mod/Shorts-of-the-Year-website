@@ -4,22 +4,42 @@
   var menuButton = document.getElementById('menuButton');
   var navMenu = document.getElementById('navMenu');
 
-  // Scroll: only on pages with data-overlay="true" (homepage)
+  // ── Overscroll prevention ──────────────────────────────────────────────────
+  // macOS Safari ignores overscroll-behavior CSS, so we block wheel/touch
+  // events that would scroll above y=0 (elastic bounce showing black above hero)
+  window.addEventListener('wheel', function (e) {
+    if (window.scrollY === 0 && e.deltaY < 0) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  window.addEventListener('touchmove', function (e) {
+    if (window.scrollY === 0) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // ── Scroll → solid nav ─────────────────────────────────────────────────────
+  // Only on pages with data-overlay="true" (homepage)
   if (navbar && navbar.dataset.overlay === 'true') {
+    // Explicitly clear any background on load before JS runs (belt + suspenders)
+    navbar.style.background = 'none';
+
     function handleScroll() {
       if (window.scrollY > 60) {
         navbar.classList.add('navbar--solid');
+        navbar.style.background = ''; // let CSS take over
       } else {
         navbar.classList.remove('navbar--solid');
+        navbar.style.background = 'none'; // force clear inline
       }
     }
     window.addEventListener('scroll', handleScroll, { passive: true });
-    // Run on load, pageshow (back/forward cache), and resize
     window.addEventListener('pageshow', handleScroll);
     window.addEventListener('resize', handleScroll, { passive: true });
-    // Run immediately AND after a short delay to catch mobile rendering lag
     handleScroll();
-    setTimeout(handleScroll, 100);
+    setTimeout(handleScroll, 50);
+    setTimeout(handleScroll, 200); // extra safety for slow mobile renders
   }
 
   // Mobile hamburger
