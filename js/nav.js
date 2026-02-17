@@ -86,7 +86,8 @@
     }
 
     progressTarget = Math.max(0, Math.min(1, visualScrollY / effectDistance));
-    var brandProgress = Math.max(0, Math.min(1, progressTarget * 2));
+    // Keep SoftY animation synced with the full navbar settle timing.
+    var brandProgress = Math.max(0, Math.min(1, progressTarget));
     // Two-phase brand animation:
     // 1) non-SOFTY letters fade out first
     // 2) remaining letters condense together after fade is mostly complete
