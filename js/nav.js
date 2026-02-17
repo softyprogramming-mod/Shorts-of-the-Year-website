@@ -19,6 +19,18 @@
     navbar.style.setProperty('--logo-progress', String(progressCurrent));
     navbar.style.setProperty('--brand-progress', String(progressCurrent));
 
+    // Fade nav bar in at the same rate as logo shrink
+    var alpha = Math.max(0, Math.min(1, progressCurrent));
+    if (alpha < 0.01) {
+      navbar.style.background = 'none';
+      navbar.style.backgroundColor = 'transparent';
+      navbar.style.boxShadow = 'none';
+    } else {
+      navbar.style.background = 'none';
+      navbar.style.backgroundColor = 'rgba(0, 0, 0, ' + alpha.toFixed(3) + ')';
+      navbar.style.boxShadow = '0 1px 0 rgba(51, 51, 51, ' + alpha.toFixed(3) + ')';
+    }
+
     if (progressCurrent !== progressTarget) {
       rafId = window.requestAnimationFrame(renderProgress);
     } else {
@@ -32,24 +44,13 @@
 
     var scroller = document.scrollingElement || document.documentElement || document.body;
     var scrollY = scroller ? scroller.scrollTop : 0;
-    var shouldBeSolid = scrollY > 140; // keep transparent longer at top on mobile/small viewports
     var shrinkDistance = 220;
     progressTarget = Math.max(0, Math.min(1, scrollY / shrinkDistance));
     if (!rafId) {
       rafId = window.requestAnimationFrame(renderProgress);
     }
-
-    if (shouldBeSolid) {
-      navbar.classList.add('navbar--solid');
-      navbar.style.background = '';
-      navbar.style.backgroundColor = '';
-      navbar.style.boxShadow = '';
-    } else {
-      navbar.classList.remove('navbar--solid');
-      navbar.style.background = 'none';
-      navbar.style.backgroundColor = 'transparent';
-      navbar.style.boxShadow = 'none';
-    }
+    // Overlay homepage uses progress-based fade; avoid class jumps.
+    navbar.classList.remove('navbar--solid');
   }
 
   // Run immediately and on page events
