@@ -99,8 +99,12 @@
     // Two-phase brand animation:
     // 1) non-SOFTY letters fade out first
     // 2) remaining letters condense together after fade is mostly complete
-    // Fade starts as soon as scrolling begins, independent of delayed condense.
-    var brandFadeProgress = Math.max(0, Math.min(1, progressTarget * 2.2));
+    // Keep full phrase briefly, then fade non-SOFTY letters.
+    var fadeStart = 0.06;
+    var brandFadeProgress = Math.max(
+      0,
+      Math.min(1, ((progressTarget - fadeStart) / (1 - fadeStart)) * 2.2)
+    );
     var condenseStart = 0.46;
     var brandCondenseProgress = Math.max(
       0,
