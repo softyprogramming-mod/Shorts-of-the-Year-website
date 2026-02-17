@@ -598,3 +598,6 @@ body {
         height: 60vh; /* Slightly shorter on mobile so the image looks better */
     }
 }
+.nav-toggle, .menu-button {
+    display: none !important;
+}
