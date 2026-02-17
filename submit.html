@@ -27,6 +27,11 @@
                 <a href="/" class="nav-link">Films</a>
                 <a href="submit.html" class="nav-link">Submit</a>
                 <a href="store.html" class="nav-link">Store</a>
+            <button class="search-btn" id="searchBtn" aria-label="Search">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+            </button>
             </div>
             <button class="menu-button" id="menuButton" aria-label="Menu" aria-expanded="false">☰</button>
         </div>
@@ -34,7 +39,7 @@
 
     <div class="submit-container">
         <h1>Submit Your Film</h1>
-        <p>We're excited to see your work! Fill out the form below to submit your short film for consideration. You'll receive a response within 24 hours.</p>
+        <p>At Shorts of The Year, our international team operates around the clock to manage the high volume of daily submissions we receive. We take pride in ensuring that every single film is screened in its entirety by our reviewers. While not everyone has a 'SofTY', we encourage all filmmakers to persevere. Our submission process remains entirely free of charge, sustained by the unique and private interests of our anonymous primary benefactor.</p>
         <iframe
             class="form-embed"
             src="https://docs.google.com/forms/d/e/1FAIpQLSfmapTrp0PbG4GIelxcLGRSQVCT4gBPQ08VzMl96exdNFZ_Vg/viewform?embedded=true"
@@ -60,5 +65,20 @@
     </footer>
 
     <script src="js/nav.js"></script>
+
+    <!-- Search overlay -->
+    <div class="search-overlay" id="searchOverlay" role="dialog" aria-label="Search">
+        <div class="search-inner">
+            <div class="search-bar">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input class="search-input" id="searchInput" type="text" placeholder="Title, director, genre&hellip;" autocomplete="off" spellcheck="false">
+                <button class="search-close-btn" id="searchClose" aria-label="Close search">&times;</button>
+            </div>
+            <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
+    <script src="js/search.js"></script>
 </body>
 </html>
