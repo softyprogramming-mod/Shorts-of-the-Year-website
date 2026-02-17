@@ -86,8 +86,16 @@
     }
 
     progressTarget = Math.max(0, Math.min(1, visualScrollY / effectDistance));
-    // Keep SoftY animation synced with the full navbar settle timing.
-    var brandProgress = Math.max(0, Math.min(1, progressTarget));
+    // Delay SoftY start until roughly halfway down the hero image,
+    // while keeping the same movement rate once it begins.
+    var brandStartOffset = 0;
+    if (masthead) {
+      brandStartOffset = masthead.offsetHeight * 0.5;
+    }
+    var brandProgress = Math.max(
+      0,
+      Math.min(1, (visualScrollY - brandStartOffset) / effectDistance)
+    );
     // Two-phase brand animation:
     // 1) non-SOFTY letters fade out first
     // 2) remaining letters condense together after fade is mostly complete
