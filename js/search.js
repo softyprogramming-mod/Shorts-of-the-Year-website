@@ -1,106 +1,93 @@
-// Search functionality for Shorts of the Year
+// Shorts of the Year — Search
+(function () {
+  var overlay  = document.getElementById('searchOverlay');
+  var input    = document.getElementById('searchInput');
+  var results  = document.getElementById('searchResults');
+  var openBtn  = document.getElementById('searchBtn');
+  var closeBtn = document.getElementById('searchClose');
 
-document.addEventListener('DOMContentLoaded', () => {
-    const searchIcon = document.querySelector('.search-icon');
-    const body = document.body;
-    
-    // Create search overlay
-    const searchOverlay = document.createElement('div');
-    searchOverlay.className = 'search-overlay';
-    searchOverlay.innerHTML = `
-        <div class="search-container">
-            <input type="text" class="search-input" placeholder="Search films by title, director, or genre..." autofocus>
-            <button class="search-close">×</button>
-        </div>
-        <div class="search-results"></div>
-    `;
-    body.appendChild(searchOverlay);
-    
-    const searchInput = searchOverlay.querySelector('.search-input');
-    const searchResults = searchOverlay.querySelector('.search-results');
-    const searchClose = searchOverlay.querySelector('.search-close');
-    
-    // Open search
-    searchIcon.addEventListener('click', () => {
-        searchOverlay.classList.add('active');
-        searchInput.focus();
-    });
-    
-    // Close search
-    searchClose.addEventListener('click', closeSearch);
-    searchOverlay.addEventListener('click', (e) => {
-        if (e.target === searchOverlay) {
-            closeSearch();
-        }
-    });
-    
-    // Close on escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && searchOverlay.classList.contains('active')) {
-            closeSearch();
-        }
-    });
-    
-    function closeSearch() {
-        searchOverlay.classList.remove('active');
-        searchInput.value = '';
-        searchResults.innerHTML = '';
+  if (!overlay || !input || !results || !openBtn) return;
+
+  var filmsCache = null;
+
+  function openSearch() {
+    overlay.classList.add('search-open');
+    input.value = '';
+    results.innerHTML = '';
+    setTimeout(function () { input.focus(); }, 60);
+  }
+
+  function closeSearch() {
+    overlay.classList.remove('search-open');
+    input.value = '';
+    results.innerHTML = '';
+  }
+
+  openBtn.addEventListener('click', openSearch);
+  if (closeBtn) closeBtn.addEventListener('click', closeSearch);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeSearch();
+  });
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeSearch();
+  });
+
+  function getFilms(cb) {
+    if (filmsCache) { cb(filmsCache); return; }
+    fetch('films.json')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        filmsCache = (data.films || []).filter(function (f) { return f.live; });
+        cb(filmsCache);
+      })
+      .catch(function () { cb([]); });
+  }
+
+  function highlight(text, query) {
+    if (!query) return text;
+    var re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return String(text || '').replace(re, '<mark>$1</mark>');
+  }
+
+  function render(films, query) {
+    if (!films.length) {
+      results.innerHTML = '<p class="search-no-results">No results for &ldquo;' + query + '&rdquo;</p>';
+      return;
     }
-    
-    // Search functionality
-    let searchTimeout;
-    searchInput.addEventListener('input', () => {
-        clearTimeout(searchTimeout);
-        const query = searchInput.value.trim().toLowerCase();
-        
-        if (query.length < 2) {
-            searchResults.innerHTML = '';
-            return;
-        }
-        
-        searchTimeout = setTimeout(() => performSearch(query), 300);
-    });
-    
-    async function performSearch(query) {
-        try {
-            const response = await fetch('films.json');
-            const data = await response.json();
-            const liveFilms = data.films.filter(film => film.live);
-            
-            const results = liveFilms.filter(film => {
-                return film.title.toLowerCase().includes(query) ||
-                       film.director.toLowerCase().includes(query) ||
-                       film.genre.toLowerCase().includes(query);
-            });
-            
-            displayResults(results, query);
-        } catch (error) {
-            console.error('Search error:', error);
-            searchResults.innerHTML = '<div class="search-error">Unable to search at this time</div>';
-        }
-    }
-    
-    function displayResults(results, query) {
-        if (results.length === 0) {
-            searchResults.innerHTML = `<div class="no-results">No films found for "${query}"</div>`;
-            return;
-        }
-        
-        const resultsHTML = results.map(film => `
-            <a href="film.html?id=${film.slug}" class="search-result-item">
-                <div class="search-result-thumb" style="background-image: url('${film.thumbnail}')"></div>
-                <div class="search-result-info">
-                    <h3>${highlightMatch(film.title, query)}</h3>
-                    <p>${highlightMatch(film.director, query)} • ${highlightMatch(film.genre, query)} • ${film.runtime} min</p>
-                </div>
-            </a>
-        `).join('');
-        
-        searchResults.innerHTML = resultsHTML;
-    }
-    
-    function highlightMatch(text, query) {
-        const regex = new RegExp(`(${query})`, 'gi');
-        return text.replace(regex, '<mark>$1</mark>');
-    }
-});
+    results.innerHTML = films.map(function (f) {
+      var thumb = f.thumbnail
+        ? '<img class="search-result-thumb" src="' + f.thumbnail + '" alt="" onerror="this.style.visibility=\'hidden\'">'
+        : '<div class="search-result-thumb"></div>';
+      return '<a href="film.html?id=' + f.slug + '" class="search-result">'
+        + thumb
+        + '<div class="search-result-info">'
+        +   '<div class="search-result-title">' + highlight(f.title, query) + '</div>'
+        +   '<div class="search-result-meta">' + highlight(f.director, query) + ' &nbsp;|&nbsp; ' + highlight(f.genre, query) + '</div>'
+        + '</div>'
+        + '</a>';
+    }).join('');
+  }
+
+  var debounceTimer;
+  input.addEventListener('input', function () {
+    clearTimeout(debounceTimer);
+    var q = input.value.trim();
+    if (!q) { results.innerHTML = ''; return; }
+    debounceTimer = setTimeout(function () {
+      getFilms(function (films) {
+        var ql = q.toLowerCase();
+        var matched = films.filter(function (f) {
+          return (f.title    || '').toLowerCase().includes(ql)
+              || (f.director || '').toLowerCase().includes(ql)
+              || (f.genre    || '').toLowerCase().includes(ql);
+        });
+        render(matched, q);
+      });
+    }, 200);
+  });
+
+  results.addEventListener('click', function (e) {
+    if (e.target.closest('.search-result')) closeSearch();
+  });
+})();
