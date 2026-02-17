@@ -6,6 +6,10 @@
   --gray: #333333;
   --light-gray: #666666;
   --nav-height: 70px;
+  --logo-size-desktop: 54px;
+  --logo-size-desktop-top: 72px;
+  --logo-size-mobile: 40px;
+  --logo-size-mobile-top: 52px;
 }
 
 * {
@@ -88,6 +92,14 @@ body {
   box-shadow: 0 1px 0 var(--gray) !important;
 }
 
+/* Compressed desktop/tablet width: keep homepage nav solid black at top */
+@media (min-width: 769px) and (max-width: 1200px) {
+  .navbar[data-overlay="true"] {
+    background: var(--black) !important;
+    box-shadow: 0 1px 0 var(--gray) !important;
+  }
+}
+
 .nav-col {
   display: flex;
   align-items: center;
@@ -118,10 +130,20 @@ body {
 .nav-logo:hover { opacity: 0.75; }
 
 .logo-svg {
-  width: 54px;
+  width: var(--logo-size-desktop);
   height: auto;
   display: block;
   filter: brightness(0) invert(1);
+  transition: width 0.3s ease;
+}
+
+/* Homepage overlay: larger logo at top, shrinks once nav turns solid */
+.navbar[data-overlay="true"] .logo-svg {
+  width: var(--logo-size-desktop-top);
+}
+
+.navbar[data-overlay="true"].navbar--solid .logo-svg {
+  width: var(--logo-size-desktop);
 }
 
 /* Nav links (right) */
@@ -321,7 +343,15 @@ mark {
   }
 
   .logo-svg {
-    width: 40px;
+    width: var(--logo-size-mobile);
+  }
+
+  .navbar[data-overlay="true"] .logo-svg {
+    width: var(--logo-size-mobile-top);
+  }
+
+  .navbar[data-overlay="true"].navbar--solid .logo-svg {
+    width: var(--logo-size-mobile);
   }
 
   /* Hide the link row, show hamburger */
