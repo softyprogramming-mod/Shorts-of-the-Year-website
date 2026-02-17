@@ -3,21 +3,11 @@
   var navbar = document.getElementById('navbar');
   var menuButton = document.getElementById('menuButton');
   var navMenu = document.getElementById('navMenu');
-  var brandDrops = [];
   var progressTarget = 0;
   var progressCurrent = 0;
   var rafId = 0;
 
   if (!navbar) return;
-
-  function measureBrandDrops() {
-    if (navbar.dataset.overlay !== 'true') return;
-    brandDrops = Array.prototype.slice.call(navbar.querySelectorAll('.brand-home .brand-drop'));
-    brandDrops.forEach(function (el) {
-      el.style.width = 'auto';
-      el.style.setProperty('--drop-w', el.scrollWidth + 'px');
-    });
-  }
 
   function renderProgress() {
     progressCurrent += (progressTarget - progressCurrent) * 0.12;
@@ -86,15 +76,9 @@
   }
 
   // Run immediately and on page events
-  measureBrandDrops();
   applyNavState();
-  window.addEventListener('load', measureBrandDrops);
-  window.addEventListener('resize', measureBrandDrops);
   window.addEventListener('scroll', applyNavState, { passive: true });
-  window.addEventListener('pageshow', function () {
-    measureBrandDrops();
-    applyNavState();
-  });
+  window.addEventListener('pageshow', applyNavState);
 
   // Mobile menu toggle
   if (menuButton && navMenu) {
