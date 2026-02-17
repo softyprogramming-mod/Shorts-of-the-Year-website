@@ -69,6 +69,13 @@ body {
   box-shadow: none !important;
 }
 
+/* Hard override: on homepage while at top, force transparent even if solid class exists */
+.navbar[data-overlay="true"].navbar--at-top {
+  background: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
 .nav-col {
   display: flex;
   align-items: center;
@@ -274,6 +281,14 @@ mark {
 
   .navbar[data-overlay="true"]:not(.navbar--solid) .nav-col {
     background: transparent !important;
+  }
+
+  .navbar[data-overlay="true"].navbar--at-top {
+    background: none !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 
   /* When solid (scrolled or inner pages), show black */
