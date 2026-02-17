@@ -4,19 +4,13 @@
   var menuButton = document.getElementById('menuButton');
   var navMenu = document.getElementById('navMenu');
 
-  // ── Overscroll prevention (desktop only - blocks bounce above page top) ───
-  window.addEventListener('wheel', function (e) {
-    if (window.scrollY === 0 && e.deltaY < 0) {
-      e.preventDefault();
-    }
-  }, { passive: false });
-
-  // ── Scroll → solid nav ────────────────────────────────────────────────────
+  // Force background none immediately — fixes iOS Safari black flash on load
   if (navbar && navbar.dataset.overlay === 'true') {
-
-    // Set inline immediately so mobile doesn't flash black before JS runs
     navbar.style.background = 'none';
+  }
 
+  // Scroll → solid nav (homepage only)
+  if (navbar && navbar.dataset.overlay === 'true') {
     function handleScroll() {
       if (window.scrollY > 60) {
         navbar.classList.add('navbar--solid');
@@ -26,16 +20,12 @@
         navbar.style.background = 'none';
       }
     }
-
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('pageshow', handleScroll);
-    window.addEventListener('resize', handleScroll, { passive: true });
     handleScroll();
-    setTimeout(handleScroll, 50);
-    setTimeout(handleScroll, 300);
   }
 
-  // ── Mobile hamburger ──────────────────────────────────────────────────────
+  // Mobile hamburger
   if (menuButton && navMenu) {
     menuButton.addEventListener('click', function (e) {
       e.stopPropagation();
