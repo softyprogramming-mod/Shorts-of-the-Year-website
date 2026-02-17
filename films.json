@@ -1,6 +1,28 @@
 {
   "films": [
     {
+      "id": "sunday-afternoon-at-dennys-1771344157258",
+      "timestamp": "2026-02-17T16:02:37.258Z",
+      "title": "Sunday Afternoon at Dennys",
+      "director": "XR",
+      "writer": "Same as Director",
+      "producer": "",
+      "genre": "Experimental",
+      "runtime": "06:16",
+      "logline": "Sunday!",
+      "directorStatement": "Let me get back to you",
+      "email": "Xavier.nyy@gmail.com",
+      "filmLink": "https://vimeo.com/374624311",
+      "password": "",
+      "twitter": "",
+      "onlinePremiere": "No",
+      "thumbnail": "https://vumbnail.com/374624311.jpg",
+      "review": "XR's Sunday Afternoon at Dennys stands out for its visual composition while maintaining tonal consistency, through purposeful cinematography. while exploring complex themes with subtlety. A strong addition to contemporary experimental.",
+      "slug": "sunday-afternoon-at-dennys-1771344157259",
+      "accepted": true,
+      "live": true
+    },
+    {
       "id": "submarine-story-1771340061012",
       "timestamp": "2026-02-17T14:54:21.012Z",
       "title": "Submarine Story",
