@@ -149,8 +149,8 @@ body {
   transform: scale(calc(1.04 - (0.04 * var(--brand-progress))));
   color: color-mix(
     in srgb,
-    var(--softy-yellow) calc((1 - var(--brand-progress)) * 100%),
-    var(--white) calc(var(--brand-progress) * 100%)
+    var(--white) calc((1 - var(--brand-progress)) * 100%),
+    var(--softy-yellow) calc(var(--brand-progress) * 100%)
   );
   transition: color 0.15s linear;
 }
