@@ -139,6 +139,8 @@ body {
   text-decoration: none;
   letter-spacing: -0.5px;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: baseline;
 }
 
 .brand-accent {
@@ -160,14 +162,14 @@ body {
 
 .brand-drop {
   display: inline-block;
-  overflow: hidden;
-  white-space: nowrap;
-  vertical-align: baseline;
+  transform-origin: left center;
+  white-space: pre;
 }
 
 .navbar[data-overlay="true"] .brand-drop {
-  max-width: calc(var(--w, 0ch) * (1 - var(--brand-progress)));
+  transform: scaleX(calc(1 - var(--brand-progress)));
   opacity: calc(1 - var(--brand-progress));
+  margin-right: calc(-0.32em * var(--brand-progress));
 }
 
 /* Center logo */
