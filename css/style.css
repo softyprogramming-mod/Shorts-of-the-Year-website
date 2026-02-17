@@ -10,6 +10,8 @@
   --logo-size-desktop-top: 72px;
   --logo-size-mobile: 40px;
   --logo-size-mobile-top: 52px;
+  --logo-top-headroom-desktop: 8px;
+  --logo-top-headroom-mobile: 8px;
 }
 
 * {
@@ -117,7 +119,7 @@ body {
 }
 
 .nav-left  { justify-content: flex-start; }
-.nav-center { justify-content: center; }
+.nav-center { justify-content: center; align-items: flex-start; }
 .nav-right { justify-content: flex-end; gap: 30px; }
 
 /* Brand text (left) */
@@ -136,6 +138,8 @@ body {
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  line-height: 0;
+  padding-top: var(--logo-top-headroom-desktop);
   transition: opacity 0.2s;
 }
 .nav-logo:hover { opacity: 0.75; }
@@ -148,13 +152,17 @@ body {
   transition: width 0.3s ease;
 }
 
-/* Homepage overlay: larger logo at top, shrinks once nav turns solid */
-.navbar[data-overlay="true"] .logo-svg {
-  width: var(--logo-size-desktop-top);
+/* Homepage overlay: logo shrinks smoothly with scroll progress (0 -> 1) */
+.navbar[data-overlay="true"] {
+  --logo-progress: 0;
+  --logo-current-size: calc(
+    var(--logo-size-desktop-top) -
+    (var(--logo-size-desktop-top) - var(--logo-size-desktop)) * var(--logo-progress)
+  );
 }
 
-.navbar[data-overlay="true"].navbar--solid .logo-svg {
-  width: var(--logo-size-desktop);
+.navbar[data-overlay="true"] .logo-svg {
+  width: var(--logo-current-size);
 }
 
 /* Nav links (right) */
@@ -357,12 +365,15 @@ mark {
     width: var(--logo-size-mobile);
   }
 
-  .navbar[data-overlay="true"] .logo-svg {
-    width: var(--logo-size-mobile-top);
+  .nav-logo {
+    padding-top: var(--logo-top-headroom-mobile);
   }
 
-  .navbar[data-overlay="true"].navbar--solid .logo-svg {
-    width: var(--logo-size-mobile);
+  .navbar[data-overlay="true"] {
+    --logo-current-size: calc(
+      var(--logo-size-mobile-top) -
+      (var(--logo-size-mobile-top) - var(--logo-size-mobile)) * var(--logo-progress)
+    );
   }
 
   /* Hide the link row, show hamburger */
