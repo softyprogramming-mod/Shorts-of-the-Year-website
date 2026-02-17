@@ -14,7 +14,12 @@
       }
     }
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // run once on load
+    // Run on load, pageshow (back/forward cache), and resize
+    window.addEventListener('pageshow', handleScroll);
+    window.addEventListener('resize', handleScroll, { passive: true });
+    // Run immediately AND after a short delay to catch mobile rendering lag
+    handleScroll();
+    setTimeout(handleScroll, 100);
   }
 
   // Mobile hamburger
