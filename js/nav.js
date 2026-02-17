@@ -3,6 +3,7 @@
   var navbar = document.getElementById('navbar');
   var menuButton = document.getElementById('menuButton');
   var navMenu = document.getElementById('navMenu');
+  var SOLID_SCROLL_THRESHOLD = 90;
 
   // Force background none immediately — fixes iOS Safari black flash on load
   if (navbar && navbar.dataset.overlay === 'true') {
@@ -20,10 +21,9 @@
     }
 
     function handleScroll() {
-      // Single source of truth:
-      // top of page => transparent nav
-      // after any meaningful scroll => solid nav
-      var shouldBeSolid = getScrollTop() > 4;
+      // Use a larger threshold because mobile/small viewports can report
+      // small non-zero scroll values even when the page looks at top.
+      var shouldBeSolid = getScrollTop() > SOLID_SCROLL_THRESHOLD;
 
       if (shouldBeSolid) {
         navbar.dataset.atTop = 'false';
