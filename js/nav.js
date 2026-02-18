@@ -76,10 +76,10 @@
       return;
     }
 
-    // Full nav animation completes by about 65% down the hero image.
+    // Full nav animation completes a bit deeper down the hero image.
     var effectDistance = 320;
     if (masthead) {
-      effectDistance = Math.max(220, masthead.offsetHeight * 0.65);
+      effectDistance = Math.max(220, masthead.offsetHeight * 0.72);
     }
 
     progressTarget = Math.max(0, Math.min(1, visualScrollY / effectDistance));
@@ -89,12 +89,12 @@
     // 1) non-SOFTY letters fade out first
     // 2) remaining letters condense together after fade is mostly complete
     // Keep full phrase briefly, then fade non-SOFTY letters.
-    var fadeStart = 0.12;
+    var fadeStart = 0.14;
     var brandFadeProgress = Math.max(
       0,
-      Math.min(1, ((progressTarget - fadeStart) / (1 - fadeStart)) * 2.2)
+      Math.min(1, ((progressTarget - fadeStart) / (1 - fadeStart)) * 1.65)
     );
-    var condenseStart = 0.6;
+    var condenseStart = 0.72;
     var brandCondenseProgress = Math.max(
       0,
       Math.min(1, (brandFadeProgress - condenseStart) / (1 - condenseStart))
