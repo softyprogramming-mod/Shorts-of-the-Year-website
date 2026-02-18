@@ -76,26 +76,15 @@
       return;
     }
 
-    // Complete the full effect when the top of viewport has passed hero title.
-    // startTop ~= titleTop + scrollY, so this tracks a stable completion distance.
-    var effectDistance = 220;
-    if (featuredTitle) {
-      var titleTop = featuredTitle.getBoundingClientRect().top;
-      var estimatedStartTop = visualScrollY + titleTop;
-      effectDistance = Math.max(220, estimatedStartTop);
+    // Full nav animation completes by halfway down the hero image.
+    var effectDistance = 320;
+    if (masthead) {
+      effectDistance = Math.max(220, masthead.offsetHeight * 0.5);
     }
 
     progressTarget = Math.max(0, Math.min(1, visualScrollY / effectDistance));
-    // Delay SoftY start until roughly halfway down the hero image,
-    // while keeping the same movement rate once it begins.
-    var brandStartOffset = 0;
-    if (masthead) {
-      brandStartOffset = masthead.offsetHeight * 0.5;
-    }
-    var brandProgress = Math.max(
-      0,
-      Math.min(1, (visualScrollY - brandStartOffset) / effectDistance)
-    );
+    // Keep SoftY phases locked to the same overall timeline.
+    var brandProgress = progressTarget;
     // Two-phase brand animation:
     // 1) non-SOFTY letters fade out first
     // 2) remaining letters condense together after fade is mostly complete
