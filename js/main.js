@@ -33,6 +33,9 @@ function displayFeaturedFilm() {
 
     masthead.style.backgroundImage = `url(${sanitizeUrl(featured.thumbnail)})`;
 
+    // Tell nav.js to recalculate now that the hero image is set
+    window.dispatchEvent(new Event("scroll"));
+
     document.getElementById('featuredTitle').textContent = featured.title;
     document.getElementById('featuredDirector').textContent = featured.director;
     document.getElementById('featuredGenre').textContent = featured.genre;
