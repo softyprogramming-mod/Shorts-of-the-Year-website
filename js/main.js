@@ -45,7 +45,7 @@ function displayFeaturedFilm() {
     document.getElementById('featuredGenre').textContent = featured.genre;
     document.getElementById('featuredRuntime').textContent = featured.runtime + ' min';
 
-    document.getElementById('featuredFilmLink').href = `film.html?id=${encodeURIComponent(featured.slug)}`;
+    document.getElementById('featuredFilmLink').href = `film.html?id=${featured.slug}`;
 }
 
 // Display film grid
@@ -70,7 +70,7 @@ function displayFilmGrid() {
 // Create film item using safe DOM methods (no innerHTML for user data)
 function createFilmItem(film) {
     const item = document.createElement('a');
-    item.href = `film.html?id=${encodeURIComponent(film.slug)}`;
+    item.href = `film.html?id=${film.slug}`;
     item.className = 'film-item';
     item.style.backgroundImage = `linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%), url(${sanitizeUrl(film.thumbnail)})`;
 
