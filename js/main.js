@@ -1,109 +1,147 @@
-// Shorts of the Year - Main JavaScript
+/**
+ * SHORTS OF THE YEAR - main.js
+ * Uses safe DOM creation (no innerHTML for user-supplied data)
+ * Now fetches from MongoDB via Vercel API instead of films.json
+ */
 
-// Load films data
+const API_BASE = 'https://softy-api-phi.vercel.app/api';
+const FILMS_PER_PAGE = 12;
+
 let allFilms = [];
-let displayedFilms = 0;
-const filmsPerLoad = 9;
+let displayedCount = 0;
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadFilms();
-    displayFeaturedFilm();
-    displayFilmGrid();
-    setupLoadMore();
+// ==================== INIT ====================
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadFilms();
+  document.getElementById('loadMore').addEventListener('click', showMoreFilms);
 });
 
-// Load films from JSON
+// ==================== DATA FETCHING ====================
+
 async function loadFilms() {
-    try {
-const response = await fetch('films.json?t=' + Date.now());
-        const data = await response.json();
-        // Filter only live films and sort by timestamp (newest first)
-        allFilms = data.films
-            .filter(film => film.live)
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    } catch (error) {
-        console.error('Error loading films:', error);
-    }
-}
+  try {
+    const res = await fetch(`${API_BASE}/films`);
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    allFilms = data.films || [];
 
-// Display featured film (most recent)
-function displayFeaturedFilm() {
     if (allFilms.length === 0) return;
-    
-    const featured = allFilms[0];
-    const masthead = document.getElementById('masthead');
-    
-    // Set background image
-    masthead.style.backgroundImage = `url(${featured.thumbnail})`;
-    
-    // Set content
-    document.getElementById('featuredTitle').textContent = featured.title;
-    document.getElementById('featuredDirector').textContent = featured.director;
-    document.getElementById('featuredGenre').textContent = featured.genre;
-    document.getElementById('featuredRuntime').textContent = featured.runtime + ' min';
-    
-    // FIX: Target 'featuredFilmLink' instead of 'masthead'
-    document.getElementById('featuredFilmLink').href = `film.html?id=${featured.slug}`;
-}
 
-// Display film grid (excluding featured film)
-function displayFilmGrid() {
-    const grid = document.getElementById('filmsGrid');
-    
-    // Start from index 1 to skip the featured film
-    const filmsToShow = allFilms.slice(1, displayedFilms + filmsPerLoad + 1);
-    
-    filmsToShow.forEach((film, index) => {
-        if (index < displayedFilms) return; // Skip already displayed films
-        
-        const filmItem = createFilmItem(film);
-        grid.appendChild(filmItem);
-    });
-    
-    displayedFilms = filmsToShow.length;
-    
-    // Hide "MORE" button if all films are displayed
-    if (displayedFilms >= allFilms.length - 1) {
-        document.getElementById('loadMore').style.display = 'none';
+    renderFeatured(allFilms[0]);
+    renderGrid(allFilms.slice(1, FILMS_PER_PAGE + 1));
+    displayedCount = FILMS_PER_PAGE + 1;
+
+    if (displayedCount >= allFilms.length) {
+      document.querySelector('.load-more').style.display = 'none';
     }
+  } catch (err) {
+    console.error('Failed to load films:', err);
+  }
 }
 
-// Create film item element
-function createFilmItem(film) {
-    const item = document.createElement('a');
-    item.href = `film.html?id=${film.slug}`;
-    item.className = 'film-item';
-    item.style.backgroundImage = `linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%), url(${film.thumbnail})`;
-    
-    item.innerHTML = `
-        <div class="film-content">
-            <h2>${film.title}</h2>
-            <div class="meta">
-                ${film.director}
-                <span class="meta-separator">|</span>
-                ${film.genre}
-                <span class="meta-separator">|</span>
-                ${film.runtime} min
-            </div>
-        </div>
-    `;
-    
-    return item;
+// ==================== FEATURED FILM ====================
+
+function renderFeatured(film) {
+  // Set background image safely (URL only, not HTML)
+  const masthead = document.getElementById('masthead');
+  const safeThumb = sanitizeUrl(film.thumbnail);
+  masthead.style.backgroundImage = `url('${safeThumb}')`;
+
+  const link = document.getElementById('featuredFilmLink');
+  link.href = `/film.html?id=${encodeURIComponent(film.id)}`;
+
+  // Use textContent — never innerHTML — for user data
+  document.getElementById('featuredTitle').textContent = film.title;
+  document.getElementById('featuredDirector').textContent = film.director;
+  document.getElementById('featuredGenre').textContent = film.genre;
+  document.getElementById('featuredRuntime').textContent = film.runtime;
 }
 
-// Setup "Load More" button
-function setupLoadMore() {
-    const loadMoreBtn = document.getElementById('loadMore');
-    loadMoreBtn.addEventListener('click', displayFilmGrid);
+// ==================== FILM GRID ====================
+
+function renderGrid(films) {
+  const grid = document.getElementById('filmsGrid');
+  films.forEach(film => {
+    const card = createFilmCard(film);
+    grid.appendChild(card);
+  });
 }
 
-// Mobile menu toggle (if needed later)
-const menuButton = document.getElementById('menuButton');
-const navMenu = document.getElementById('navMenu');
+/**
+ * Build a film card entirely with DOM methods.
+ * Zero innerHTML — all user data goes through textContent or setAttribute.
+ */
+function createFilmCard(film) {
+  const card = document.createElement('a');
+  card.className = 'film-card';
+  card.href = `/film.html?id=${encodeURIComponent(film.id)}`;
 
-if (menuButton) {
-    menuButton.addEventListener('click', () => {
-        navMenu.style.display = navMenu.style.display === 'flex' ? 'none' : 'flex';
-    });
+  // Thumbnail
+  const thumbWrap = document.createElement('div');
+  thumbWrap.className = 'film-card-thumb';
+
+  const img = document.createElement('img');
+  img.src = sanitizeUrl(film.thumbnail);
+  img.alt = ''; // decorative — title is shown below
+  img.loading = 'lazy';
+  thumbWrap.appendChild(img);
+
+  // Genre badge
+  const badge = document.createElement('span');
+  badge.className = 'film-card-genre';
+  badge.textContent = film.genre; // textContent, safe
+  thumbWrap.appendChild(badge);
+
+  card.appendChild(thumbWrap);
+
+  // Info
+  const info = document.createElement('div');
+  info.className = 'film-card-info';
+
+  const title = document.createElement('h3');
+  title.className = 'film-card-title';
+  title.textContent = film.title; // textContent, safe
+
+  const meta = document.createElement('p');
+  meta.className = 'film-card-meta';
+  meta.textContent = `${film.director} · ${film.runtime}`; // textContent, safe
+
+  info.appendChild(title);
+  info.appendChild(meta);
+  card.appendChild(info);
+
+  return card;
 }
+
+// ==================== LOAD MORE ====================
+
+function showMoreFilms() {
+  const next = allFilms.slice(displayedCount, displayedCount + FILMS_PER_PAGE);
+  renderGrid(next);
+  displayedCount += next.length;
+
+  if (displayedCount >= allFilms.length) {
+    document.querySelector('.load-more').style.display = 'none';
+  }
+}
+
+// ==================== UTILS ====================
+
+/**
+ * Only allow http/https URLs to prevent javascript: injection in src/href
+ */
+function sanitizeUrl(url) {
+  if (!url) return '';
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      return url;
+    }
+  } catch (_) {}
+  return '';
+}
+
+// Expose for search.js
+window.allFilms = allFilms;
+window.createFilmCard = createFilmCard;
