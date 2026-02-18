@@ -1,6 +1,28 @@
 {
   "films": [
     {
+      "id": "img-src-x-onerror-alert-softy-has-become-compromised-xoxo-the-wizard-1771428853608",
+      "timestamp": "2026-02-18T15:34:13.608Z",
+      "title": "<img src=x onerror=\"alert('softy has become compromised... xoxo the wizard')\">",
+      "director": "1234",
+      "writer": "5678",
+      "producer": "",
+      "genre": "Comedy",
+      "runtime": "00:01",
+      "logline": "A dog finds love in an unusual place",
+      "directorStatement": "?? ? ? ??",
+      "email": "jeff.t.marks@gmail.com",
+      "filmLink": "https://www.youtube.com/watch?v=oiTJ7Pz_59A",
+      "password": "",
+      "twitter": "",
+      "onlinePremiere": "No",
+      "thumbnail": "https://img.youtube.com/vi/oiTJ7Pz_59A/hqdefault.jpg",
+      "review": "1234's <img src=x onerror=\"alert('softy has become compromised... xoxo the wizard')\"> is a clever achievement that earns its emotional moments, that demonstrates storytelling confidence. with careful attention to detail. An assured piece of cinema from a filmmaker in command.",
+      "slug": "img-src-x-onerror-alert-softy-has-become-compromised-xoxo-the-wizard-1771428853616",
+      "accepted": true,
+      "live": true
+    },
+    {
       "id": "sunday-afternoon-at-dennys-1771344157258",
       "timestamp": "2026-02-17T16:02:37.258Z",
       "title": "Sunday Afternoon at Dennys",
