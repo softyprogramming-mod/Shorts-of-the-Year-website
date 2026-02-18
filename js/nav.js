@@ -76,10 +76,10 @@
       return;
     }
 
-    // Full nav animation completes by halfway down the hero image.
+    // Full nav animation completes by about 65% down the hero image.
     var effectDistance = 320;
     if (masthead) {
-      effectDistance = Math.max(220, masthead.offsetHeight * 0.5);
+      effectDistance = Math.max(220, masthead.offsetHeight * 0.65);
     }
 
     progressTarget = Math.max(0, Math.min(1, visualScrollY / effectDistance));
