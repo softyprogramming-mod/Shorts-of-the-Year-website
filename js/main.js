@@ -5,12 +5,13 @@ let displayedFilms = 0;
 const filmsPerLoad = 9;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Force navbar transparent immediately while API loads
-    var navbar = document.getElementById('navbar');
-    if (navbar) {
-        navbar.style.setProperty('background-color', 'transparent', 'important');
-        navbar.style.setProperty('box-shadow', 'none', 'important');
+    // Set a dark gradient on masthead immediately so it doesn't flash solid black
+    // while the API is loading. This matches the site's dark aesthetic.
+    const masthead = document.getElementById('masthead');
+    if (masthead) {
+        masthead.style.backgroundImage = 'linear-gradient(to bottom, #1a1a1a 0%, #0d0d0d 100%)';
     }
+
     await loadFilms();
     displayFeaturedFilm();
     displayFilmGrid();
@@ -38,9 +39,6 @@ function displayFeaturedFilm() {
     const masthead = document.getElementById('masthead');
 
     masthead.style.backgroundImage = `url(${sanitizeUrl(featured.thumbnail)})`;
-
-    // Tell nav.js to recalculate now that the hero image is set
-    window.dispatchEvent(new Event("scroll"));
 
     document.getElementById('featuredTitle').textContent = featured.title;
     document.getElementById('featuredDirector').textContent = featured.director;
