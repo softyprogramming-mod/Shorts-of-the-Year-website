@@ -52,6 +52,20 @@ function displayFilm(film) {
     if (!film.producer) {
         document.getElementById('producerSection').style.display = 'none';
     }
+
+    // Cast
+    if (film.cast) {
+        document.getElementById('infoCast').textContent = film.cast;
+    } else {
+        document.getElementById('castSection').style.display = 'none';
+    }
+
+    // Language
+    if (film.language) {
+        document.getElementById('infoLanguage').textContent = film.language;
+    } else {
+        document.getElementById('languageSection').style.display = 'none';
+    }
 }
 
 function embedVideo(url, password) {
