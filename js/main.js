@@ -1,147 +1,124 @@
-/**
- * SHORTS OF THE YEAR - main.js
- * Uses safe DOM creation (no innerHTML for user-supplied data)
- * Now fetches from MongoDB via Vercel API instead of films.json
- */
-
-const API_BASE = 'https://softy-api-phi.vercel.app/api';
-const FILMS_PER_PAGE = 12;
+// Shorts of the Year - Main JavaScript
 
 let allFilms = [];
-let displayedCount = 0;
+let displayedFilms = 0;
+const filmsPerLoad = 9;
 
-// ==================== INIT ====================
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadFilms();
-  document.getElementById('loadMore').addEventListener('click', showMoreFilms);
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadFilms();
+    displayFeaturedFilm();
+    displayFilmGrid();
+    setupLoadMore();
 });
 
-// ==================== DATA FETCHING ====================
-
+// Load films from MongoDB API
 async function loadFilms() {
-  try {
-    const res = await fetch(`${API_BASE}/films`);
-    if (!res.ok) throw new Error('API error');
-    const data = await res.json();
-    allFilms = data.films || [];
+    try {
+        const response = await fetch('https://softy-api-phi.vercel.app/api/films');
+        const data = await response.json();
+        allFilms = (data.films || [])
+            .filter(film => film.live)
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    } catch (error) {
+        console.error('Error loading films:', error);
+    }
+}
 
+// Display featured film (most recent)
+function displayFeaturedFilm() {
     if (allFilms.length === 0) return;
 
-    renderFeatured(allFilms[0]);
-    renderGrid(allFilms.slice(1, FILMS_PER_PAGE + 1));
-    displayedCount = FILMS_PER_PAGE + 1;
+    const featured = allFilms[0];
+    const masthead = document.getElementById('masthead');
 
-    if (displayedCount >= allFilms.length) {
-      document.querySelector('.load-more').style.display = 'none';
+    masthead.style.backgroundImage = `url(${sanitizeUrl(featured.thumbnail)})`;
+
+    document.getElementById('featuredTitle').textContent = featured.title;
+    document.getElementById('featuredDirector').textContent = featured.director;
+    document.getElementById('featuredGenre').textContent = featured.genre;
+    document.getElementById('featuredRuntime').textContent = featured.runtime + ' min';
+
+    document.getElementById('featuredFilmLink').href = `film.html?id=${encodeURIComponent(featured.slug)}`;
+}
+
+// Display film grid
+function displayFilmGrid() {
+    const grid = document.getElementById('filmsGrid');
+
+    const filmsToShow = allFilms.slice(1, displayedFilms + filmsPerLoad + 1);
+
+    filmsToShow.forEach((film, index) => {
+        if (index < displayedFilms) return;
+        const filmItem = createFilmItem(film);
+        grid.appendChild(filmItem);
+    });
+
+    displayedFilms = filmsToShow.length;
+
+    if (displayedFilms >= allFilms.length - 1) {
+        document.getElementById('loadMore').style.display = 'none';
     }
-  } catch (err) {
-    console.error('Failed to load films:', err);
-  }
 }
 
-// ==================== FEATURED FILM ====================
+// Create film item using safe DOM methods (no innerHTML for user data)
+function createFilmItem(film) {
+    const item = document.createElement('a');
+    item.href = `film.html?id=${encodeURIComponent(film.slug)}`;
+    item.className = 'film-item';
+    item.style.backgroundImage = `linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%), url(${sanitizeUrl(film.thumbnail)})`;
 
-function renderFeatured(film) {
-  // Set background image safely (URL only, not HTML)
-  const masthead = document.getElementById('masthead');
-  const safeThumb = sanitizeUrl(film.thumbnail);
-  masthead.style.backgroundImage = `url('${safeThumb}')`;
+    const content = document.createElement('div');
+    content.className = 'film-content';
 
-  const link = document.getElementById('featuredFilmLink');
-  link.href = `/film.html?id=${encodeURIComponent(film.id)}`;
+    const title = document.createElement('h2');
+    title.textContent = film.title;
 
-  // Use textContent — never innerHTML — for user data
-  document.getElementById('featuredTitle').textContent = film.title;
-  document.getElementById('featuredDirector').textContent = film.director;
-  document.getElementById('featuredGenre').textContent = film.genre;
-  document.getElementById('featuredRuntime').textContent = film.runtime;
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+
+    const director = document.createTextNode(film.director);
+    const sep1 = document.createElement('span');
+    sep1.className = 'meta-separator';
+    sep1.textContent = '|';
+    const genre = document.createTextNode(film.genre);
+    const sep2 = document.createElement('span');
+    sep2.className = 'meta-separator';
+    sep2.textContent = '|';
+    const runtime = document.createTextNode(film.runtime + ' min');
+
+    meta.appendChild(director);
+    meta.appendChild(sep1);
+    meta.appendChild(genre);
+    meta.appendChild(sep2);
+    meta.appendChild(runtime);
+
+    content.appendChild(title);
+    content.appendChild(meta);
+    item.appendChild(content);
+
+    return item;
 }
 
-// ==================== FILM GRID ====================
-
-function renderGrid(films) {
-  const grid = document.getElementById('filmsGrid');
-  films.forEach(film => {
-    const card = createFilmCard(film);
-    grid.appendChild(card);
-  });
+function setupLoadMore() {
+    const loadMoreBtn = document.getElementById('loadMore');
+    loadMoreBtn.addEventListener('click', displayFilmGrid);
 }
 
-/**
- * Build a film card entirely with DOM methods.
- * Zero innerHTML — all user data goes through textContent or setAttribute.
- */
-function createFilmCard(film) {
-  const card = document.createElement('a');
-  card.className = 'film-card';
-  card.href = `/film.html?id=${encodeURIComponent(film.id)}`;
-
-  // Thumbnail
-  const thumbWrap = document.createElement('div');
-  thumbWrap.className = 'film-card-thumb';
-
-  const img = document.createElement('img');
-  img.src = sanitizeUrl(film.thumbnail);
-  img.alt = ''; // decorative — title is shown below
-  img.loading = 'lazy';
-  thumbWrap.appendChild(img);
-
-  // Genre badge
-  const badge = document.createElement('span');
-  badge.className = 'film-card-genre';
-  badge.textContent = film.genre; // textContent, safe
-  thumbWrap.appendChild(badge);
-
-  card.appendChild(thumbWrap);
-
-  // Info
-  const info = document.createElement('div');
-  info.className = 'film-card-info';
-
-  const title = document.createElement('h3');
-  title.className = 'film-card-title';
-  title.textContent = film.title; // textContent, safe
-
-  const meta = document.createElement('p');
-  meta.className = 'film-card-meta';
-  meta.textContent = `${film.director} · ${film.runtime}`; // textContent, safe
-
-  info.appendChild(title);
-  info.appendChild(meta);
-  card.appendChild(info);
-
-  return card;
-}
-
-// ==================== LOAD MORE ====================
-
-function showMoreFilms() {
-  const next = allFilms.slice(displayedCount, displayedCount + FILMS_PER_PAGE);
-  renderGrid(next);
-  displayedCount += next.length;
-
-  if (displayedCount >= allFilms.length) {
-    document.querySelector('.load-more').style.display = 'none';
-  }
-}
-
-// ==================== UTILS ====================
-
-/**
- * Only allow http/https URLs to prevent javascript: injection in src/href
- */
+// Only allow http/https URLs
 function sanitizeUrl(url) {
-  if (!url) return '';
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
-      return url;
-    }
-  } catch (_) {}
-  return '';
+    if (!url) return '';
+    try {
+        const parsed = new URL(url);
+        if (parsed.protocol === 'https:' || parsed.protocol === 'http:') return url;
+    } catch (_) {}
+    return '';
 }
 
-// Expose for search.js
-window.allFilms = allFilms;
-window.createFilmCard = createFilmCard;
+const menuButton = document.getElementById('menuButton');
+const navMenu = document.getElementById('navMenu');
+
+if (menuButton) {
+    menuButton.addEventListener('click', () => {
+        navMenu.style.display = navMenu.style.display === 'flex' ? 'none' : 'flex';
+    });
+}
