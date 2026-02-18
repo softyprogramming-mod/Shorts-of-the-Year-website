@@ -5,6 +5,12 @@ let displayedFilms = 0;
 const filmsPerLoad = 9;
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Force navbar transparent immediately while API loads
+    var navbar = document.getElementById('navbar');
+    if (navbar) {
+        navbar.style.setProperty('background-color', 'transparent', 'important');
+        navbar.style.setProperty('box-shadow', 'none', 'important');
+    }
     await loadFilms();
     displayFeaturedFilm();
     displayFilmGrid();
