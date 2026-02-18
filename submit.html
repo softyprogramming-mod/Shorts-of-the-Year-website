@@ -10,6 +10,90 @@
     <meta name="twitter:card" content="summary">
     <meta name="twitter:site" content="@shortsoftheyear">
     <link rel="stylesheet" href="css/style.css?v=20260217e">
+    <style>
+        .submit-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: calc(var(--nav-height) + 80px) 40px 100px;
+        }
+
+        .submit-intro-section {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .submit-container h1 {
+            font-size: clamp(36px, 5vw, 64px);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: #fff;
+            margin-bottom: 32px;
+        }
+
+        .submit-intro {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #888;
+            max-width: 620px;
+            margin: 0 auto 48px;
+            text-align: left;
+        }
+
+        .submit-intro strong {
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        .submit-cta-btn {
+            display: inline-block;
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 16px 48px;
+            font-size: 12px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease;
+            font-family: inherit;
+        }
+
+        .submit-cta-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .submit-form-wrap {
+            display: none;
+            opacity: 0;
+            transform: translateY(16px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .submit-form-wrap.visible {
+            display: block;
+        }
+
+        .submit-form-wrap.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .form-embed {
+            width: 100%;
+            height: 2400px;
+            border: none;
+        }
+
+        @media (max-width: 600px) {
+            .submit-container {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+            .form-embed {
+                height: 2800px;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -38,9 +122,13 @@
     </nav>
 
     <div class="submit-container">
-        <h1>Submit Your Film</h1>
-        <p class="submit-intro">At Shorts of The Year, our international team operates around the clock to manage the high volume of daily submissions we receive. We take pride in ensuring that <strong>every single film is screened in its entirety</strong> by our reviewers. While not everyone has a "SofTY", we encourage all filmmakers to <strong>persevere</strong>. Our submission process remains <strong>entirely free of charge</strong>, sustained by the unique and private interests of our anonymous primary benefactor.</p>
-        <div class="submit-form-wrap">
+        <div class="submit-intro-section">
+            <h1>Submit Your Film</h1>
+            <p class="submit-intro">At Shorts of The Year, our international team operates around the clock to manage the high volume of daily submissions we receive. We take pride in ensuring that <strong>every single film is screened in its entirety</strong> by our reviewers. While not everyone has a "SofTY", we encourage all filmmakers to <strong>persevere</strong>. Our submission process remains <strong>entirely free of charge</strong>, sustained by the unique and private interests of our anonymous primary benefactor.</p>
+            <button class="submit-cta-btn" id="submitBtn">Submit Your Film</button>
+        </div>
+
+        <div class="submit-form-wrap" id="formWrap">
             <iframe
                 class="form-embed"
                 src="https://docs.google.com/forms/d/e/1FAIpQLSfmapTrp0PbG4GIelxcLGRSQVCT4gBPQ08VzMl96exdNFZ_Vg/viewform?embedded=true"
@@ -66,9 +154,22 @@
         </div>
     </footer>
 
+    <script>
+        var btn = document.getElementById('submitBtn');
+        var formWrap = document.getElementById('formWrap');
+
+        btn.addEventListener('click', function () {
+            formWrap.classList.add('visible');
+            setTimeout(function () {
+                formWrap.classList.add('animated');
+                formWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 20);
+            btn.style.display = 'none';
+        });
+    </script>
+
     <script src="js/nav.js?v=20260217d"></script>
 
-    <!-- Search overlay -->
     <div class="search-overlay" id="searchOverlay" role="dialog" aria-label="Search">
         <div class="search-inner">
             <div class="search-bar">
