@@ -546,7 +546,26 @@ mark {
   margin-bottom: 16px;
   color: #fff;
   text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  opacity: 0;
+  transform: translateY(14px);
   transition: transform 0.35s ease, text-shadow 0.35s ease;
+}
+
+.featured-title--ready {
+  animation: featuredTitleFadeIn 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes featuredTitleFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.45);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
 }
 
 .masthead-meta {
@@ -562,6 +581,14 @@ mark {
 .masthead-full-link:hover #featuredTitle {
   transform: translateY(-6px) scale(1.015);
   text-shadow: 0 8px 24px rgba(0,0,0,0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featured-title--ready {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 768px) {
