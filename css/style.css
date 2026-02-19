@@ -183,8 +183,14 @@ body {
 }
 
 .navbar[data-overlay="true"] .brand-drop {
-  width: calc(var(--w, 0ch) * (1 - var(--brand-condense-progress)));
+  width: calc(var(--drop-w, var(--w, 0ch)) * (1 - var(--brand-condense-progress)));
   opacity: calc(1 - var(--brand-fade-progress));
+}
+
+/* During measurement, force natural text widths so chunk spacing matches plain brand text */
+.navbar.navbar--measure-brand .brand-drop {
+  width: auto !important;
+  opacity: 1 !important;
 }
 
 /* Center logo */
