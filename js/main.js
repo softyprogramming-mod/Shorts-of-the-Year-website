@@ -33,11 +33,16 @@ async function loadFilms() {
 
 // Display featured film (most recent)
 function displayFeaturedFilm() {
-    if (allFilms.length === 0) return;
+    const featuredTitle = document.getElementById('featuredTitle');
+    if (!featuredTitle) return;
+
+    if (allFilms.length === 0) {
+        featuredTitle.textContent = '';
+        return;
+    }
 
     const featured = allFilms[0];
     const masthead = document.getElementById('masthead');
-    const featuredTitle = document.getElementById('featuredTitle');
 
     masthead.style.backgroundImage = `url(${sanitizeUrl(featured.thumbnail)})`;
 
