@@ -37,10 +37,13 @@ function displayFeaturedFilm() {
 
     const featured = allFilms[0];
     const masthead = document.getElementById('masthead');
+    const featuredTitle = document.getElementById('featuredTitle');
 
     masthead.style.backgroundImage = `url(${sanitizeUrl(featured.thumbnail)})`;
 
-    document.getElementById('featuredTitle').textContent = featured.title;
+    featuredTitle.classList.remove('featured-title--ready');
+    featuredTitle.textContent = featured.title;
+    requestAnimationFrame(() => featuredTitle.classList.add('featured-title--ready'));
     document.getElementById('featuredDirector').textContent = featured.director;
     document.getElementById('featuredGenre').textContent = featured.genre;
     document.getElementById('featuredRuntime').textContent = featured.runtime + ' min';
