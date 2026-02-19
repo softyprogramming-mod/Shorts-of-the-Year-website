@@ -38,7 +38,7 @@ function displayFilm(film) {
     document.getElementById('filmRuntime').textContent = film.runtime + ' min';
     document.getElementById('filmLogline').textContent = film.logline;
 
-    embedVideo(film.filmLink, film.password);
+    embedVideo(film.filmLink);
 
     document.getElementById('filmReview').textContent = film.review;
 
@@ -68,7 +68,7 @@ function displayFilm(film) {
     }
 }
 
-function embedVideo(url, password) {
+function embedVideo(url) {
     const container = document.getElementById('videoContainer');
     let embedUrl = '';
 
@@ -76,8 +76,8 @@ function embedVideo(url, password) {
         const vimeo = extractVimeoData(url);
         if (vimeo.id) {
             embedUrl = `https://player.vimeo.com/video/${vimeo.id}`;
-            // Use hash from URL first (vimeo.com/{id}/{hash}), then query ?h=, then password field.
-            const hash = vimeo.hash || (password || '').trim();
+            // Use hash only from Vimeo URL formats (vimeo.com/{id}/{hash}) or ?h=
+            const hash = vimeo.hash;
             if (hash) {
                 embedUrl += `?h=${encodeURIComponent(hash)}`;
             }
