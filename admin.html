@@ -331,6 +331,7 @@ const CORRECT_PASSWORD = 'password.dlr';
 let films = [];
 let submissions = [];
 let editingFilm = null;
+let modalReadOnly = false;
 let deletingId = null;
 let approvingSubmission = null;
 let approveReviewText = '';
@@ -586,6 +587,14 @@ function createSubRow(sub) {
   const actions = document.createElement('div');
   actions.className = 'actions';
 
+  const viewBtn = document.createElement('button');
+  viewBtn.className = 'btn btn-edit';
+  viewBtn.textContent = 'View';
+  viewBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openEditModal(sub, { readOnly: true, titlePrefix: 'Submission' });
+  });
+
   const approveBtn = document.createElement('button');
   approveBtn.className = 'btn btn-approve';
   approveBtn.textContent = '✓ Approve';
@@ -596,10 +605,18 @@ function createSubRow(sub) {
   rejectBtn.textContent = 'Reject';
   rejectBtn.addEventListener('click', () => rejectSubmission(mongoId, sub.title, tr));
 
+  actions.appendChild(viewBtn);
   actions.appendChild(approveBtn);
   actions.appendChild(rejectBtn);
   tdActions.appendChild(actions);
   tr.appendChild(tdActions);
+
+  // Click anywhere on submission row (except action buttons) to view full details.
+  tr.style.cursor = 'pointer';
+  tr.addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    openEditModal(sub, { readOnly: true, titlePrefix: 'Submission' });
+  });
 
   return tr;
 }
@@ -854,11 +871,15 @@ const EDITABLE_FIELDS = [
   { key: 'language', label: 'Language' },
 ];
 
-function openEditModal(film) {
+function openEditModal(film, options = {}) {
   editingFilm = film;
+  modalReadOnly = !!options.readOnly;
   const form = document.getElementById('editForm');
+  const saveBtn = document.getElementById('modalSave');
+  const cancelBtn = document.getElementById('modalCancel');
   while (form.firstChild) form.removeChild(form.firstChild);
-  document.getElementById('modalTitle').textContent = 'Editing: ' + film.title;
+  const prefix = options.titlePrefix || (modalReadOnly ? 'Viewing' : 'Editing');
+  document.getElementById('modalTitle').textContent = prefix + ': ' + (film.title || 'Untitled');
   EDITABLE_FIELDS.forEach(field => {
     const group = document.createElement('div');
     group.className = field.full ? 'form-group full' : 'form-group';
@@ -883,19 +904,33 @@ function openEditModal(film) {
       input.value = film[field.key] || '';
     }
     input.dataset.key = field.key;
+    if (modalReadOnly) {
+      input.disabled = true;
+      input.readOnly = true;
+      input.style.opacity = '0.85';
+      input.style.cursor = 'default';
+    }
     group.appendChild(label);
     group.appendChild(input);
     form.appendChild(group);
   });
+  saveBtn.style.display = modalReadOnly ? 'none' : 'inline-flex';
+  cancelBtn.textContent = modalReadOnly ? 'Close' : 'Cancel';
   document.getElementById('editModal').classList.add('open');
 }
 
 document.getElementById('modalCancel').addEventListener('click', closeEditModal);
 document.getElementById('editModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeEditModal(); });
-function closeEditModal() { document.getElementById('editModal').classList.remove('open'); editingFilm = null; }
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('open');
+  document.getElementById('modalSave').style.display = 'inline-flex';
+  document.getElementById('modalCancel').textContent = 'Cancel';
+  editingFilm = null;
+  modalReadOnly = false;
+}
 
 document.getElementById('modalSave').addEventListener('click', async () => {
-  if (!editingFilm) return;
+  if (!editingFilm || modalReadOnly) return;
   const inputs = document.getElementById('editForm').querySelectorAll('[data-key]');
   const updates = {};
   inputs.forEach(inp => { updates[inp.dataset.key] = inp.value || inp.textContent || ''; });
