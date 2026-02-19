@@ -5,6 +5,7 @@
   var featuredTitle = document.getElementById('featuredTitle');
   var menuButton = document.getElementById('menuButton');
   var navMenu = document.getElementById('navMenu');
+  var brandDrops = navbar.querySelectorAll('.brand-home .brand-drop');
   var progressTarget = 0;
   var progressCurrent = 0;
   var rafId = 0;
@@ -108,11 +109,29 @@
     // Overlay homepage uses progress-based fade driven in renderProgress.
   }
 
+  function measureBrandDropWidths() {
+    if (navbar.dataset.overlay !== 'true' || !brandDrops.length) return;
+
+    navbar.classList.add('navbar--measure-brand');
+    brandDrops.forEach(function (drop) {
+      var w = drop.getBoundingClientRect().width;
+      drop.style.setProperty('--drop-w', w.toFixed(3) + 'px');
+    });
+    navbar.classList.remove('navbar--measure-brand');
+  }
+
   // Run immediately and on page events
+  measureBrandDropWidths();
   applyNavState();
-  window.addEventListener('resize', applyNavState);
+  window.addEventListener('resize', function () {
+    measureBrandDropWidths();
+    applyNavState();
+  });
   window.addEventListener('scroll', applyNavState, { passive: true });
-  window.addEventListener('pageshow', applyNavState);
+  window.addEventListener('pageshow', function () {
+    measureBrandDropWidths();
+    applyNavState();
+  });
 
   // Mobile menu toggle
   if (menuButton && navMenu) {
