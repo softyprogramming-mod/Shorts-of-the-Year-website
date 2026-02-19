@@ -554,7 +554,7 @@ mark {
     text-shadow 0.35s ease;
 }
 
-.featured-title--ready {
+#featuredTitle.featured-title--ready {
   opacity: 1;
   transform: translateY(0);
 }
@@ -575,7 +575,7 @@ mark {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .featured-title--ready {
+  #featuredTitle.featured-title--ready {
     opacity: 1;
     transform: none;
   }
