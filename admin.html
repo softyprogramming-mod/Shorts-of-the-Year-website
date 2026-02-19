@@ -774,12 +774,84 @@ const QUALITIES_CLIENT = [
 
 function randomChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
+function parseDirectorNames(str) {
+  return String(str || '').split(',').map(n => n.trim()).filter(Boolean);
+}
+
 function formatNames(str) {
-  const names = String(str || '').split(',').map(n => n.trim()).filter(Boolean);
+  const names = parseDirectorNames(str);
   if (names.length === 0) return 'the director';
   if (names.length === 1) return names[0];
   if (names.length === 2) return names[0] + ' and ' + names[1];
   return names.slice(0, -1).join(', ') + ', and ' + names[names.length - 1];
+}
+
+function escapeRegex(str) {
+  return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function applyDirectorAgreement(text, director, isPlural) {
+  if (!isPlural) return text;
+
+  let out = text;
+  const directVerbPairs = [
+    ['is', 'are'],
+    ['has', 'have'],
+    ['demonstrates', 'demonstrate'],
+    ['creates', 'create'],
+    ['crafts', 'craft'],
+    ['delivers', 'deliver'],
+    ['proves', 'prove'],
+    ['shows', 'show'],
+    ['reveals', 'reveal'],
+    ['finds', 'find'],
+    ['situates', 'situate'],
+    ['frames', 'frame'],
+    ['uses', 'use'],
+    ['builds', 'build'],
+    ['returns', 'return'],
+    ['approaches', 'approach'],
+    ['balances', 'balance'],
+    ['navigates', 'navigate'],
+    ['examines', 'examine'],
+    ['positions', 'position'],
+    ['treats', 'treat'],
+    ['anchors', 'anchor'],
+    ['foregrounds', 'foreground'],
+    ['commits', 'commit'],
+    ['keeps', 'keep'],
+    ['opts', 'opt'],
+    ['maintains', 'maintain'],
+    ['prioritizes', 'prioritize'],
+    ['confirms', 'confirm']
+  ];
+
+  directVerbPairs.forEach(([singular, plural]) => {
+    const rx = new RegExp(escapeRegex(director) + ' ' + singular + '\\b', 'g');
+    out = out.replace(rx, director + ' ' + plural);
+  });
+
+  out = out
+    .replace(new RegExp('\\bdirector ' + escapeRegex(director) + '\\b', 'g'), 'directors ' + director)
+    .replace(new RegExp('\\bDirector ' + escapeRegex(director) + '\\b', 'g'), 'Directors ' + director)
+    .replace(/\ba promising filmmaker\b/g, 'promising filmmakers')
+    .replace(/\ba filmmaker with serious potential\b/g, 'filmmakers with serious potential')
+    .replace(/\ba filmmaker to watch\b/g, 'filmmakers to watch');
+
+  return out;
+}
+
+function normalizeReviewText(text) {
+  let out = String(text || '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([,.;:!?])/g, '$1')
+    .replace(/([,.;:!?])([^\s])/g, '$1 $2')
+    .replace(/\.\s*\./g, '.')
+    .trim();
+
+  out = out.replace(/([.!?]\s+)([a-z])/g, (_, p1, p2) => p1 + p2.toUpperCase());
+  if (out && !/[.!?]$/.test(out)) out += '.';
+  return out;
 }
 
 function generateReview(formData) {
@@ -792,9 +864,11 @@ function generateReview(formData) {
   const genreAdj = randomChoice(genreAdjs);
   const quality1 = randomChoice(QUALITIES_CLIENT);
   const quality2 = randomChoice(QUALITIES_CLIENT.filter(q => q !== quality1));
+  const directorNames = parseDirectorNames(formData.director);
+  const isPluralDirector = directorNames.length > 1;
   const director = formatNames(formData.director);
 
-  let review = `${opening} ${middle1}, ${middle2}. ${middle3}. ${closing}`;
+  let review = `${opening} ${middle1}, ${middle2}, ${middle3}. ${closing}`;
   review = review
     .replace(/{TITLE}/g, formData.title || 'this film')
     .replace(/{DIRECTOR}/g, director)
@@ -802,7 +876,9 @@ function generateReview(formData) {
     .replace(/{GENRE_ADJ}/g, genreAdj)
     .replace(/{QUALITY}/g, quality1)
     .replace(/{QUALITY}/g, quality2);
-  return review;
+
+  review = applyDirectorAgreement(review, director, isPluralDirector);
+  return normalizeReviewText(review);
 }
 
 // ══════════════════════════════════════════════════════════════
