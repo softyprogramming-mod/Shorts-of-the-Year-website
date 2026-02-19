@@ -12,6 +12,8 @@
     <meta property="og:url" content="https://www.shortsoftheyear.com">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:site" content="@shortsoftheyear">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://softy-api-phi.vercel.app; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
     <link rel="stylesheet" href="css/style.css?v=20260217e">
 </head>
 <body>
@@ -43,7 +45,7 @@
     <header id="masthead" class="masthead">
         <a href="#" id="featuredFilmLink" class="masthead-full-link">
             <div class="masthead-content">
-                <h1 id="featuredTitle">Loading...</h1>
+                <h1 id="featuredTitle"></h1>
                 <div class="masthead-meta">
                     <span id="featuredDirector"></span>
                     <span class="meta-separator">|</span>
