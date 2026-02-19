@@ -84,6 +84,21 @@
             border: none;
         }
 
+        .submit-status {
+            display: none;
+            margin-top: 18px;
+            padding: 14px 16px;
+            border: 1px solid #2a2a2a;
+            background: #111;
+            color: #d8d8d8;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .submit-status.visible {
+            display: block;
+        }
+
         @media (max-width: 600px) {
             .submit-container {
                 padding-left: 20px;
@@ -130,6 +145,7 @@
 
         <div class="submit-form-wrap" id="formWrap">
             <iframe
+                id="submitFormFrame"
                 class="form-embed"
                 src="https://docs.google.com/forms/d/e/1FAIpQLSfmapTrp0PbG4GIelxcLGRSQVCT4gBPQ08VzMl96exdNFZ_Vg/viewform?embedded=true"
                 frameborder="0"
@@ -137,6 +153,9 @@
                 marginwidth="0">
                 Loading…
             </iframe>
+            <div class="submit-status" id="submitStatus">
+                Submission received. If you see Google Form's confirmation message above, your film is in.
+            </div>
         </div>
     </div>
 
@@ -157,14 +176,33 @@
     <script>
         var btn = document.getElementById('submitBtn');
         var formWrap = document.getElementById('formWrap');
+        var formFrame = document.getElementById('submitFormFrame');
+        var submitStatus = document.getElementById('submitStatus');
+        var formOpened = false;
+        var loadsAfterOpen = 0;
 
         btn.addEventListener('click', function () {
             formWrap.classList.add('visible');
+            formOpened = true;
+            loadsAfterOpen = 0;
+            submitStatus.classList.remove('visible');
             setTimeout(function () {
                 formWrap.classList.add('animated');
                 formWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 20);
             btn.style.display = 'none';
+        });
+
+        // Google Forms iframe is cross-domain, so we cannot reliably read submit state.
+        // Practical fallback: after a later iframe reload, return user to top of form and
+        // show a confirmation hint.
+        formFrame.addEventListener('load', function () {
+            if (!formOpened) return;
+            loadsAfterOpen += 1;
+            if (loadsAfterOpen >= 2) {
+                formWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                submitStatus.classList.add('visible');
+            }
         });
     </script>
 
