@@ -73,10 +73,14 @@ function embedVideo(url, password) {
     let embedUrl = '';
 
     if (url.includes('vimeo.com')) {
-        const vimeoId = extractVimeoId(url);
-        embedUrl = `https://player.vimeo.com/video/${vimeoId}`;
-        if (password) {
-            embedUrl += `?h=${password}`;
+        const vimeo = extractVimeoData(url);
+        if (vimeo.id) {
+            embedUrl = `https://player.vimeo.com/video/${vimeo.id}`;
+            // Use hash from URL first (vimeo.com/{id}/{hash}), then query ?h=, then password field.
+            const hash = vimeo.hash || (password || '').trim();
+            if (hash) {
+                embedUrl += `?h=${encodeURIComponent(hash)}`;
+            }
         }
     } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
         const youtubeId = extractYouTubeId(url);
@@ -93,9 +97,21 @@ function embedVideo(url, password) {
     }
 }
 
-function extractVimeoId(url) {
-    const match = url.match(/vimeo\.com\/(\d+)/);
-    return match ? match[1] : '';
+function extractVimeoData(url) {
+    try {
+        const parsed = new URL(url);
+        const parts = parsed.pathname.split('/').filter(Boolean);
+        const id = parts[0] && /^\d+$/.test(parts[0]) ? parts[0] : '';
+        const hashFromPath = parts[1] || '';
+        const hashFromQuery = parsed.searchParams.get('h') || '';
+        return { id, hash: hashFromPath || hashFromQuery };
+    } catch (_) {
+        const match = String(url).match(/vimeo\.com\/(\d+)(?:\/([a-zA-Z0-9]+))?/);
+        return {
+            id: match ? match[1] : '',
+            hash: match && match[2] ? match[2] : ''
+        };
+    }
 }
 
 function extractYouTubeId(url) {
