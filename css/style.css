@@ -775,7 +775,7 @@ mark {
   height: 0;
   overflow: hidden;
   margin-bottom: 40px;
-  background-color: var(--gray);
+  background-color: #000;
 }
 .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
