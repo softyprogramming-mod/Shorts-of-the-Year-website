@@ -9,9 +9,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Set a dark gradient on masthead immediately so it doesn't flash solid black
     // while the API is loading. This matches the site's dark aesthetic.
     const masthead = document.getElementById('masthead');
+    const featuredMeta = document.getElementById('featuredMeta');
     if (masthead) {
+        masthead.classList.remove('masthead--ready');
         masthead.style.backgroundImage = 'linear-gradient(to bottom, #1a1a1a 0%, #0d0d0d 100%)';
     }
+    if (featuredMeta) featuredMeta.classList.remove('masthead-meta--ready');
 
     await loadFilms();
     displayFeaturedFilm();
@@ -35,6 +38,7 @@ async function loadFilms() {
 // Display featured film (most recent)
 function displayFeaturedFilm() {
     const featuredTitle = document.getElementById('featuredTitle');
+    const featuredMeta = document.getElementById('featuredMeta');
     if (!featuredTitle) return;
 
     if (allFilms.length === 0) {
@@ -43,14 +47,13 @@ function displayFeaturedFilm() {
             featuredTitleInteractiveTimer = null;
         }
         featuredTitle.classList.remove('featured-title--ready', 'featured-title--interactive');
+        if (featuredMeta) featuredMeta.classList.remove('masthead-meta--ready');
         featuredTitle.textContent = '';
         return;
     }
 
     const featured = allFilms[0];
     const masthead = document.getElementById('masthead');
-
-    masthead.style.backgroundImage = `url(${sanitizeUrl(featured.thumbnail)})`;
 
     if (featuredTitleInteractiveTimer) {
         clearTimeout(featuredTitleInteractiveTimer);
@@ -67,8 +70,26 @@ function displayFeaturedFilm() {
     document.getElementById('featuredDirector').textContent = featured.director;
     document.getElementById('featuredGenre').textContent = featured.genre;
     document.getElementById('featuredRuntime').textContent = featured.runtime + ' min';
+    if (featuredMeta) featuredMeta.classList.add('masthead-meta--ready');
 
     document.getElementById('featuredFilmLink').href = `film.html?id=${featured.slug}`;
+
+    const heroUrl = sanitizeUrl(featured.thumbnail);
+    if (!masthead) return;
+    if (!heroUrl) {
+        masthead.classList.add('masthead--ready');
+        return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+        masthead.style.backgroundImage = `url(${heroUrl})`;
+        requestAnimationFrame(() => masthead.classList.add('masthead--ready'));
+    };
+    img.onerror = () => {
+        masthead.classList.add('masthead--ready');
+    };
+    img.src = heroUrl;
 }
 
 // Display film grid
