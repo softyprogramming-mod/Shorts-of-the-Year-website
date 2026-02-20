@@ -3,6 +3,7 @@
 let allFilms = [];
 let displayedFilms = 0;
 const filmsPerLoad = 9;
+let featuredTitleInteractiveTimer = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Set a dark gradient on masthead immediately so it doesn't flash solid black
@@ -37,6 +38,11 @@ function displayFeaturedFilm() {
     if (!featuredTitle) return;
 
     if (allFilms.length === 0) {
+        if (featuredTitleInteractiveTimer) {
+            clearTimeout(featuredTitleInteractiveTimer);
+            featuredTitleInteractiveTimer = null;
+        }
+        featuredTitle.classList.remove('featured-title--ready', 'featured-title--interactive');
         featuredTitle.textContent = '';
         return;
     }
@@ -46,9 +52,18 @@ function displayFeaturedFilm() {
 
     masthead.style.backgroundImage = `url(${sanitizeUrl(featured.thumbnail)})`;
 
-    featuredTitle.classList.remove('featured-title--ready');
+    if (featuredTitleInteractiveTimer) {
+        clearTimeout(featuredTitleInteractiveTimer);
+        featuredTitleInteractiveTimer = null;
+    }
+    featuredTitle.classList.remove('featured-title--ready', 'featured-title--interactive');
     featuredTitle.textContent = featured.title;
-    requestAnimationFrame(() => featuredTitle.classList.add('featured-title--ready'));
+    requestAnimationFrame(() => {
+        featuredTitle.classList.add('featured-title--ready');
+        featuredTitleInteractiveTimer = setTimeout(() => {
+            featuredTitle.classList.add('featured-title--interactive');
+        }, 950);
+    });
     document.getElementById('featuredDirector').textContent = featured.director;
     document.getElementById('featuredGenre').textContent = featured.genre;
     document.getElementById('featuredRuntime').textContent = featured.runtime + ' min';
