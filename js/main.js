@@ -6,6 +6,13 @@ const filmsPerLoad = 9;
 let featuredTitleInteractiveTimer = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Homepage mobile: allow native pull-to-refresh behavior.
+    if (window.matchMedia('(max-width: 768px)').matches) {
+        document.documentElement.style.overscrollBehaviorY = 'auto';
+        document.body.style.overscrollBehaviorY = 'auto';
+        document.body.style.webkitOverflowScrolling = 'touch';
+    }
+
     // Set a dark gradient on masthead immediately so it doesn't flash solid black
     // while the API is loading. This matches the site's dark aesthetic.
     const masthead = document.getElementById('masthead');
