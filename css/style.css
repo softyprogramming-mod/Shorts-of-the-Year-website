@@ -98,32 +98,6 @@ body {
   box-shadow: 0 1px 0 var(--gray) !important;
 }
 
-/* Compressed desktop/tablet width: keep homepage nav solid black at top */
-@media (min-width: 769px) and (max-width: 1200px) {
-  .navbar[data-overlay="true"] {
-    background: var(--black) !important;
-    box-shadow: 0 1px 0 var(--gray) !important;
-  }
-
-  /* In this range, place hero below the black nav bar */
-  .navbar[data-overlay="true"] + .masthead {
-    margin-top: var(--nav-height);
-    height: 100vh;
-  }
-
-  /* Keep logo at normal nav size when nav is black in compressed desktop */
-  .navbar[data-overlay="true"] .logo-svg {
-    width: var(--logo-size-desktop) !important;
-    transform: none !important;
-  }
-
-  .navbar[data-overlay="true"] .brand-accent {
-    color: var(--white) !important;
-    transform: none !important;
-    font-weight: 700;
-  }
-}
-
 .nav-col {
   display: flex;
   align-items: center;
