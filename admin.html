@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin · Shorts of the Year</title>
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://softy-api-phi.vercel.app; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://softy-api-phi.vercel.app https://vimeo.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1040,6 +1040,60 @@ function getEditFormValues() {
   return values;
 }
 
+function extractYouTubeIdClient(url) {
+  const str = String(url || '');
+  const patterns = [
+    /youtube\.com\/watch\?v=([^&\s]+)/i,
+    /youtu\.be\/([^?&\s]+)/i,
+    /youtube\.com\/embed\/([^?&\s]+)/i
+  ];
+  for (const p of patterns) {
+    const m = str.match(p);
+    if (m && m[1]) return m[1];
+  }
+  return '';
+}
+
+function extractVimeoIdClient(url) {
+  try {
+    const parsed = new URL(String(url || ''));
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    if (parts[0] && /^\d+$/.test(parts[0])) return parts[0];
+  } catch (_) {}
+  const m = String(url || '').match(/vimeo\.com\/(\d+)/i);
+  return m && m[1] ? m[1] : '';
+}
+
+async function deriveThumbnailFromVideoLink(url) {
+  const u = String(url || '').trim();
+  if (!u) return '';
+
+  const ytId = extractYouTubeIdClient(u);
+  if (ytId) {
+    // hqdefault is reliable across uploads; maxresdefault often 404s.
+    return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+  }
+
+  const vimeoId = extractVimeoIdClient(u);
+  if (vimeoId) {
+    try {
+      const oembedUrl = 'https://vimeo.com/api/oembed.json?url=' + encodeURIComponent(u) + '&width=1280';
+      const res = await fetch(oembedUrl);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.thumbnail_url) {
+          return String(data.thumbnail_url).replace(/_\d+x\d+\./, '_1280.');
+        }
+      }
+    } catch (_) {
+      // Fall back to a predictable thumbnail service if Vimeo oEmbed is blocked/unavailable.
+    }
+    return `https://vumbnail.com/${vimeoId}.jpg`;
+  }
+
+  return '';
+}
+
 function openEditModal(film, options = {}) {
   editingFilm = film;
   modalReadOnly = !!options.readOnly;
@@ -1124,6 +1178,15 @@ document.getElementById('modalSave').addEventListener('click', async () => {
   const originalLabel = btn.textContent;
   btn.disabled = true; btn.textContent = isCreatingFilm ? 'Creating…' : 'Saving…';
   try {
+    if (!String(updates.thumbnail || '').trim() && String(updates.filmLink || '').trim()) {
+      const derivedThumb = await deriveThumbnailFromVideoLink(updates.filmLink);
+      if (derivedThumb) {
+        updates.thumbnail = derivedThumb;
+        const thumbInput = document.getElementById('editForm').querySelector('[data-key="thumbnail"]');
+        if (thumbInput) thumbInput.value = derivedThumb;
+      }
+    }
+
     if (!updates.slug) updates.slug = slugifyTitle(updates.title);
     if (!updates.timestamp) updates.timestamp = new Date().toISOString();
     updates.pending = false;
