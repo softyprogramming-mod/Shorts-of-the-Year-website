@@ -16,11 +16,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Set a dark gradient on masthead immediately so it doesn't flash solid black
     // while the API is loading. This matches the site's dark aesthetic.
     const masthead = document.getElementById('masthead');
+    const heroImgEl = document.getElementById('featuredHeroImage');
     const featuredMeta = document.getElementById('featuredMeta');
     if (masthead) {
         masthead.classList.remove('masthead--ready');
         masthead.style.backgroundImage = 'linear-gradient(to bottom, #1a1a1a 0%, #0d0d0d 100%)';
     }
+    if (heroImgEl) heroImgEl.removeAttribute('src');
     if (featuredMeta) featuredMeta.classList.remove('masthead-meta--ready');
 
     await loadFilms();
@@ -61,6 +63,7 @@ function displayFeaturedFilm() {
 
     const featured = allFilms[0];
     const masthead = document.getElementById('masthead');
+    const heroImgEl = document.getElementById('featuredHeroImage');
 
     if (featuredTitleInteractiveTimer) {
         clearTimeout(featuredTitleInteractiveTimer);
@@ -84,13 +87,17 @@ function displayFeaturedFilm() {
     const heroUrl = sanitizeUrl(featured.thumbnail);
     if (!masthead) return;
     if (!heroUrl) {
+        if (heroImgEl) heroImgEl.removeAttribute('src');
         masthead.classList.add('masthead--ready');
         return;
     }
 
-    // Paint the hero image immediately so the transparent nav overlays artwork,
-    // then keep the veil until preload confirms the image is ready.
-    masthead.style.backgroundImage = `url(${heroUrl})`;
+    // Paint the hero image immediately in a dedicated media layer so the top of
+    // the image stays pinned to the top of the hero container while resizing.
+    if (heroImgEl) {
+        heroImgEl.src = heroUrl;
+        heroImgEl.alt = featured.title || '';
+    }
 
     const img = new Image();
     img.onload = () => {
