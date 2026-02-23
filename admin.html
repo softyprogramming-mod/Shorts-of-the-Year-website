@@ -171,7 +171,7 @@
     .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #555; }
     .form-group textarea { resize: vertical; min-height: 80px; }
     .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
-    .modal-actions .btn-grow { margin-right: auto; }
+    .inline-field-action { margin-top: 0.5rem; justify-content: flex-start; }
 
     /* ── APPROVE CONFIRM ── */
     .confirm-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 300; padding: 1rem; }
@@ -289,7 +289,6 @@
     <h2 id="modalTitle">Edit Film</h2>
     <div class="form-grid" id="editForm"></div>
     <div class="modal-actions">
-      <button class="btn btn-edit btn-grow" id="modalGenerateReview">Generate review</button>
       <button class="btn btn-cancel" id="modalCancel">Cancel</button>
       <button class="btn btn-save" id="modalSave">Save changes</button>
     </div>
@@ -1137,10 +1136,20 @@ function openEditModal(film, options = {}) {
     }
     group.appendChild(label);
     group.appendChild(input);
+    if (field.key === 'review' && !modalReadOnly) {
+      const row = document.createElement('div');
+      row.className = 'actions inline-field-action';
+      const genBtn = document.createElement('button');
+      genBtn.type = 'button';
+      genBtn.className = 'btn btn-edit';
+      genBtn.id = 'modalGenerateReview';
+      genBtn.textContent = 'Generate review';
+      row.appendChild(genBtn);
+      group.appendChild(row);
+    }
     form.appendChild(group);
   });
   saveBtn.style.display = modalReadOnly ? 'none' : 'inline-flex';
-  generateBtn.style.display = modalReadOnly ? 'none' : 'inline-flex';
   saveBtn.textContent = isCreatingFilm ? 'Create film' : 'Save changes';
   cancelBtn.textContent = modalReadOnly ? 'Close' : 'Cancel';
   document.getElementById('editModal').classList.add('open');
@@ -1152,7 +1161,6 @@ function closeEditModal() {
   document.getElementById('editModal').classList.remove('open');
   document.getElementById('modalSave').style.display = 'inline-flex';
   document.getElementById('modalSave').textContent = 'Save changes';
-  document.getElementById('modalGenerateReview').style.display = 'inline-flex';
   document.getElementById('modalCancel').textContent = 'Cancel';
   editingFilm = null;
   modalReadOnly = false;
@@ -1163,7 +1171,9 @@ document.getElementById('addFilmBtn').addEventListener('click', () => {
   openEditModal(buildEmptyFilmDraft(), { create: true, titlePrefix: 'Add Film' });
 });
 
-document.getElementById('modalGenerateReview').addEventListener('click', () => {
+document.getElementById('editForm').addEventListener('click', (e) => {
+  const btn = e.target.closest('#modalGenerateReview');
+  if (!btn) return;
   if (!editingFilm || modalReadOnly) return;
   const values = getEditFormValues();
   const reviewField = document.getElementById('editForm').querySelector('[data-key="review"]');
