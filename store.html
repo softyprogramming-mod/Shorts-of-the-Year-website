@@ -123,7 +123,6 @@
             background-color: #0d0d0d;
             margin-bottom: 0;
             overflow: hidden;
-            cursor: zoom-in;
         }
 
         .product-image-wrap--grid {
@@ -297,23 +296,6 @@
             cursor: pointer;
         }
 
-        .store-lightbox-next {
-            position: absolute;
-            top: 50%;
-            right: 12px;
-            transform: translateY(-50%);
-            min-width: 56px;
-            height: 40px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(0,0,0,0.5);
-            color: #fff;
-            font-size: 11px;
-            letter-spacing: 0.16em;
-            text-transform: uppercase;
-            cursor: pointer;
-            padding: 0 12px;
-        }
-
         .store-lightbox-meta {
             display: flex;
             align-items: center;
@@ -385,16 +367,6 @@
                 right: 8px;
                 width: 36px;
                 height: 36px;
-            }
-            .store-lightbox-next {
-                right: 8px;
-                bottom: 8px;
-                top: auto;
-                transform: none;
-                min-width: 70px;
-                height: 34px;
-                font-size: 10px;
-                letter-spacing: 0.12em;
             }
             .store-lightbox-meta {
                 flex-direction: column;
@@ -472,7 +444,7 @@
 
                 <div class="product-card">
                     <div class="product-image-wrap" data-lightbox-image="images/SoftyYellowShortsGrid.webp" data-lightbox-name="Softy Yellow Shorts" data-lightbox-price="$200.00" data-lightbox-status="Sold Out" tabindex="0" role="button" aria-label="View Softy Yellow Shorts">
-                        <img src="images/SoftyShortsSolo.webp" alt="Softy Yellow Shorts" class="store-img">
+                        <img src="images/SoftyYellowShorts_2k.webp" alt="Softy Yellow Shorts" class="store-img">
                         <div class="sold-out-overlay"><span>Sold Out</span></div>
                     </div>
                     <div class="product-info">
@@ -494,7 +466,6 @@
             <div class="store-lightbox-media">
                 <span class="store-lightbox-status" id="storeLightboxStatus">Sold Out</span>
                 <button class="store-lightbox-close" id="storeLightboxClose" type="button" aria-label="Close image">&times;</button>
-                <button class="store-lightbox-next" id="storeLightboxNext" type="button" aria-label="Next product">Next</button>
                 <img class="store-lightbox-img" id="storeLightboxImg" alt="">
             </div>
             <div class="store-lightbox-meta">
