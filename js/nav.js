@@ -58,11 +58,14 @@
       visualScrollY = Math.max(0, -masthead.getBoundingClientRect().top);
     }
 
-    // iOS can report a few pixels of offset at page load; treat a small range as "top".
-    var topThreshold = window.innerWidth <= 768 ? 12 : 2;
+    // Browsers can report a visual masthead offset at load even when the document
+    // scroll position is still 0 (mobile Safari / some mid-width desktop states).
+    // Trust the real document scroll first, then fall back to visual offset.
+    var topThreshold = window.innerWidth <= 1200 ? 18 : 2;
+    var isAtTop = rawScrollY <= 1 || visualScrollY <= topThreshold;
 
     // Always be fully transparent at true top (no lag on return to top)
-    if (visualScrollY <= topThreshold) {
+    if (isAtTop) {
       navbar.setAttribute('data-at-top', 'true');
       progressTarget = 0;
       progressCurrent = 0;
