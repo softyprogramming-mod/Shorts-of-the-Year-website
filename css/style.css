@@ -502,7 +502,8 @@ mark {
   min-height: 560px;
   margin-top: 0;
   background-size: cover;
-  background-position: center;
+  background-position: center top;
+  background-repeat: no-repeat;
   background-color: var(--black);
   display: flex;
   align-items: center;
