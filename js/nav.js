@@ -12,6 +12,16 @@
 
   if (!navbar) return;
 
+  // First paint on homepage should always be transparent over the hero.
+  // Some browsers report a transient non-zero offset before layout settles.
+  if (navbar.dataset.overlay === 'true') {
+    navbar.setAttribute('data-at-top', 'true');
+    navbar.classList.remove('navbar--solid');
+    navbar.style.background = 'none';
+    navbar.style.setProperty('background-color', 'transparent', 'important');
+    navbar.style.setProperty('box-shadow', 'none', 'important');
+  }
+
   function renderProgress() {
     progressCurrent += (progressTarget - progressCurrent) * 0.12;
 
@@ -51,18 +61,10 @@
 
     var scroller = document.scrollingElement || document.documentElement || document.body;
     var rawScrollY = scroller ? scroller.scrollTop : 0;
+    // Nav state must follow real page scroll only.
+    // Using masthead visual offsets here causes false "scrolled" states while resizing.
     var visualScrollY = rawScrollY;
-
-    // Use masthead visual offset when available so "top" is true top of hero.
-    if (masthead) {
-      visualScrollY = Math.max(0, -masthead.getBoundingClientRect().top);
-    }
-
-    // Browsers can report a visual masthead offset at load even when the document
-    // scroll position is still 0 (mobile Safari / some mid-width desktop states).
-    // Trust the real document scroll first, then fall back to visual offset.
-    var topThreshold = window.innerWidth <= 1200 ? 18 : 2;
-    var isAtTop = rawScrollY <= 1 || visualScrollY <= topThreshold;
+    var isAtTop = rawScrollY <= 1;
 
     // Always be fully transparent at true top (no lag on return to top)
     if (isAtTop) {
@@ -92,7 +94,7 @@
       effectDistance = Math.max(220, masthead.offsetHeight * 0.72);
     }
 
-    progressTarget = Math.max(0, Math.min(1, visualScrollY / effectDistance));
+    progressTarget = Math.max(0, Math.min(1, rawScrollY / effectDistance));
     // Keep SoftY phases locked to the same overall timeline.
     var brandProgress = progressTarget;
     // Two-phase brand animation:
