@@ -126,6 +126,11 @@
             cursor: zoom-in;
         }
 
+        .product-image-wrap--grid {
+            aspect-ratio: 1 / 2;
+            background-color: #111;
+        }
+
         .store-img {
             width: 100%;
             height: 100%;
@@ -134,6 +139,11 @@
             transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
                         filter 0.7s ease;
             filter: grayscale(8%);
+        }
+
+        .product-image-wrap--grid .store-img {
+            object-fit: contain;
+            background: #111;
         }
 
         .product-card:hover .store-img {
@@ -422,8 +432,8 @@
                 </div>
 
                 <div class="product-card">
-                    <div class="product-image-wrap" data-lightbox-image="images/SoftyBriefs.webp" data-lightbox-name="Softy Briefs" data-lightbox-price="$59.00" data-lightbox-status="Coming Soon" tabindex="0" role="button" aria-label="View Softy Briefs">
-                        <img src="images/SoftyBriefs.webp" alt="Softy Briefs" class="store-img">
+                    <div class="product-image-wrap product-image-wrap--grid" data-lightbox-image="images/SoftyBriefsGrid.webp" data-lightbox-name="Softy Briefs" data-lightbox-price="$59.00" data-lightbox-status="Coming Soon" tabindex="0" role="button" aria-label="View Softy Briefs">
+                        <img src="images/SoftyBriefsGrid.webp" alt="Softy Briefs" class="store-img">
                         <div class="sold-out-overlay"><span>Coming Soon</span></div>
                     </div>
                     <div class="product-info">
@@ -434,8 +444,8 @@
                 </div>
 
                 <div class="product-card">
-                    <div class="product-image-wrap" data-lightbox-image="images/softy-yellow-shorts.jpg" data-lightbox-name="Softy Yellow Shorts" data-lightbox-price="$200.00" data-lightbox-status="Sold Out" tabindex="0" role="button" aria-label="View Softy Yellow Shorts">
-                        <img src="images/softy-yellow-shorts.jpg" alt="Softy Yellow Shorts" class="store-img">
+                    <div class="product-image-wrap product-image-wrap--grid" data-lightbox-image="images/SoftyYellowShortsGrid.webp" data-lightbox-name="Softy Yellow Shorts" data-lightbox-price="$200.00" data-lightbox-status="Sold Out" tabindex="0" role="button" aria-label="View Softy Yellow Shorts">
+                        <img src="images/SoftyYellowShortsGrid.webp" alt="Softy Yellow Shorts" class="store-img">
                         <div class="sold-out-overlay"><span>Sold Out</span></div>
                     </div>
                     <div class="product-info">
@@ -512,64 +522,6 @@
         </div>
     </div>
     <script src="js/search.js"></script>
-    <script>
-        (function () {
-            const lightbox = document.getElementById('storeLightbox');
-            const backdrop = document.getElementById('storeLightboxBackdrop');
-            const closeBtn = document.getElementById('storeLightboxClose');
-            const img = document.getElementById('storeLightboxImg');
-            const nameEl = document.getElementById('storeLightboxName');
-            const priceEl = document.getElementById('storeLightboxPrice');
-            const statusEl = document.getElementById('storeLightboxStatus');
-            const triggers = document.querySelectorAll('.product-image-wrap[data-lightbox-image]');
-
-            if (!lightbox || !img || !nameEl || !priceEl || !statusEl) return;
-
-            let lastTrigger = null;
-
-            function openLightbox(trigger) {
-                const image = trigger.dataset.lightboxImage || '';
-                const name = trigger.dataset.lightboxName || '';
-                const price = trigger.dataset.lightboxPrice || '';
-                const status = trigger.dataset.lightboxStatus || '';
-
-                img.src = image;
-                img.alt = name;
-                nameEl.textContent = name;
-                priceEl.textContent = price;
-                statusEl.textContent = status;
-
-                lightbox.classList.add('open');
-                lightbox.setAttribute('aria-hidden', 'false');
-                document.body.style.overflow = 'hidden';
-                lastTrigger = trigger;
-            }
-
-            function closeLightbox() {
-                lightbox.classList.remove('open');
-                lightbox.setAttribute('aria-hidden', 'true');
-                document.body.style.overflow = '';
-                if (lastTrigger) lastTrigger.focus();
-            }
-
-            triggers.forEach((trigger) => {
-                trigger.addEventListener('click', () => openLightbox(trigger));
-                trigger.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        openLightbox(trigger);
-                    }
-                });
-            });
-
-            backdrop.addEventListener('click', closeLightbox);
-            closeBtn.addEventListener('click', closeLightbox);
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && lightbox.classList.contains('open')) {
-                    closeLightbox();
-                }
-            });
-        })();
-    </script>
+    <script src="js/store.js?v=20260223a"></script>
 </body>
 </html>
