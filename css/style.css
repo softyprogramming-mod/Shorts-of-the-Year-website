@@ -617,15 +617,8 @@ mark {
   }
 }
 
-@media (max-width: 1200px) {
-  /* Shift the hero focal point upward on narrower viewports so the image
-     doesn't appear to "drop" below the nav as cover-cropping increases. */
-  .masthead { background-position: center 40%; }
-}
-
 @media (max-width: 768px) {
   .masthead { height: 70vh; }
-  .masthead { background-position: center 34%; }
   .masthead::before {
     background: linear-gradient(to bottom, rgba(0,0,0,0.01) 0%, rgba(0,0,0,0.18) 48%, rgba(0,0,0,0.7) 100%);
   }
