@@ -71,6 +71,36 @@
             gap: 2px;
         }
 
+        .collection-block {
+            margin-bottom: 56px;
+        }
+
+        .collection-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 0 0 18px 0;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #161616;
+        }
+
+        .collection-title {
+            margin: 0;
+            color: #f0f0f0;
+            font-size: 18px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        .collection-subtitle {
+            margin: 0;
+            color: #7f7f7f;
+            font-size: 10px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+        }
+
         /* Card */
         .product-card {
             position: relative;
@@ -93,6 +123,7 @@
             background-color: #0d0d0d;
             margin-bottom: 0;
             overflow: hidden;
+            cursor: zoom-in;
         }
 
         .store-img {
@@ -178,6 +209,106 @@
         /* Hide old button */
         .sold-out-btn { display: none; }
 
+        /* Lightbox */
+        .store-lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.92);
+            padding: 28px;
+        }
+
+        .store-lightbox.open {
+            display: flex;
+        }
+
+        .store-lightbox-backdrop {
+            position: absolute;
+            inset: 0;
+        }
+
+        .store-lightbox-dialog {
+            position: relative;
+            width: min(92vw, 1200px);
+            max-height: 92vh;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 12px;
+            z-index: 1;
+        }
+
+        .store-lightbox-media {
+            position: relative;
+            background: #070707;
+            border: 1px solid rgba(255,255,255,0.08);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .store-lightbox-img {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 78vh;
+            object-fit: contain;
+            background: #070707;
+        }
+
+        .store-lightbox-status {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            font-size: 10px;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(0,0,0,0.45);
+            backdrop-filter: blur(4px);
+            padding: 10px 14px;
+        }
+
+        .store-lightbox-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .store-lightbox-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            color: #fff;
+        }
+
+        .store-lightbox-name {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+        }
+
+        .store-lightbox-price {
+            margin: 0;
+            font-size: 14px;
+            color: #b5b5b5;
+            letter-spacing: 0.08em;
+        }
+
         /* Divider between grid and footer */
         .store-footer-note {
             margin-top: 64px;
@@ -205,8 +336,33 @@
                 grid-template-columns: 1fr;
                 gap: 1px;
             }
+            .collection-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
             .store-header {
                 margin-bottom: 48px;
+            }
+            .store-lightbox {
+                padding: 12px;
+            }
+            .store-lightbox-status {
+                top: 10px;
+                left: 10px;
+                font-size: 9px;
+                padding: 8px 10px;
+            }
+            .store-lightbox-close {
+                top: 8px;
+                right: 8px;
+                width: 36px;
+                height: 36px;
+            }
+            .store-lightbox-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
             }
         }
     </style>
@@ -247,61 +403,84 @@
             </p>
         </div>
 
-        <div class="products-grid">
-
-            <div class="product-card">
-                <div class="product-image-wrap">
-                    <img src="images/SoftyBikini.webp" alt="Softy Bikini Set" class="store-img">
-                    <div class="sold-out-overlay"><span>Sold Out</span></div>
-                </div>
-                <div class="product-info">
-                    <h2 class="product-name">Softy Bikini Set</h2>
-                    <p class="product-price">$200.00</p>
-                </div>
-                <button class="sold-out-btn">SOLD OUT</button>
+        <section class="collection-block" aria-labelledby="summerCollectionTitle">
+            <div class="collection-header">
+                <h2 class="collection-title" id="summerCollectionTitle">Softy Summer Collection</h2>
+                <p class="collection-subtitle">Seasonal Drop</p>
             </div>
+            <div class="products-grid">
+                <div class="product-card">
+                    <div class="product-image-wrap" data-lightbox-image="images/SoftyBikini.webp" data-lightbox-name="Softy Bikini Set" data-lightbox-price="$200.00" data-lightbox-status="Sold Out" tabindex="0" role="button" aria-label="View Softy Bikini Set">
+                        <img src="images/SoftyBikini.webp" alt="Softy Bikini Set" class="store-img">
+                        <div class="sold-out-overlay"><span>Sold Out</span></div>
+                    </div>
+                    <div class="product-info">
+                        <h2 class="product-name">Softy Bikini Set</h2>
+                        <p class="product-price">$200.00</p>
+                    </div>
+                    <button class="sold-out-btn">SOLD OUT</button>
+                </div>
 
-            <div class="product-card">
-                <div class="product-image-wrap">
-                    <img src="images/business-shorts-2.png" alt="Business Shorts" class="store-img">
-                    <div class="sold-out-overlay"><span>Sold Out</span></div>
+                <div class="product-card">
+                    <div class="product-image-wrap" data-lightbox-image="images/SoftyBriefs.webp" data-lightbox-name="Softy Briefs" data-lightbox-price="$59.00" data-lightbox-status="Coming Soon" tabindex="0" role="button" aria-label="View Softy Briefs">
+                        <img src="images/SoftyBriefs.webp" alt="Softy Briefs" class="store-img">
+                        <div class="sold-out-overlay"><span>Coming Soon</span></div>
+                    </div>
+                    <div class="product-info">
+                        <h2 class="product-name">Softy Briefs</h2>
+                        <p class="product-price">$59.00</p>
+                    </div>
+                    <button class="sold-out-btn">COMING SOON</button>
                 </div>
-                <div class="product-info">
-                    <h2 class="product-name">Business Shorts</h2>
-                    <p class="product-price">$65.00</p>
+
+                <div class="product-card">
+                    <div class="product-image-wrap" data-lightbox-image="images/softy-yellow-shorts.jpg" data-lightbox-name="Softy Yellow Shorts" data-lightbox-price="$200.00" data-lightbox-status="Sold Out" tabindex="0" role="button" aria-label="View Softy Yellow Shorts">
+                        <img src="images/softy-yellow-shorts.jpg" alt="Softy Yellow Shorts" class="store-img">
+                        <div class="sold-out-overlay"><span>Sold Out</span></div>
+                    </div>
+                    <div class="product-info">
+                        <h2 class="product-name">Softy Yellow Shorts</h2>
+                        <p class="product-price">$200.00</p>
+                    </div>
+                    <button class="sold-out-btn">SOLD OUT</button>
                 </div>
-                <button class="sold-out-btn">SOLD OUT</button>
             </div>
+        </section>
 
-            <div class="product-card">
-                <div class="product-image-wrap">
-                    <img src="images/softy-yellow-shorts.jpg" alt="Softy Yellow Shorts" class="store-img">
-                    <div class="sold-out-overlay"><span>Sold Out</span></div>
+        <section class="collection-block" aria-label="Other products">
+            <div class="products-grid">
+                <div class="product-card">
+                    <div class="product-image-wrap" data-lightbox-image="images/business-shorts-2.png" data-lightbox-name="Business Shorts" data-lightbox-price="$65.00" data-lightbox-status="Sold Out" tabindex="0" role="button" aria-label="View Business Shorts">
+                        <img src="images/business-shorts-2.png" alt="Business Shorts" class="store-img">
+                        <div class="sold-out-overlay"><span>Sold Out</span></div>
+                    </div>
+                    <div class="product-info">
+                        <h2 class="product-name">Business Shorts</h2>
+                        <p class="product-price">$65.00</p>
+                    </div>
+                    <button class="sold-out-btn">SOLD OUT</button>
                 </div>
-                <div class="product-info">
-                    <h2 class="product-name">Softy Yellow Shorts</h2>
-                    <p class="product-price">$200.00</p>
-                </div>
-                <button class="sold-out-btn">SOLD OUT</button>
             </div>
-
-            <div class="product-card">
-                <div class="product-image-wrap">
-                    <img src="images/SoftyBriefs.webp" alt="Softy Briefs" class="store-img">
-                    <div class="sold-out-overlay"><span>Coming Soon</span></div>
-                </div>
-                <div class="product-info">
-                    <h2 class="product-name">Softy Briefs</h2>
-                    <p class="product-price">$59.00</p>
-                </div>
-                <button class="sold-out-btn">COMING SOON</button>
-            </div>
-
-        </div>
+        </section>
 
         <p class="store-footer-note">*UPDATE: You spoke, we listened. Just like yours, our shorts are now ethically produced by adults. The Softy Seamstress's&trade; are employed under fair, regionally appropriate wage standards and working conditions.</p>
 
     </main>
+
+    <div class="store-lightbox" id="storeLightbox" aria-hidden="true">
+        <div class="store-lightbox-backdrop" id="storeLightboxBackdrop"></div>
+        <div class="store-lightbox-dialog" role="dialog" aria-modal="true" aria-label="Product image">
+            <div class="store-lightbox-media">
+                <span class="store-lightbox-status" id="storeLightboxStatus">Sold Out</span>
+                <button class="store-lightbox-close" id="storeLightboxClose" type="button" aria-label="Close image">&times;</button>
+                <img class="store-lightbox-img" id="storeLightboxImg" alt="">
+            </div>
+            <div class="store-lightbox-meta">
+                <h2 class="store-lightbox-name" id="storeLightboxName"></h2>
+                <p class="store-lightbox-price" id="storeLightboxPrice"></p>
+            </div>
+        </div>
+    </div>
 
     <footer class="footer">
         <div class="container">
@@ -333,5 +512,64 @@
         </div>
     </div>
     <script src="js/search.js"></script>
+    <script>
+        (function () {
+            const lightbox = document.getElementById('storeLightbox');
+            const backdrop = document.getElementById('storeLightboxBackdrop');
+            const closeBtn = document.getElementById('storeLightboxClose');
+            const img = document.getElementById('storeLightboxImg');
+            const nameEl = document.getElementById('storeLightboxName');
+            const priceEl = document.getElementById('storeLightboxPrice');
+            const statusEl = document.getElementById('storeLightboxStatus');
+            const triggers = document.querySelectorAll('.product-image-wrap[data-lightbox-image]');
+
+            if (!lightbox || !img || !nameEl || !priceEl || !statusEl) return;
+
+            let lastTrigger = null;
+
+            function openLightbox(trigger) {
+                const image = trigger.dataset.lightboxImage || '';
+                const name = trigger.dataset.lightboxName || '';
+                const price = trigger.dataset.lightboxPrice || '';
+                const status = trigger.dataset.lightboxStatus || '';
+
+                img.src = image;
+                img.alt = name;
+                nameEl.textContent = name;
+                priceEl.textContent = price;
+                statusEl.textContent = status;
+
+                lightbox.classList.add('open');
+                lightbox.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+                lastTrigger = trigger;
+            }
+
+            function closeLightbox() {
+                lightbox.classList.remove('open');
+                lightbox.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+                if (lastTrigger) lastTrigger.focus();
+            }
+
+            triggers.forEach((trigger) => {
+                trigger.addEventListener('click', () => openLightbox(trigger));
+                trigger.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openLightbox(trigger);
+                    }
+                });
+            });
+
+            backdrop.addEventListener('click', closeLightbox);
+            closeBtn.addEventListener('click', closeLightbox);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && lightbox.classList.contains('open')) {
+                    closeLightbox();
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
