@@ -88,9 +88,12 @@ function displayFeaturedFilm() {
         return;
     }
 
+    // Paint the hero image immediately so the transparent nav overlays artwork,
+    // then keep the veil until preload confirms the image is ready.
+    masthead.style.backgroundImage = `url(${heroUrl})`;
+
     const img = new Image();
     img.onload = () => {
-        masthead.style.backgroundImage = `url(${heroUrl})`;
         requestAnimationFrame(() => masthead.classList.add('masthead--ready'));
     };
     img.onerror = () => {
