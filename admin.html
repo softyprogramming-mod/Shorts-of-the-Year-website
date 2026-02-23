@@ -1171,14 +1171,36 @@ document.getElementById('addFilmBtn').addEventListener('click', () => {
   openEditModal(buildEmptyFilmDraft(), { create: true, titlePrefix: 'Add Film' });
 });
 
-document.getElementById('editForm').addEventListener('click', (e) => {
+document.getElementById('editForm').addEventListener('click', async (e) => {
   const btn = e.target.closest('#modalGenerateReview');
   if (!btn) return;
   if (!editingFilm || modalReadOnly) return;
   const values = getEditFormValues();
   const reviewField = document.getElementById('editForm').querySelector('[data-key="review"]');
   if (!reviewField) return;
-  reviewField.value = generateReview(values);
+  btn.disabled = true;
+  const prevLabel = btn.textContent;
+  btn.textContent = 'Generating…';
+  try {
+    const res = await fetch(`${API_BASE}/admin?action=generateReview`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': adminPassword
+      },
+      body: JSON.stringify(values)
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    reviewField.value = data.review || '';
+  } catch {
+    // Fallback to local generator if API route isn't deployed yet.
+    reviewField.value = generateReview(values);
+    showToast('Used local review generator (deploy API to use full set)', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = prevLabel;
+  }
 });
 
 document.getElementById('modalSave').addEventListener('click', async () => {
