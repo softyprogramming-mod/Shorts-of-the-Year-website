@@ -58,8 +58,12 @@
       visualScrollY = Math.max(0, -masthead.getBoundingClientRect().top);
     }
 
+    // iOS can report a few pixels of offset at page load; treat a small range as "top".
+    var topThreshold = window.innerWidth <= 768 ? 12 : 2;
+
     // Always be fully transparent at true top (no lag on return to top)
-    if (visualScrollY <= 1) {
+    if (visualScrollY <= topThreshold) {
+      navbar.setAttribute('data-at-top', 'true');
       progressTarget = 0;
       progressCurrent = 0;
       if (rafId) {
@@ -76,6 +80,8 @@
       navbar.style.setProperty('box-shadow', 'none', 'important');
       return;
     }
+
+    navbar.setAttribute('data-at-top', 'false');
 
     // Full nav animation completes a bit deeper down the hero image.
     var effectDistance = 320;
