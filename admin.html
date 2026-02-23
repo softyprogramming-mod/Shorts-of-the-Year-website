@@ -61,6 +61,8 @@
     .btn-logout:hover { color: var(--text); border-color: #555; }
     .btn-edit { background: var(--surface2); color: var(--text); border: 1px solid var(--border); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
     .btn-edit:hover { border-color: #555; }
+    .btn-add { background: var(--accent); color: #000; border: none; font-weight: 600; }
+    .btn-add:hover { opacity: 0.85; }
     .btn-toggle { background: transparent; border: 1px solid var(--border); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
     .btn-toggle.is-live { color: var(--yellow); border-color: rgba(224,194,82,0.3); }
     .btn-toggle.is-hidden { color: var(--green); border-color: rgba(82,201,122,0.3); }
@@ -169,6 +171,7 @@
     .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #555; }
     .form-group textarea { resize: vertical; min-height: 80px; }
     .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .modal-actions .btn-grow { margin-right: auto; }
 
     /* ── APPROVE CONFIRM ── */
     .confirm-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 300; padding: 1rem; }
@@ -231,6 +234,7 @@
   <!-- FILMS PANEL -->
   <div id="panelFilms">
     <div class="toolbar">
+      <button class="btn btn-add" id="addFilmBtn">Add</button>
       <input class="search-input" type="text" placeholder="Search title, director…" id="searchInput">
       <select class="filter-select" id="filterGenre">
         <option value="">All genres</option>
@@ -285,6 +289,7 @@
     <h2 id="modalTitle">Edit Film</h2>
     <div class="form-grid" id="editForm"></div>
     <div class="modal-actions">
+      <button class="btn btn-edit btn-grow" id="modalGenerateReview">Generate review</button>
       <button class="btn btn-cancel" id="modalCancel">Cancel</button>
       <button class="btn btn-save" id="modalSave">Save changes</button>
     </div>
@@ -342,6 +347,7 @@ let adminPassword = '';
 let activeTab = 'films';
 let failedLoginAttempts = 0;
 let lockoutUntil = 0;
+let isCreatingFilm = false;
 
 // ══════════════════════════════════════════════════════════════
 // LOGIN
@@ -993,14 +999,57 @@ const EDITABLE_FIELDS = [
   { key: 'language', label: 'Language' },
 ];
 
+function buildEmptyFilmDraft() {
+  return {
+    title: '',
+    director: '',
+    writer: '',
+    producer: '',
+    genre: 'Drama',
+    runtime: '',
+    logline: '',
+    review: '',
+    filmLink: '',
+    thumbnail: '',
+    twitter: '',
+    onlinePremiere: '',
+    directorStatement: '',
+    cast: '',
+    language: '',
+    slug: '',
+    pending: false,
+    live: true,
+    accepted: true,
+    timestamp: new Date().toISOString()
+  };
+}
+
+function slugifyTitle(value) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'untitled';
+}
+
+function getEditFormValues() {
+  const inputs = document.getElementById('editForm').querySelectorAll('[data-key]');
+  const values = {};
+  inputs.forEach(inp => { values[inp.dataset.key] = inp.value || inp.textContent || ''; });
+  return values;
+}
+
 function openEditModal(film, options = {}) {
   editingFilm = film;
   modalReadOnly = !!options.readOnly;
+  isCreatingFilm = !!options.create;
   const form = document.getElementById('editForm');
   const saveBtn = document.getElementById('modalSave');
   const cancelBtn = document.getElementById('modalCancel');
+  const generateBtn = document.getElementById('modalGenerateReview');
   while (form.firstChild) form.removeChild(form.firstChild);
-  const prefix = options.titlePrefix || (modalReadOnly ? 'Viewing' : 'Editing');
+  const prefix = options.titlePrefix || (modalReadOnly ? 'Viewing' : (isCreatingFilm ? 'Add Film' : 'Editing'));
   document.getElementById('modalTitle').textContent = prefix + ': ' + (film.title || 'Untitled');
   EDITABLE_FIELDS.forEach(field => {
     const group = document.createElement('div');
@@ -1037,6 +1086,8 @@ function openEditModal(film, options = {}) {
     form.appendChild(group);
   });
   saveBtn.style.display = modalReadOnly ? 'none' : 'inline-flex';
+  generateBtn.style.display = modalReadOnly ? 'none' : 'inline-flex';
+  saveBtn.textContent = isCreatingFilm ? 'Create film' : 'Save changes';
   cancelBtn.textContent = modalReadOnly ? 'Close' : 'Cancel';
   document.getElementById('editModal').classList.add('open');
 }
@@ -1046,32 +1097,67 @@ document.getElementById('editModal').addEventListener('click', e => { if (e.targ
 function closeEditModal() {
   document.getElementById('editModal').classList.remove('open');
   document.getElementById('modalSave').style.display = 'inline-flex';
+  document.getElementById('modalSave').textContent = 'Save changes';
+  document.getElementById('modalGenerateReview').style.display = 'inline-flex';
   document.getElementById('modalCancel').textContent = 'Cancel';
   editingFilm = null;
   modalReadOnly = false;
+  isCreatingFilm = false;
 }
+
+document.getElementById('addFilmBtn').addEventListener('click', () => {
+  openEditModal(buildEmptyFilmDraft(), { create: true, titlePrefix: 'Add Film' });
+});
+
+document.getElementById('modalGenerateReview').addEventListener('click', () => {
+  if (!editingFilm || modalReadOnly) return;
+  const values = getEditFormValues();
+  const reviewField = document.getElementById('editForm').querySelector('[data-key="review"]');
+  if (!reviewField) return;
+  reviewField.value = generateReview(values);
+});
 
 document.getElementById('modalSave').addEventListener('click', async () => {
   if (!editingFilm || modalReadOnly) return;
-  const inputs = document.getElementById('editForm').querySelectorAll('[data-key]');
-  const updates = {};
-  inputs.forEach(inp => { updates[inp.dataset.key] = inp.value || inp.textContent || ''; });
-  const mongoId = editingFilm._id?.$oid || editingFilm._id?.toString() || editingFilm._id;
+  const updates = getEditFormValues();
   const btn = document.getElementById('modalSave');
-  btn.disabled = true; btn.textContent = 'Saving…';
+  const originalLabel = btn.textContent;
+  btn.disabled = true; btn.textContent = isCreatingFilm ? 'Creating…' : 'Saving…';
   try {
-    const res = await fetch(`${API_BASE}/admin?action=update&id=${mongoId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
-      body: JSON.stringify(updates)
-    });
+    if (!updates.slug) updates.slug = slugifyTitle(updates.title);
+    if (!updates.timestamp) updates.timestamp = new Date().toISOString();
+    updates.pending = false;
+    updates.accepted = true;
+
+    let res;
+    if (isCreatingFilm) {
+      updates.live = true;
+      res = await fetch(`${API_BASE}/admin?action=create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+        body: JSON.stringify(updates)
+      });
+    } else {
+      const mongoId = editingFilm._id?.$oid || editingFilm._id?.toString() || editingFilm._id;
+      res = await fetch(`${API_BASE}/admin?action=update&id=${mongoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+        body: JSON.stringify(updates)
+      });
+    }
     if (!res.ok) throw new Error();
-    Object.assign(editingFilm, updates);
+    if (isCreatingFilm) {
+      await loadFilms();
+    } else {
+      Object.assign(editingFilm, updates);
+    }
     closeEditModal();
     applyFilters();
-    showToast('Film saved', 'success');
-  } catch { showToast('Failed to save', 'error'); }
-  finally { btn.disabled = false; btn.textContent = 'Save changes'; }
+    showToast(isCreatingFilm ? 'Film created' : 'Film saved', 'success');
+  } catch {
+    showToast(isCreatingFilm ? 'Failed to create film' : 'Failed to save', 'error');
+  }
+  finally { btn.disabled = false; btn.textContent = originalLabel; }
 });
 
 // ══════════════════════════════════════════════════════════════
