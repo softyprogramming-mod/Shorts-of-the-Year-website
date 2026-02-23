@@ -159,6 +159,20 @@ body {
 .navbar[data-overlay="true"] .brand-drop {
   width: calc(var(--drop-w, var(--w, 0ch)) * (1 - var(--brand-condense-progress)));
   opacity: calc(1 - var(--brand-fade-progress));
+  /* Feather the trailing edge while width collapses so clipped letters fade out cleanly. */
+  --drop-feather: calc(12px * var(--brand-condense-progress));
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - var(--drop-feather)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - var(--drop-feather)),
+    transparent 100%
+  );
 }
 
 /* During measurement, force natural text widths so chunk spacing matches plain brand text */
@@ -400,6 +414,15 @@ mark {
   /* When solid (scrolled or inner pages), show black */
   .navbar--solid {
     background: var(--black) !important;
+  }
+
+  /* Mobile homepage: if JS marks us at top, keep nav transparent even if class lingers */
+  .navbar[data-overlay="true"].navbar--solid[data-at-top="true"] {
+    background: none !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 
   .brand {
