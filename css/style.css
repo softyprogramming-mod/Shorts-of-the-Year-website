@@ -513,9 +513,7 @@ mark {
   min-height: 560px;
   margin-top: 0;
   background-color: var(--black);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   text-align: center;
   overflow: hidden;
 }
@@ -538,6 +536,22 @@ mark {
   object-position: top center;
   display: block;
   z-index: 0;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+/* Hard guarantee for homepage hero image layer: keep it pinned to the top
+   even if class-based styling is missed or overridden. */
+#featuredHeroImage {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: cover !important;
+  object-position: top center !important;
+  z-index: 0 !important;
+  pointer-events: none;
 }
 
 .masthead::before {
