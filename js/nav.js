@@ -63,10 +63,11 @@
 
     var scroller = document.scrollingElement || document.documentElement || document.body;
     var rawScrollY = scroller ? scroller.scrollTop : 0;
+    var topStartThreshold = 36; // absorb browser load/restore jitter so homepage starts transparent
     // Nav state must follow real page scroll only.
     // Using masthead visual offsets here causes false "scrolled" states while resizing.
     var visualScrollY = rawScrollY;
-    var isAtTop = rawScrollY <= 1;
+    var isAtTop = rawScrollY <= topStartThreshold;
 
     // Hard rule: homepage nav starts transparent until an actual user scroll happens.
     if (!hasUserScrolled) {
@@ -101,7 +102,8 @@
       effectDistance = Math.max(220, masthead.offsetHeight * 0.72);
     }
 
-    progressTarget = Math.max(0, Math.min(1, rawScrollY / effectDistance));
+    var effectiveScrollY = Math.max(0, rawScrollY - topStartThreshold);
+    progressTarget = Math.max(0, Math.min(1, effectiveScrollY / effectDistance));
     // Keep SoftY phases locked to the same overall timeline.
     var brandProgress = progressTarget;
     // Two-phase brand animation:
