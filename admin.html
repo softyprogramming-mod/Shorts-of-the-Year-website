@@ -137,6 +137,12 @@
     tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
     tbody tr:hover { background: var(--surface); }
     tbody td { padding: 0.85rem 0.75rem; vertical-align: middle; }
+    tbody tr.row-draggable { cursor: grab; }
+    tbody tr.row-draggable.dragging { opacity: 0.5; }
+    tbody tr.row-drop-target { outline: 1px dashed #666; outline-offset: -2px; }
+    .td-drag { width: 28px; color: var(--text-dim); text-align: center; user-select: none; }
+    .drag-handle { font-size: 1rem; line-height: 1; display: inline-block; opacity: 0.65; }
+    .reorder-hint { font-size: 0.75rem; color: var(--text-dim); margin-left: 0.5rem; }
 
     .td-thumb img { width: 72px; height: 42px; object-fit: cover; border-radius: 4px; display: block; background: var(--surface2); }
     .td-title strong { display: block; font-weight: 500; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -253,7 +259,7 @@
       <table id="filmsTable" style="display:none">
         <thead>
           <tr>
-            <th></th><th>Title / Director</th><th>Genre</th>
+            <th></th><th></th><th>Title / Director</th><th>Genre</th>
             <th>Runtime</th><th>Status</th><th>Date</th><th>Actions</th>
           </tr>
         </thead>
@@ -347,6 +353,8 @@ let activeTab = 'films';
 let failedLoginAttempts = 0;
 let lockoutUntil = 0;
 let isCreatingFilm = false;
+let draggedFilmId = null;
+let savingReorder = false;
 
 // ══════════════════════════════════════════════════════════════
 // LOGIN
@@ -487,6 +495,8 @@ function renderFilmsTable(list) {
 
   document.getElementById('tableState').style.display = 'none';
   document.getElementById('filmsTable').style.display = 'table';
+  const reorderEnabled = canReorderFilmsInCurrentView();
+  document.getElementById('filmCountLabel').innerHTML = `${films.length} film${films.length !== 1 ? 's' : ''}${reorderEnabled ? '<span class="reorder-hint">Drag to reorder · top live film = homepage hero</span>' : ''}`;
   list.forEach(film => body.appendChild(createFilmRow(film)));
 }
 
@@ -494,6 +504,24 @@ function createFilmRow(film) {
   const tr = document.createElement('tr');
   const mongoId = film._id?.$oid || film._id?.toString() || film._id;
   tr.dataset.id = mongoId;
+  const reorderEnabled = canReorderFilmsInCurrentView();
+  if (reorderEnabled) {
+    tr.classList.add('row-draggable');
+    tr.draggable = true;
+    tr.addEventListener('dragstart', onFilmRowDragStart);
+    tr.addEventListener('dragover', onFilmRowDragOver);
+    tr.addEventListener('dragleave', onFilmRowDragLeave);
+    tr.addEventListener('drop', onFilmRowDrop);
+    tr.addEventListener('dragend', onFilmRowDragEnd);
+  }
+
+  const tdDrag = document.createElement('td');
+  tdDrag.className = 'td-drag';
+  const dragHandle = document.createElement('span');
+  dragHandle.className = 'drag-handle';
+  dragHandle.textContent = reorderEnabled ? '⋮⋮' : '';
+  tdDrag.appendChild(dragHandle);
+  tr.appendChild(tdDrag);
 
   const tdThumb = document.createElement('td');
   tdThumb.className = 'td-thumb';
@@ -567,6 +595,88 @@ function createFilmRow(film) {
   tr.appendChild(tdActions);
 
   return tr;
+}
+
+function getFilmId(film) {
+  return film && (film._id?.$oid || film._id?.toString() || film._id);
+}
+
+function canReorderFilmsInCurrentView() {
+  const q = document.getElementById('searchInput')?.value.trim();
+  const genre = document.getElementById('filterGenre')?.value;
+  const status = document.getElementById('filterStatus')?.value;
+  return activeTab === 'films' && !q && !genre && !status && films.length > 1;
+}
+
+function onFilmRowDragStart(e) {
+  draggedFilmId = e.currentTarget.dataset.id;
+  e.currentTarget.classList.add('dragging');
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', draggedFilmId || '');
+  }
+}
+
+function onFilmRowDragOver(e) {
+  e.preventDefault();
+  if (!draggedFilmId || draggedFilmId === e.currentTarget.dataset.id) return;
+  e.currentTarget.classList.add('row-drop-target');
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+}
+
+function onFilmRowDragLeave(e) {
+  e.currentTarget.classList.remove('row-drop-target');
+}
+
+function onFilmRowDrop(e) {
+  e.preventDefault();
+  const targetRow = e.currentTarget;
+  targetRow.classList.remove('row-drop-target');
+  const targetId = targetRow.dataset.id;
+  const sourceId = draggedFilmId || (e.dataTransfer && e.dataTransfer.getData('text/plain'));
+  if (!sourceId || !targetId || sourceId === targetId) return;
+  if (!moveFilmInOrder(sourceId, targetId)) return;
+  applyFilters();
+  void saveFilmOrder();
+}
+
+function onFilmRowDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('#filmsBody tr').forEach(row => row.classList.remove('row-drop-target', 'dragging'));
+  draggedFilmId = null;
+}
+
+function moveFilmInOrder(sourceId, targetId) {
+  const sourceIdx = films.findIndex(f => getFilmId(f) === sourceId);
+  const targetIdx = films.findIndex(f => getFilmId(f) === targetId);
+  if (sourceIdx < 0 || targetIdx < 0 || sourceIdx === targetIdx) return false;
+  const [moved] = films.splice(sourceIdx, 1);
+  films.splice(targetIdx, 0, moved);
+  films.forEach((film, idx) => { film.sortOrder = idx; });
+  return true;
+}
+
+async function saveFilmOrder() {
+  if (savingReorder) return;
+  savingReorder = true;
+  try {
+    const ids = films.map(getFilmId).filter(Boolean);
+    const res = await fetch(`${API_BASE}/admin?action=reorder`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': adminPassword
+      },
+      body: JSON.stringify({ ids })
+    });
+    if (!res.ok) throw new Error();
+    showToast('Film order saved', 'success');
+  } catch (_) {
+    showToast('Failed to save film order', 'error');
+    void loadFilms();
+  } finally {
+    savingReorder = false;
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
