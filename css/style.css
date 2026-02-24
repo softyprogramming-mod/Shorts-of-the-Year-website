@@ -513,45 +513,12 @@ mark {
   min-height: 560px;
   margin-top: 0;
   background-color: var(--black);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center top;
   display: block;
   text-align: center;
   overflow: hidden;
-}
-
-/* Wide thumbnails (most video thumbs, ~16:9) should not be forced into the same
-   very tall hero treatment as squarer images. JS adds this class after reading
-   the actual thumbnail dimensions. We keep the top pinned and let height track
-   the thumbnail aspect more closely on mid-size viewports. */
-.masthead.masthead--thumb-wide {
-  height: min(100vh, max(420px, calc(100vw / var(--hero-thumb-aspect, 1.7778))));
-  min-height: 420px;
-}
-
-.masthead-media {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-  display: block;
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 220ms ease;
-}
-
-/* Hard guarantee for homepage hero image layer: keep it pinned to the top
-   even if class-based styling is missed or overridden. */
-#featuredHeroImage {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  display: block !important;
-  object-fit: cover !important;
-  object-position: top center !important;
-  z-index: 0 !important;
-  pointer-events: none;
 }
 
 .masthead::before {
@@ -652,10 +619,6 @@ mark {
 
 @media (max-width: 768px) {
   .masthead { height: 70vh; min-height: 0; }
-  .masthead.masthead--thumb-wide {
-    height: max(320px, min(70vh, calc(100vw / var(--hero-thumb-aspect, 1.7778))));
-    min-height: 320px;
-  }
   .masthead::before {
     background: linear-gradient(to bottom, rgba(0,0,0,0.01) 0%, rgba(0,0,0,0.18) 48%, rgba(0,0,0,0.7) 100%);
   }
