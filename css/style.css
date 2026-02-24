@@ -489,6 +489,17 @@ mark {
   }
 }
 
+/* Homepage nav must remain transparent unless JS explicitly marks scrolled.
+   This preserves visible hero pixels at the very top on initial load/resize. */
+.navbar[data-overlay="true"]:not([data-at-top="false"]),
+.navbar[data-overlay="true"]:not([data-at-top="false"])[style] {
+  background: none !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 /* =============================================
    HERO / MASTHEAD
    ============================================= */
@@ -498,9 +509,8 @@ mark {
 .masthead {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  height: auto;
-  max-height: 100vh;
+  height: 100vh;
+  min-height: 560px;
   margin-top: 0;
   background-color: var(--black);
   display: flex;
@@ -631,6 +641,7 @@ mark {
 }
 
 @media (max-width: 768px) {
+  .masthead { height: 70vh; min-height: 0; }
   .masthead::before {
     background: linear-gradient(to bottom, rgba(0,0,0,0.01) 0%, rgba(0,0,0,0.18) 48%, rgba(0,0,0,0.7) 100%);
   }
