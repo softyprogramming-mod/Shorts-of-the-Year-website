@@ -101,6 +101,7 @@ function displayFeaturedFilm() {
 
     const img = new Image();
     img.onload = () => {
+        masthead.style.backgroundImage = 'none';
         requestAnimationFrame(() => masthead.classList.add('masthead--ready'));
     };
     img.onerror = () => {
