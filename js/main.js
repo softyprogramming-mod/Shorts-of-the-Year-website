@@ -4,7 +4,6 @@ let allFilms = [];
 let displayedFilms = 0;
 const filmsPerLoad = 9;
 let featuredTitleInteractiveTimer = null;
-const WIDE_THUMB_ASPECT_THRESHOLD = 1.6;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Homepage mobile: allow native pull-to-refresh behavior.
@@ -17,17 +16,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Keep homepage hero fallback pure black while the API/image loads.
     // Gray fallback reads like a broken frame with the new <img>-based hero.
     const masthead = document.getElementById('masthead');
-    const heroImgEl = document.getElementById('featuredHeroImage');
     const featuredMeta = document.getElementById('featuredMeta');
     if (masthead) {
         masthead.classList.remove('masthead--ready');
-        masthead.classList.remove('masthead--thumb-wide');
-        masthead.style.removeProperty('--hero-thumb-aspect');
         masthead.style.backgroundImage = 'none';
-    }
-    if (heroImgEl) {
-        heroImgEl.removeAttribute('src');
-        heroImgEl.style.opacity = '0';
     }
     if (featuredMeta) featuredMeta.classList.remove('masthead-meta--ready');
 
@@ -64,16 +56,12 @@ function displayFeaturedFilm() {
         if (featuredMeta) featuredMeta.classList.remove('masthead-meta--ready');
         featuredTitle.textContent = '';
         const masthead = document.getElementById('masthead');
-        if (masthead) {
-            masthead.classList.remove('masthead--thumb-wide');
-            masthead.style.removeProperty('--hero-thumb-aspect');
-        }
+        if (masthead) masthead.style.backgroundImage = 'none';
         return;
     }
 
     const featured = allFilms[0];
     const masthead = document.getElementById('masthead');
-    const heroImgEl = document.getElementById('featuredHeroImage');
 
     if (featuredTitleInteractiveTimer) {
         clearTimeout(featuredTitleInteractiveTimer);
@@ -97,51 +85,22 @@ function displayFeaturedFilm() {
     const heroUrl = sanitizeUrl(featured.thumbnail);
     if (!masthead) return;
     if (!heroUrl) {
-        if (heroImgEl) {
-            heroImgEl.removeAttribute('src');
-            heroImgEl.style.opacity = '0';
-        }
-        masthead.classList.remove('masthead--thumb-wide');
-        masthead.style.removeProperty('--hero-thumb-aspect');
+        masthead.style.backgroundImage = 'none';
         masthead.classList.add('masthead--ready');
         return;
     }
 
     const img = new Image();
     img.onload = () => {
-        applyFeaturedHeroSizing_(masthead, img.naturalWidth, img.naturalHeight);
-        if (heroImgEl) {
-            heroImgEl.src = heroUrl;
-            heroImgEl.alt = featured.title || '';
-            requestAnimationFrame(() => {
-                heroImgEl.style.opacity = '1';
-            });
-        }
-        masthead.style.backgroundImage = 'none';
+        const safeCssUrl = heroUrl.replace(/"/g, '%22');
+        masthead.style.backgroundImage = `url("${safeCssUrl}")`;
         requestAnimationFrame(() => masthead.classList.add('masthead--ready'));
     };
     img.onerror = () => {
-        if (heroImgEl) heroImgEl.style.opacity = '0';
-        masthead.classList.remove('masthead--thumb-wide');
-        masthead.style.removeProperty('--hero-thumb-aspect');
+        masthead.style.backgroundImage = 'none';
         masthead.classList.add('masthead--ready');
     };
     img.src = heroUrl;
-}
-
-function applyFeaturedHeroSizing_(masthead, width, height) {
-    if (!masthead) return;
-    const w = Number(width) || 0;
-    const h = Number(height) || 0;
-    if (w <= 0 || h <= 0) {
-        masthead.classList.remove('masthead--thumb-wide');
-        masthead.style.removeProperty('--hero-thumb-aspect');
-        return;
-    }
-
-    const aspect = w / h;
-    masthead.style.setProperty('--hero-thumb-aspect', String(aspect));
-    masthead.classList.toggle('masthead--thumb-wide', aspect >= WIDE_THUMB_ASPECT_THRESHOLD);
 }
 
 // Display film grid
