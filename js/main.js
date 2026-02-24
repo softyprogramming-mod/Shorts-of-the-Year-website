@@ -14,8 +14,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.body.style.webkitOverflowScrolling = 'touch';
     }
 
-    // Set a dark gradient on masthead immediately so it doesn't flash solid black
-    // while the API is loading. This matches the site's dark aesthetic.
+    // Keep homepage hero fallback pure black while the API/image loads.
+    // Gray fallback reads like a broken frame with the new <img>-based hero.
     const masthead = document.getElementById('masthead');
     const heroImgEl = document.getElementById('featuredHeroImage');
     const featuredMeta = document.getElementById('featuredMeta');
@@ -23,9 +23,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         masthead.classList.remove('masthead--ready');
         masthead.classList.remove('masthead--thumb-wide');
         masthead.style.removeProperty('--hero-thumb-aspect');
-        masthead.style.backgroundImage = 'linear-gradient(to bottom, #1a1a1a 0%, #0d0d0d 100%)';
+        masthead.style.backgroundImage = 'none';
     }
-    if (heroImgEl) heroImgEl.removeAttribute('src');
+    if (heroImgEl) {
+        heroImgEl.removeAttribute('src');
+        heroImgEl.style.opacity = '0';
+    }
     if (featuredMeta) featuredMeta.classList.remove('masthead-meta--ready');
 
     await loadFilms();
@@ -94,27 +97,31 @@ function displayFeaturedFilm() {
     const heroUrl = sanitizeUrl(featured.thumbnail);
     if (!masthead) return;
     if (!heroUrl) {
-        if (heroImgEl) heroImgEl.removeAttribute('src');
+        if (heroImgEl) {
+            heroImgEl.removeAttribute('src');
+            heroImgEl.style.opacity = '0';
+        }
         masthead.classList.remove('masthead--thumb-wide');
         masthead.style.removeProperty('--hero-thumb-aspect');
         masthead.classList.add('masthead--ready');
         return;
     }
 
-    // Paint the hero image immediately in a dedicated media layer so the top of
-    // the image stays pinned to the top of the hero container while resizing.
-    if (heroImgEl) {
-        heroImgEl.src = heroUrl;
-        heroImgEl.alt = featured.title || '';
-    }
-
     const img = new Image();
     img.onload = () => {
         applyFeaturedHeroSizing_(masthead, img.naturalWidth, img.naturalHeight);
+        if (heroImgEl) {
+            heroImgEl.src = heroUrl;
+            heroImgEl.alt = featured.title || '';
+            requestAnimationFrame(() => {
+                heroImgEl.style.opacity = '1';
+            });
+        }
         masthead.style.backgroundImage = 'none';
         requestAnimationFrame(() => masthead.classList.add('masthead--ready'));
     };
     img.onerror = () => {
+        if (heroImgEl) heroImgEl.style.opacity = '0';
         masthead.classList.remove('masthead--thumb-wide');
         masthead.style.removeProperty('--hero-thumb-aspect');
         masthead.classList.add('masthead--ready');
