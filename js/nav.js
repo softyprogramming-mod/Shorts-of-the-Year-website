@@ -9,6 +9,7 @@
   var progressTarget = 0;
   var progressCurrent = 0;
   var rafId = 0;
+  var hasUserScrolled = false;
 
   if (!navbar) return;
 
@@ -55,9 +56,10 @@
     }
   }
 
-  function applyNavState() {
+  function applyNavState(fromScrollEvent) {
     // Only homepage uses overlay behavior
     if (navbar.dataset.overlay !== 'true') return;
+    if (fromScrollEvent) hasUserScrolled = true;
 
     var scroller = document.scrollingElement || document.documentElement || document.body;
     var rawScrollY = scroller ? scroller.scrollTop : 0;
@@ -65,6 +67,11 @@
     // Using masthead visual offsets here causes false "scrolled" states while resizing.
     var visualScrollY = rawScrollY;
     var isAtTop = rawScrollY <= 1;
+
+    // Hard rule: homepage nav starts transparent until an actual user scroll happens.
+    if (!hasUserScrolled) {
+      isAtTop = true;
+    }
 
     // Always be fully transparent at true top (no lag on return to top)
     if (isAtTop) {
@@ -133,15 +140,15 @@
 
   // Run immediately and on page events
   measureBrandDropWidths();
-  applyNavState();
+  applyNavState(false);
   window.addEventListener('resize', function () {
     measureBrandDropWidths();
-    applyNavState();
+    applyNavState(false);
   });
-  window.addEventListener('scroll', applyNavState, { passive: true });
+  window.addEventListener('scroll', function () { applyNavState(true); }, { passive: true });
   window.addEventListener('pageshow', function () {
     measureBrandDropWidths();
-    applyNavState();
+    applyNavState(false);
   });
 
   // Mobile menu toggle
