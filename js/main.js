@@ -4,6 +4,7 @@ let allFilms = [];
 let displayedFilms = 0;
 const filmsPerLoad = 9;
 let featuredTitleInteractiveTimer = null;
+const WIDE_THUMB_ASPECT_THRESHOLD = 1.6;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Homepage mobile: allow native pull-to-refresh behavior.
@@ -20,6 +21,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const featuredMeta = document.getElementById('featuredMeta');
     if (masthead) {
         masthead.classList.remove('masthead--ready');
+        masthead.classList.remove('masthead--thumb-wide');
+        masthead.style.removeProperty('--hero-thumb-aspect');
         masthead.style.backgroundImage = 'linear-gradient(to bottom, #1a1a1a 0%, #0d0d0d 100%)';
     }
     if (heroImgEl) heroImgEl.removeAttribute('src');
@@ -36,9 +39,8 @@ async function loadFilms() {
     try {
         const response = await fetch('https://softy-api-phi.vercel.app/api/films');
         const data = await response.json();
-        allFilms = (data.films || [])
-            .filter(film => film.live)
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        // Respect API order (admin drag-reorder sets the homepage hero order).
+        allFilms = (data.films || []).filter(film => film.live);
     } catch (error) {
         console.error('Error loading films:', error);
     }
@@ -58,6 +60,11 @@ function displayFeaturedFilm() {
         featuredTitle.classList.remove('featured-title--ready', 'featured-title--interactive');
         if (featuredMeta) featuredMeta.classList.remove('masthead-meta--ready');
         featuredTitle.textContent = '';
+        const masthead = document.getElementById('masthead');
+        if (masthead) {
+            masthead.classList.remove('masthead--thumb-wide');
+            masthead.style.removeProperty('--hero-thumb-aspect');
+        }
         return;
     }
 
@@ -88,6 +95,8 @@ function displayFeaturedFilm() {
     if (!masthead) return;
     if (!heroUrl) {
         if (heroImgEl) heroImgEl.removeAttribute('src');
+        masthead.classList.remove('masthead--thumb-wide');
+        masthead.style.removeProperty('--hero-thumb-aspect');
         masthead.classList.add('masthead--ready');
         return;
     }
@@ -101,13 +110,31 @@ function displayFeaturedFilm() {
 
     const img = new Image();
     img.onload = () => {
+        applyFeaturedHeroSizing_(masthead, img.naturalWidth, img.naturalHeight);
         masthead.style.backgroundImage = 'none';
         requestAnimationFrame(() => masthead.classList.add('masthead--ready'));
     };
     img.onerror = () => {
+        masthead.classList.remove('masthead--thumb-wide');
+        masthead.style.removeProperty('--hero-thumb-aspect');
         masthead.classList.add('masthead--ready');
     };
     img.src = heroUrl;
+}
+
+function applyFeaturedHeroSizing_(masthead, width, height) {
+    if (!masthead) return;
+    const w = Number(width) || 0;
+    const h = Number(height) || 0;
+    if (w <= 0 || h <= 0) {
+        masthead.classList.remove('masthead--thumb-wide');
+        masthead.style.removeProperty('--hero-thumb-aspect');
+        return;
+    }
+
+    const aspect = w / h;
+    masthead.style.setProperty('--hero-thumb-aspect', String(aspect));
+    masthead.classList.toggle('masthead--thumb-wide', aspect >= WIDE_THUMB_ASPECT_THRESHOLD);
 }
 
 // Display film grid
