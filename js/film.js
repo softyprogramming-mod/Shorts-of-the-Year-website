@@ -49,6 +49,12 @@ function displayFilm(film) {
     document.getElementById('infoRuntime').textContent = film.runtime + ' min';
     document.getElementById('infoPremiere').textContent = film.onlinePremiere;
 
+    if (film.completionDate) {
+        document.getElementById('infoCompletionDate').textContent = film.completionDate;
+    } else {
+        document.getElementById('completionDateSection').style.display = 'none';
+    }
+
     if (!film.producer) {
         document.getElementById('producerSection').style.display = 'none';
     }
