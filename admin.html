@@ -310,6 +310,15 @@
       grid-template-columns: 1fr 1fr;
       gap: 0.85rem;
     }
+    .arc-step-footer {
+      padding: 0.85rem 1rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      background: rgba(255,255,255,0.01);
+    }
     .arc-step-body .full { grid-column: 1 / -1; }
     .arc-field {
       display: flex;
@@ -965,8 +974,33 @@ function renderRejectionArc() {
       body.appendChild(hint);
     }
 
+    const footer = document.createElement('div');
+    footer.className = 'arc-step-footer';
+
+    const addEmailAfterBtn = document.createElement('button');
+    addEmailAfterBtn.type = 'button';
+    addEmailAfterBtn.className = 'btn btn-add';
+    addEmailAfterBtn.style.padding = '0.5rem 0.85rem';
+    addEmailAfterBtn.style.fontSize = '0.8rem';
+    addEmailAfterBtn.textContent = 'Add Email Step';
+    addEmailAfterBtn.dataset.arcAction = 'insertCustomAfter';
+    addEmailAfterBtn.dataset.index = String(idx);
+
+    const addAcceptanceAfterBtn = document.createElement('button');
+    addAcceptanceAfterBtn.type = 'button';
+    addAcceptanceAfterBtn.className = 'btn btn-edit';
+    addAcceptanceAfterBtn.style.padding = '0.5rem 0.85rem';
+    addAcceptanceAfterBtn.style.fontSize = '0.8rem';
+    addAcceptanceAfterBtn.textContent = 'Add Acceptance Email';
+    addAcceptanceAfterBtn.dataset.arcAction = 'insertAcceptanceAfter';
+    addAcceptanceAfterBtn.dataset.index = String(idx);
+
+    footer.appendChild(addEmailAfterBtn);
+    footer.appendChild(addAcceptanceAfterBtn);
+
     card.appendChild(head);
     card.appendChild(body);
+    card.appendChild(footer);
     stepsWrap.appendChild(card);
   });
 }
@@ -1106,10 +1140,26 @@ function addArcStep() {
   });
 }
 
+function addArcStepAfter(index) {
+  mutateArcSteps((steps) => {
+    const insertAt = Math.min(Math.max(index + 1, 0), steps.length);
+    const next = buildEmptyArcStep(insertAt);
+    steps.splice(insertAt, 0, next);
+  });
+}
+
 function addArcAcceptanceStep() {
   mutateArcSteps((steps) => {
     const next = buildAcceptanceArcStep(steps.length);
     steps.push(next);
+  });
+}
+
+function addArcAcceptanceStepAfter(index) {
+  mutateArcSteps((steps) => {
+    const insertAt = Math.min(Math.max(index + 1, 0), steps.length);
+    const next = buildAcceptanceArcStep(insertAt);
+    steps.splice(insertAt, 0, next);
   });
 }
 
@@ -1609,6 +1659,14 @@ document.getElementById('panelRejectionArc').addEventListener('click', (e) => {
   const action = btn.dataset.arcAction;
   if (action === 'insertToken') {
     insertTokenIntoArcBody(idx, btn.dataset.arcToken || '');
+    return;
+  }
+  if (action === 'insertCustomAfter') {
+    addArcStepAfter(idx);
+    return;
+  }
+  if (action === 'insertAcceptanceAfter') {
+    addArcAcceptanceStepAfter(idx);
     return;
   }
   if (action === 'moveUp') moveArcStep(idx, -1);
