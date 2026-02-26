@@ -769,7 +769,7 @@ async function loadSubmissions() {
     });
     if (!res.ok) throw new Error();
     const data = await res.json();
-    submissions = (data.films || []).filter(f => f.pending === true);
+    submissions = (data.films || []).filter(f => f.pending === true && f.rejectionArcActive !== true);
     renderSubsTable(submissions);
     document.getElementById('subsTabCount').textContent = submissions.length;
   } catch (err) {
@@ -1876,13 +1876,20 @@ async function rejectSubmission(mongoId, title, tr) {
       } catch (_) {}
       throw new Error(msg);
     }
+    let result = {};
+    try { result = await res.json(); } catch (_) {}
     submissions = submissions.filter(s => {
       const sid = s._id?.$oid || s._id?.toString() || s._id;
       return sid !== mongoId;
     });
     renderSubsTable(submissions);
     document.getElementById('subsTabCount').textContent = submissions.length;
-    showToast('Submission rejected and email sent', 'success');
+    if (result && result.rejectionArcActive) {
+      void loadRejectionTracker(true);
+      showToast('Rejection arc started (moved to tracker)', 'success');
+    } else {
+      showToast('Submission rejected and email sent', 'success');
+    }
   } catch (err) {
     showToast(err && err.message ? err.message : 'Failed to reject', 'error');
   }
