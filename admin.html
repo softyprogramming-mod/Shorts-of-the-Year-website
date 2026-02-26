@@ -190,6 +190,196 @@
     .btn-confirm-approve { background: var(--green); color: #000; border: none; font-weight: 600; }
     .btn-confirm-approve:hover { opacity: 0.85; }
 
+    /* ── REJECTION ARC ── */
+    .panel-section {
+      padding: 1.5rem 2rem;
+    }
+    .arc-shell {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+    .arc-shell-head {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .arc-shell-head h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .arc-shell-head p {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-top: 0.2rem;
+    }
+    .arc-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: #111;
+    }
+    .arc-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+    .arc-toggle input { accent-color: #fff; }
+    .arc-meta-note {
+      color: var(--text-dim);
+      font-size: 0.75rem;
+    }
+    .arc-updated {
+      margin-left: auto;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+    }
+    .arc-steps {
+      padding: 1rem;
+      display: grid;
+      gap: 1rem;
+    }
+    .arc-step-card {
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .arc-step-head {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .arc-step-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .arc-step-index {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.7rem;
+      height: 1.7rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      background: rgba(255,255,255,0.02);
+    }
+    .arc-step-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .arc-step-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+    .btn-mini {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      padding: 0.32rem 0.55rem;
+    }
+    .btn-mini:hover { color: var(--text); border-color: #555; }
+    .btn-mini-danger { color: var(--red); border-color: rgba(224,82,82,0.3); }
+    .btn-mini-danger:hover { background: rgba(224,82,82,0.08); }
+    .arc-step-body {
+      padding: 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.85rem;
+    }
+    .arc-step-body .full { grid-column: 1 / -1; }
+    .arc-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .arc-field label {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .arc-field input,
+    .arc-field select,
+    .arc-field textarea {
+      background: #121212;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.85rem;
+      padding: 0.55rem 0.7rem;
+      outline: none;
+      font-family: var(--font);
+    }
+    .arc-field textarea {
+      min-height: 140px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+    .arc-field-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.45rem;
+      align-items: center;
+    }
+    .arc-field-tools .tool-label {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-right: 0.2rem;
+    }
+    .arc-step-hint {
+      grid-column: 1 / -1;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.7rem 0.8rem;
+      line-height: 1.4;
+    }
+    .arc-delay-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      align-items: end;
+    }
+    .arc-empty {
+      padding: 2rem 1.25rem;
+      color: var(--text-dim);
+      text-align: center;
+      font-size: 0.85rem;
+    }
+    .arc-dirty {
+      color: var(--yellow);
+      font-size: 0.75rem;
+      margin-right: 0.5rem;
+    }
+
     /* ── TOAST ── */
     #toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem 1.25rem; font-size: 0.875rem; opacity: 0; transform: translateY(8px); transition: opacity 0.25s, transform 0.25s; z-index: 400; pointer-events: none; }
     #toast.show { opacity: 1; transform: translateY(0); }
@@ -200,6 +390,10 @@
       header, .toolbar, .table-wrap { padding-left: 1rem; padding-right: 1rem; }
       .form-grid { grid-template-columns: 1fr; }
       .tabs { padding: 0 1rem; }
+      .panel-section { padding-left: 1rem; padding-right: 1rem; }
+      .arc-step-body { grid-template-columns: 1fr; }
+      .arc-delay-grid { grid-template-columns: 1fr; }
+      .arc-updated { margin-left: 0; width: 100%; }
     }
   </style>
 </head>
@@ -234,6 +428,9 @@
     </button>
     <button class="tab-btn" id="tabSubmissions" onclick="switchTab('submissions')">
       Submissions <span class="tab-count pending-count" id="subsTabCount">0</span>
+    </button>
+    <button class="tab-btn" id="tabRejectionArc" onclick="switchTab('rejectionArc')">
+      Rejection Arc
     </button>
   </div>
 
@@ -284,6 +481,43 @@
         </thead>
         <tbody id="subsBody"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- REJECTION ARC PANEL -->
+  <div id="panelRejectionArc" style="display:none">
+    <div class="toolbar">
+      <button class="btn btn-add" id="arcAddStepBtn" type="button">Add Email Step</button>
+      <button class="btn btn-edit" id="arcAddAcceptanceStepBtn" type="button">Add Acceptance Email</button>
+      <button class="btn btn-edit" id="arcReloadBtn" type="button">Reload</button>
+      <button class="btn btn-save" id="arcSaveBtn" type="button">Save Arc</button>
+      <span class="count-badge" id="arcToolbarStatus">Not loaded</span>
+    </div>
+    <div class="panel-section">
+      <div class="arc-shell">
+        <div class="arc-shell-head">
+          <div>
+            <h3>Rejection Arc Templates</h3>
+            <p>Configure sender display names, subjects, bodies, and time delays between emails.</p>
+          </div>
+          <div>
+            <span id="arcDirtyBadge" class="arc-dirty" style="display:none">Unsaved changes</span>
+          </div>
+        </div>
+        <div class="arc-meta-row">
+          <label class="arc-toggle">
+            <input type="checkbox" id="arcEnabled">
+            <span>Enable custom rejection arc</span>
+          </label>
+          <div class="arc-meta-note">Step 1 delay is relative to the rejection event. Later steps are relative to the previous email.</div>
+          <div class="arc-updated" id="arcUpdatedAt">—</div>
+        </div>
+        <div id="arcState" class="state-msg">Open the tab to load arc settings…</div>
+        <div id="arcEditor" style="display:none">
+          <div class="arc-steps" id="arcSteps"></div>
+          <div class="arc-empty" id="arcEmpty" style="display:none">No steps configured. Add one to start the arc.</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -355,6 +589,11 @@ let lockoutUntil = 0;
 let isCreatingFilm = false;
 let draggedFilmId = null;
 let savingReorder = false;
+let rejectionArcConfig = null;
+let rejectionArcLoaded = false;
+let rejectionArcDirty = false;
+let loadingRejectionArc = false;
+let savingRejectionArc = false;
 
 // ══════════════════════════════════════════════════════════════
 // LOGIN
@@ -421,6 +660,11 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   adminPassword = '';
   films = [];
   submissions = [];
+  rejectionArcConfig = null;
+  rejectionArcLoaded = false;
+  rejectionArcDirty = false;
+  loadingRejectionArc = false;
+  savingRejectionArc = false;
   document.getElementById('adminApp').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('pwInput').value = '';
@@ -433,8 +677,13 @@ function switchTab(tab) {
   activeTab = tab;
   document.getElementById('panelFilms').style.display = tab === 'films' ? 'block' : 'none';
   document.getElementById('panelSubmissions').style.display = tab === 'submissions' ? 'block' : 'none';
+  document.getElementById('panelRejectionArc').style.display = tab === 'rejectionArc' ? 'block' : 'none';
   document.getElementById('tabFilms').classList.toggle('active', tab === 'films');
   document.getElementById('tabSubmissions').classList.toggle('active', tab === 'submissions');
+  document.getElementById('tabRejectionArc').classList.toggle('active', tab === 'rejectionArc');
+  if (tab === 'rejectionArc' && !rejectionArcLoaded) {
+    void loadRejectionArc();
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -474,6 +723,472 @@ async function loadSubmissions() {
   } catch (err) {
     document.getElementById('subTableState').textContent = '⚠ Could not load submissions.';
   }
+}
+
+// ══════════════════════════════════════════════════════════════
+// REJECTION ARC CONFIG
+// ══════════════════════════════════════════════════════════════
+const ARC_DELAY_UNITS_CLIENT = ['minutes', 'hours', 'days'];
+const ARC_STEP_TYPES_CLIENT = ['custom', 'acceptance_builtin'];
+const ARC_PLACEHOLDER_TOKENS = ['[FILM NAME]', '[SUBMITTERS NAME]'];
+
+function buildDefaultRejectionArcConfigClient() {
+  return {
+    enabled: false,
+    updatedAt: null,
+    steps: [buildEmptyArcStep(0)]
+  };
+}
+
+function buildEmptyArcStep(index = 0) {
+  return {
+    id: 'step_' + (index + 1) + '_' + Date.now(),
+    name: `Email ${index + 1}`,
+    senderName: 'Shorts of the Year',
+    subject: '',
+    body: '',
+    delayAmount: index === 0 ? 0 : 24,
+    delayUnit: 'hours',
+    enabled: true,
+    stepType: 'custom',
+    triggerAcceptanceFollowup: false
+  };
+}
+
+function buildAcceptanceArcStep(index = 0) {
+  return {
+    id: 'step_acceptance_' + Date.now(),
+    name: 'Acceptance Email',
+    senderName: 'Shorts of the Year',
+    subject: '[BUILT-IN ACCEPTANCE EMAIL]',
+    body: '[BUILT-IN ACCEPTANCE EMAIL BODY]\n\nThis step uses the current SoftY acceptance email template and schedules the normal acceptance follow-up actions (including delayed site publish timing) when the arc runner supports it.',
+    delayAmount: index === 0 ? 0 : 24,
+    delayUnit: 'hours',
+    enabled: true,
+    stepType: 'acceptance_builtin',
+    triggerAcceptanceFollowup: true
+  };
+}
+
+function normalizeArcConfigClient(raw) {
+  const cfg = raw && typeof raw === 'object' ? raw : {};
+  const steps = Array.isArray(cfg.steps) ? cfg.steps.map((step, idx) => ({
+    id: String(step?.id || `step_${idx + 1}`),
+    name: String(step?.name || `Email ${idx + 1}`),
+    senderName: String(step?.senderName || 'Shorts of the Year'),
+    subject: String(step?.subject || ''),
+    body: String(step?.body || ''),
+    delayAmount: Number.isFinite(Number(step?.delayAmount)) ? Math.max(0, Math.round(Number(step.delayAmount))) : (idx === 0 ? 0 : 24),
+    delayUnit: ARC_DELAY_UNITS_CLIENT.includes(String(step?.delayUnit || '').toLowerCase()) ? String(step.delayUnit).toLowerCase() : 'hours',
+    enabled: step?.enabled !== false,
+    stepType: ARC_STEP_TYPES_CLIENT.includes(String(step?.stepType || '').toLowerCase()) ? String(step.stepType).toLowerCase() : 'custom',
+    triggerAcceptanceFollowup: step?.triggerAcceptanceFollowup === true
+  })) : [];
+  return {
+    enabled: cfg.enabled !== false,
+    updatedAt: cfg.updatedAt || null,
+    steps: steps.length ? steps : [buildEmptyArcStep(0)]
+  };
+}
+
+function formatArcUpdatedAt(ts) {
+  if (!ts) return 'Last saved: —';
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return 'Last saved: —';
+  return 'Last saved: ' + d.toLocaleString();
+}
+
+function markRejectionArcDirty(dirty = true) {
+  rejectionArcDirty = !!dirty;
+  const badge = document.getElementById('arcDirtyBadge');
+  const status = document.getElementById('arcToolbarStatus');
+  badge.style.display = rejectionArcDirty ? 'inline' : 'none';
+  if (rejectionArcDirty) {
+    status.textContent = 'Unsaved changes';
+  } else if (rejectionArcLoaded) {
+    status.textContent = `${(rejectionArcConfig?.steps || []).length} step${(rejectionArcConfig?.steps || []).length === 1 ? '' : 's'} loaded`;
+  }
+}
+
+function updateArcMetaUI() {
+  document.getElementById('arcEnabled').checked = !!rejectionArcConfig?.enabled;
+  document.getElementById('arcUpdatedAt').textContent = formatArcUpdatedAt(rejectionArcConfig?.updatedAt || null);
+  document.getElementById('arcToolbarStatus').textContent = loadingRejectionArc
+    ? 'Loading…'
+    : `${(rejectionArcConfig?.steps || []).length} step${(rejectionArcConfig?.steps || []).length === 1 ? '' : 's'} loaded`;
+}
+
+function renderRejectionArc() {
+  const state = document.getElementById('arcState');
+  const editor = document.getElementById('arcEditor');
+  const stepsWrap = document.getElementById('arcSteps');
+  const empty = document.getElementById('arcEmpty');
+
+  while (stepsWrap.firstChild) stepsWrap.removeChild(stepsWrap.firstChild);
+
+  if (!rejectionArcConfig) {
+    state.style.display = 'block';
+    state.textContent = 'Loading rejection arc…';
+    editor.style.display = 'none';
+    return;
+  }
+
+  state.style.display = 'none';
+  editor.style.display = 'block';
+  updateArcMetaUI();
+
+  const steps = rejectionArcConfig.steps || [];
+  empty.style.display = steps.length ? 'none' : 'block';
+
+  steps.forEach((step, idx) => {
+    const card = document.createElement('div');
+    card.className = 'arc-step-card';
+    card.dataset.index = String(idx);
+
+    const head = document.createElement('div');
+    head.className = 'arc-step-head';
+
+    const titleWrap = document.createElement('div');
+    titleWrap.className = 'arc-step-title';
+    const indexBadge = document.createElement('span');
+    indexBadge.className = 'arc-step-index';
+    indexBadge.textContent = String(idx + 1);
+    const name = document.createElement('div');
+    name.className = 'arc-step-name';
+    name.textContent = step.name || `Email ${idx + 1}`;
+    titleWrap.appendChild(indexBadge);
+    titleWrap.appendChild(name);
+
+    const controls = document.createElement('div');
+    controls.className = 'arc-step-controls';
+
+    const enabledLabel = document.createElement('label');
+    enabledLabel.className = 'arc-toggle';
+    enabledLabel.style.fontSize = '0.78rem';
+    const enabledInput = document.createElement('input');
+    enabledInput.type = 'checkbox';
+    enabledInput.checked = step.enabled !== false;
+    enabledInput.dataset.arcField = 'enabled';
+    enabledInput.dataset.index = String(idx);
+    enabledLabel.appendChild(enabledInput);
+    const enabledSpan = document.createElement('span');
+    enabledSpan.textContent = 'Enabled';
+    enabledLabel.appendChild(enabledSpan);
+
+    const upBtn = document.createElement('button');
+    upBtn.type = 'button';
+    upBtn.className = 'btn btn-mini';
+    upBtn.textContent = '↑';
+    upBtn.dataset.arcAction = 'moveUp';
+    upBtn.dataset.index = String(idx);
+    upBtn.disabled = idx === 0;
+
+    const downBtn = document.createElement('button');
+    downBtn.type = 'button';
+    downBtn.className = 'btn btn-mini';
+    downBtn.textContent = '↓';
+    downBtn.dataset.arcAction = 'moveDown';
+    downBtn.dataset.index = String(idx);
+    downBtn.disabled = idx === steps.length - 1;
+
+    const dupBtn = document.createElement('button');
+    dupBtn.type = 'button';
+    dupBtn.className = 'btn btn-mini';
+    dupBtn.textContent = 'Duplicate';
+    dupBtn.dataset.arcAction = 'duplicate';
+    dupBtn.dataset.index = String(idx);
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'btn btn-mini btn-mini-danger';
+    delBtn.textContent = 'Delete';
+    delBtn.dataset.arcAction = 'delete';
+    delBtn.dataset.index = String(idx);
+
+    controls.appendChild(enabledLabel);
+    controls.appendChild(upBtn);
+    controls.appendChild(downBtn);
+    controls.appendChild(dupBtn);
+    controls.appendChild(delBtn);
+
+    head.appendChild(titleWrap);
+    head.appendChild(controls);
+
+    const body = document.createElement('div');
+    body.className = 'arc-step-body';
+
+    body.appendChild(buildArcField('Step Name', 'name', step.name || '', idx));
+    body.appendChild(buildArcField('Sender Display Name', 'senderName', step.senderName || '', idx));
+    body.appendChild(buildArcSelectField('Step Type', 'stepType', step.stepType || 'custom', idx, [
+      { value: 'custom', label: 'Custom Email' },
+      { value: 'acceptance_builtin', label: 'Acceptance Email (Built-in)' }
+    ]));
+    body.appendChild(buildArcField('Subject', 'subject', step.subject || '', idx, { full: true }));
+
+    const delayField = document.createElement('div');
+    delayField.className = 'arc-field';
+    delayField.innerHTML = `<label>${idx === 0 ? 'Delay After Rejection' : 'Delay After Previous Email'}</label>`;
+    const delayGrid = document.createElement('div');
+    delayGrid.className = 'arc-delay-grid';
+
+    const delayAmountInput = document.createElement('input');
+    delayAmountInput.type = 'number';
+    delayAmountInput.min = '0';
+    delayAmountInput.step = '1';
+    delayAmountInput.value = String(Number.isFinite(Number(step.delayAmount)) ? Math.max(0, Math.round(Number(step.delayAmount))) : 0);
+    delayAmountInput.dataset.arcField = 'delayAmount';
+    delayAmountInput.dataset.index = String(idx);
+
+    const delayUnitSelect = document.createElement('select');
+    delayUnitSelect.dataset.arcField = 'delayUnit';
+    delayUnitSelect.dataset.index = String(idx);
+    ARC_DELAY_UNITS_CLIENT.forEach(unit => {
+      const opt = document.createElement('option');
+      opt.value = unit;
+      opt.textContent = unit;
+      if ((step.delayUnit || 'hours') === unit) opt.selected = true;
+      delayUnitSelect.appendChild(opt);
+    });
+
+    delayGrid.appendChild(delayAmountInput);
+    delayGrid.appendChild(delayUnitSelect);
+    delayField.appendChild(delayGrid);
+    body.appendChild(delayField);
+
+    const bodyField = buildArcField('Email Body', 'body', step.body || '', idx, { textarea: true, full: true, rows: 8, tokenTools: true });
+    body.appendChild(bodyField);
+
+    if ((step.stepType || 'custom') === 'acceptance_builtin') {
+      const hint = document.createElement('div');
+      hint.className = 'arc-step-hint';
+      hint.textContent = 'Built-in Acceptance Email step: intended to use the current acceptance email template and trigger the normal acceptance follow-up actions (like delayed publish) when the rejection-arc runner is implemented.';
+      body.appendChild(hint);
+    }
+
+    card.appendChild(head);
+    card.appendChild(body);
+    stepsWrap.appendChild(card);
+  });
+}
+
+function buildArcField(labelText, fieldKey, value, index, options = {}) {
+  const wrap = document.createElement('div');
+  wrap.className = 'arc-field' + (options.full ? ' full' : '');
+  const label = document.createElement('label');
+  label.textContent = labelText;
+  wrap.appendChild(label);
+  let input;
+  if (options.textarea) {
+    input = document.createElement('textarea');
+    input.rows = options.rows || 6;
+    input.value = value || '';
+  } else {
+    input = document.createElement('input');
+    input.type = 'text';
+    input.value = value || '';
+  }
+  input.dataset.arcField = fieldKey;
+  input.dataset.index = String(index);
+  wrap.appendChild(input);
+  if (options.tokenTools && fieldKey === 'body') {
+    const tools = document.createElement('div');
+    tools.className = 'arc-field-tools';
+    const label = document.createElement('span');
+    label.className = 'tool-label';
+    label.textContent = 'Insert:';
+    tools.appendChild(label);
+    ARC_PLACEHOLDER_TOKENS.forEach(token => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-mini';
+      btn.textContent = token;
+      btn.dataset.arcAction = 'insertToken';
+      btn.dataset.arcToken = token;
+      btn.dataset.index = String(index);
+      tools.appendChild(btn);
+    });
+    wrap.appendChild(tools);
+  }
+  return wrap;
+}
+
+function buildArcSelectField(labelText, fieldKey, value, index, options) {
+  const wrap = document.createElement('div');
+  wrap.className = 'arc-field';
+  const label = document.createElement('label');
+  label.textContent = labelText;
+  wrap.appendChild(label);
+  const select = document.createElement('select');
+  select.dataset.arcField = fieldKey;
+  select.dataset.index = String(index);
+  (options || []).forEach(opt => {
+    const option = document.createElement('option');
+    option.value = opt.value;
+    option.textContent = opt.label;
+    if (String(value) === String(opt.value)) option.selected = true;
+    select.appendChild(option);
+  });
+  wrap.appendChild(select);
+  return wrap;
+}
+
+function syncRejectionArcFromUI() {
+  if (!rejectionArcConfig) rejectionArcConfig = buildDefaultRejectionArcConfigClient();
+  const enabledEl = document.getElementById('arcEnabled');
+  rejectionArcConfig.enabled = !!enabledEl.checked;
+  const stepCards = Array.from(document.querySelectorAll('#arcSteps .arc-step-card'));
+  rejectionArcConfig.steps = stepCards.map((card, idx) => {
+    const get = (field) => card.querySelector(`[data-arc-field="${field}"]`);
+    return {
+      id: rejectionArcConfig.steps?.[idx]?.id || `step_${idx + 1}_${Date.now()}`,
+      name: String(get('name')?.value || `Email ${idx + 1}`),
+      senderName: String(get('senderName')?.value || ''),
+      subject: String(get('subject')?.value || ''),
+      body: String(get('body')?.value || ''),
+      delayAmount: Math.max(0, Math.round(Number(get('delayAmount')?.value || 0))),
+      delayUnit: ARC_DELAY_UNITS_CLIENT.includes(String(get('delayUnit')?.value || '').toLowerCase())
+        ? String(get('delayUnit').value).toLowerCase()
+        : 'hours',
+      enabled: !!get('enabled')?.checked,
+      stepType: ARC_STEP_TYPES_CLIENT.includes(String(get('stepType')?.value || '').toLowerCase())
+        ? String(get('stepType').value).toLowerCase()
+        : 'custom',
+      triggerAcceptanceFollowup: String(get('stepType')?.value || '').toLowerCase() === 'acceptance_builtin'
+    };
+  });
+}
+
+async function loadRejectionArc(force = false) {
+  if (loadingRejectionArc) return;
+  if (rejectionArcLoaded && !force) return;
+  loadingRejectionArc = true;
+  document.getElementById('arcState').style.display = 'block';
+  document.getElementById('arcState').textContent = 'Loading rejection arc…';
+  document.getElementById('arcEditor').style.display = 'none';
+  document.getElementById('arcToolbarStatus').textContent = 'Loading…';
+  try {
+    const res = await fetch(`${API_BASE}/admin?action=rejectionArc`, {
+      headers: { 'x-admin-password': adminPassword }
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    rejectionArcConfig = normalizeArcConfigClient(data.config);
+    rejectionArcLoaded = true;
+    markRejectionArcDirty(false);
+    renderRejectionArc();
+  } catch (_) {
+    rejectionArcConfig = buildDefaultRejectionArcConfigClient();
+    rejectionArcLoaded = true;
+    document.getElementById('arcState').style.display = 'block';
+    document.getElementById('arcState').textContent = '⚠ Could not load rejection arc.';
+    document.getElementById('arcEditor').style.display = 'none';
+    document.getElementById('arcToolbarStatus').textContent = 'Load failed';
+  } finally {
+    loadingRejectionArc = false;
+  }
+}
+
+function mutateArcSteps(mutator) {
+  if (!rejectionArcLoaded) return;
+  syncRejectionArcFromUI();
+  mutator(rejectionArcConfig.steps);
+  if (!Array.isArray(rejectionArcConfig.steps) || rejectionArcConfig.steps.length === 0) {
+    rejectionArcConfig.steps = [buildEmptyArcStep(0)];
+  }
+  renderRejectionArc();
+  markRejectionArcDirty(true);
+}
+
+function addArcStep() {
+  mutateArcSteps((steps) => {
+    const next = buildEmptyArcStep(steps.length);
+    steps.push(next);
+  });
+}
+
+function addArcAcceptanceStep() {
+  mutateArcSteps((steps) => {
+    const next = buildAcceptanceArcStep(steps.length);
+    steps.push(next);
+  });
+}
+
+function moveArcStep(index, dir) {
+  mutateArcSteps((steps) => {
+    const target = index + dir;
+    if (index < 0 || index >= steps.length || target < 0 || target >= steps.length) return;
+    const [moved] = steps.splice(index, 1);
+    steps.splice(target, 0, moved);
+  });
+}
+
+function duplicateArcStep(index) {
+  mutateArcSteps((steps) => {
+    if (index < 0 || index >= steps.length) return;
+    const source = steps[index];
+    const clone = {
+      ...source,
+      id: `${source.id || 'step'}_${Date.now()}`,
+      name: source.name ? `${source.name} Copy` : `Email ${index + 2}`
+    };
+    steps.splice(index + 1, 0, clone);
+  });
+}
+
+function deleteArcStep(index) {
+  mutateArcSteps((steps) => {
+    if (index < 0 || index >= steps.length) return;
+    steps.splice(index, 1);
+  });
+}
+
+async function saveRejectionArc() {
+  if (!rejectionArcLoaded || savingRejectionArc) return;
+  syncRejectionArcFromUI();
+  savingRejectionArc = true;
+  const btn = document.getElementById('arcSaveBtn');
+  const prevLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  document.getElementById('arcToolbarStatus').textContent = 'Saving…';
+  try {
+    const res = await fetch(`${API_BASE}/admin?action=rejectionArc`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': adminPassword
+      },
+      body: JSON.stringify(rejectionArcConfig)
+    });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    rejectionArcConfig = normalizeArcConfigClient(data.config);
+    renderRejectionArc();
+    markRejectionArcDirty(false);
+    showToast('Rejection Arc saved', 'success');
+  } catch (_) {
+    document.getElementById('arcToolbarStatus').textContent = 'Save failed';
+    showToast('Failed to save Rejection Arc', 'error');
+  } finally {
+    savingRejectionArc = false;
+    btn.disabled = false;
+    btn.textContent = prevLabel;
+  }
+}
+
+function insertTokenIntoArcBody(index, token) {
+  const textarea = document.querySelector(`#arcSteps textarea[data-arc-field="body"][data-index="${index}"]`);
+  if (!textarea) return;
+  const insert = String(token || '');
+  const start = Number.isFinite(textarea.selectionStart) ? textarea.selectionStart : textarea.value.length;
+  const end = Number.isFinite(textarea.selectionEnd) ? textarea.selectionEnd : textarea.value.length;
+  const before = textarea.value.slice(0, start);
+  const after = textarea.value.slice(end);
+  textarea.value = before + insert + after;
+  const caret = start + insert.length;
+  textarea.focus();
+  textarea.setSelectionRange(caret, caret);
+  markRejectionArcDirty(true);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -876,6 +1591,62 @@ document.getElementById('subSearchInput').addEventListener('input', function() {
     !q || (s.title || '').toLowerCase().includes(q) || (s.director || '').toLowerCase().includes(q)
   );
   renderSubsTable(filtered);
+});
+
+document.getElementById('arcAddStepBtn').addEventListener('click', () => addArcStep());
+document.getElementById('arcAddAcceptanceStepBtn').addEventListener('click', () => addArcAcceptanceStep());
+document.getElementById('arcReloadBtn').addEventListener('click', () => {
+  if (rejectionArcDirty && !confirm('Discard unsaved Rejection Arc changes and reload?')) return;
+  void loadRejectionArc(true);
+});
+document.getElementById('arcSaveBtn').addEventListener('click', () => { void saveRejectionArc(); });
+
+document.getElementById('panelRejectionArc').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-arc-action]');
+  if (!btn) return;
+  const idx = Number(btn.dataset.index);
+  if (!Number.isFinite(idx)) return;
+  const action = btn.dataset.arcAction;
+  if (action === 'insertToken') {
+    insertTokenIntoArcBody(idx, btn.dataset.arcToken || '');
+    return;
+  }
+  if (action === 'moveUp') moveArcStep(idx, -1);
+  if (action === 'moveDown') moveArcStep(idx, 1);
+  if (action === 'duplicate') duplicateArcStep(idx);
+  if (action === 'delete') deleteArcStep(idx);
+});
+
+document.getElementById('panelRejectionArc').addEventListener('input', (e) => {
+  if (!e.target.closest('[data-arc-field]')) return;
+  markRejectionArcDirty(true);
+});
+document.getElementById('panelRejectionArc').addEventListener('change', (e) => {
+  if (!e.target.closest('[data-arc-field], #arcEnabled')) return;
+  const target = e.target;
+  if (target && target.matches('[data-arc-field="stepType"]')) {
+    const idx = Number(target.dataset.index);
+    if (Number.isFinite(idx)) {
+      mutateArcSteps((steps) => {
+        const step = steps[idx];
+        if (!step) return;
+        step.stepType = String(target.value || 'custom').toLowerCase();
+        if (step.stepType === 'acceptance_builtin') {
+          if (!String(step.name || '').trim()) step.name = 'Acceptance Email';
+          if (!String(step.subject || '').trim()) step.subject = '[BUILT-IN ACCEPTANCE EMAIL]';
+          if (!String(step.body || '').trim()) {
+            step.body = '[BUILT-IN ACCEPTANCE EMAIL BODY]\n\nThis step uses the current SoftY acceptance email template and schedules the normal acceptance follow-up actions (including delayed site publish timing) when the arc runner supports it.';
+          }
+          step.triggerAcceptanceFollowup = true;
+        } else {
+          step.triggerAcceptanceFollowup = false;
+          if (step.subject === '[BUILT-IN ACCEPTANCE EMAIL]') step.subject = '';
+        }
+      });
+      return;
+    }
+  }
+  markRejectionArcDirty(true);
 });
 
 // ══════════════════════════════════════════════════════════════
