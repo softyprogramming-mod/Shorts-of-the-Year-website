@@ -739,7 +739,7 @@ async function loadSubmissions() {
 // ══════════════════════════════════════════════════════════════
 const ARC_DELAY_UNITS_CLIENT = ['minutes', 'hours', 'days'];
 const ARC_STEP_TYPES_CLIENT = ['custom', 'acceptance_builtin'];
-const ARC_PLACEHOLDER_TOKENS = ['[FILM NAME]', '[SUBMITTERS NAME]'];
+const ARC_PLACEHOLDER_TOKENS = ['[FILM NAME]', '[SUBMITTERS NAME]', '[RANDOM NAME]'];
 
 function buildDefaultRejectionArcConfigClient() {
   return {
@@ -927,7 +927,7 @@ function renderRejectionArc() {
     body.className = 'arc-step-body';
 
     body.appendChild(buildArcField('Step Name', 'name', step.name || '', idx));
-    body.appendChild(buildArcField('Sender Display Name', 'senderName', step.senderName || '', idx));
+    body.appendChild(buildArcField('Sender Display Name', 'senderName', step.senderName || '', idx, { tokenTools: true }));
     body.appendChild(buildArcSelectField('Step Type', 'stepType', step.stepType || 'custom', idx, [
       { value: 'custom', label: 'Custom Email' },
       { value: 'acceptance_builtin', label: 'Acceptance Email (Built-in)' }
@@ -1005,6 +1005,13 @@ function renderRejectionArc() {
   });
 }
 
+function getArcTokensForField(fieldKey) {
+  if (fieldKey === 'senderName') return ['[RANDOM NAME]'];
+  if (fieldKey === 'body') return ARC_PLACEHOLDER_TOKENS;
+  if (fieldKey === 'subject') return ['[FILM NAME]', '[SUBMITTERS NAME]', '[RANDOM NAME]'];
+  return [];
+}
+
 function buildArcField(labelText, fieldKey, value, index, options = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'arc-field' + (options.full ? ' full' : '');
@@ -1024,24 +1031,28 @@ function buildArcField(labelText, fieldKey, value, index, options = {}) {
   input.dataset.arcField = fieldKey;
   input.dataset.index = String(index);
   wrap.appendChild(input);
-  if (options.tokenTools && fieldKey === 'body') {
+  if (options.tokenTools) {
+    const tokens = getArcTokensForField(fieldKey);
+    if (tokens.length) {
     const tools = document.createElement('div');
     tools.className = 'arc-field-tools';
     const label = document.createElement('span');
     label.className = 'tool-label';
     label.textContent = 'Insert:';
     tools.appendChild(label);
-    ARC_PLACEHOLDER_TOKENS.forEach(token => {
+    tokens.forEach(token => {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn btn-mini';
       btn.textContent = token;
       btn.dataset.arcAction = 'insertToken';
       btn.dataset.arcToken = token;
+      btn.dataset.arcFieldTarget = fieldKey;
       btn.dataset.index = String(index);
       tools.appendChild(btn);
     });
     wrap.appendChild(tools);
+    }
   }
   return wrap;
 }
@@ -1226,18 +1237,19 @@ async function saveRejectionArc() {
   }
 }
 
-function insertTokenIntoArcBody(index, token) {
-  const textarea = document.querySelector(`#arcSteps textarea[data-arc-field="body"][data-index="${index}"]`);
-  if (!textarea) return;
+function insertTokenIntoArcField(index, token, fieldKey = 'body') {
+  const selector = `#arcSteps [data-arc-field="${fieldKey}"][data-index="${index}"]`;
+  const input = document.querySelector(selector);
+  if (!input) return;
   const insert = String(token || '');
-  const start = Number.isFinite(textarea.selectionStart) ? textarea.selectionStart : textarea.value.length;
-  const end = Number.isFinite(textarea.selectionEnd) ? textarea.selectionEnd : textarea.value.length;
-  const before = textarea.value.slice(0, start);
-  const after = textarea.value.slice(end);
-  textarea.value = before + insert + after;
+  const start = Number.isFinite(input.selectionStart) ? input.selectionStart : input.value.length;
+  const end = Number.isFinite(input.selectionEnd) ? input.selectionEnd : input.value.length;
+  const before = input.value.slice(0, start);
+  const after = input.value.slice(end);
+  input.value = before + insert + after;
   const caret = start + insert.length;
-  textarea.focus();
-  textarea.setSelectionRange(caret, caret);
+  input.focus();
+  if (typeof input.setSelectionRange === 'function') input.setSelectionRange(caret, caret);
   markRejectionArcDirty(true);
 }
 
@@ -1658,7 +1670,7 @@ document.getElementById('panelRejectionArc').addEventListener('click', (e) => {
   if (!Number.isFinite(idx)) return;
   const action = btn.dataset.arcAction;
   if (action === 'insertToken') {
-    insertTokenIntoArcBody(idx, btn.dataset.arcToken || '');
+    insertTokenIntoArcField(idx, btn.dataset.arcToken || '', btn.dataset.arcFieldTarget || 'body');
     return;
   }
   if (action === 'insertCustomAfter') {
