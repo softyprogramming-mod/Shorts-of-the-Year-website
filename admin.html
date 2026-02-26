@@ -635,6 +635,7 @@ let rejectionTrackerArcs = [];
 let rejectionTrackerLoaded = false;
 let loadingRejectionTracker = false;
 let advancingRejectionArcId = '';
+let cancelingRejectionArcId = '';
 
 // ══════════════════════════════════════════════════════════════
 // LOGIN
@@ -710,6 +711,7 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   rejectionTrackerLoaded = false;
   loadingRejectionTracker = false;
   advancingRejectionArcId = '';
+  cancelingRejectionArcId = '';
   document.getElementById('adminApp').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('pwInput').value = '';
@@ -862,6 +864,15 @@ function renderRejectionTracker(arcs) {
     forceBtn.dataset.arcTrackerAction = 'forceNext';
     forceBtn.dataset.arcId = arc.arcId || '';
     actions.appendChild(forceBtn);
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-reject';
+    cancelBtn.textContent = cancelingRejectionArcId === arc.arcId ? 'Canceling…' : 'Cancel Arc';
+    cancelBtn.disabled = cancelingRejectionArcId === arc.arcId;
+    cancelBtn.dataset.arcTrackerAction = 'cancelArc';
+    cancelBtn.dataset.arcId = arc.arcId || '';
+    actions.appendChild(cancelBtn);
+
     tdActions.appendChild(actions);
     tr.appendChild(tdActions);
 
@@ -931,6 +942,38 @@ async function forceAdvanceRejectionArc(arcId) {
     showToast(err && err.message ? err.message : 'Failed to force next step', 'error');
   } finally {
     advancingRejectionArcId = '';
+    renderRejectionTracker(rejectionTrackerArcs);
+  }
+}
+
+async function cancelRejectionArc(arcId) {
+  if (!arcId || cancelingRejectionArcId) return;
+  if (!confirm('Cancel this rejection arc and stop all remaining emails?')) return;
+  cancelingRejectionArcId = arcId;
+  renderRejectionTracker(rejectionTrackerArcs);
+  try {
+    const res = await fetch(`${API_BASE}/admin?action=rejectionArcCancel`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': adminPassword
+      },
+      body: JSON.stringify({ arcId })
+    });
+    if (!res.ok) {
+      let msg = 'Failed to cancel arc';
+      try {
+        const data = await res.json();
+        if (data && data.error) msg = data.error;
+      } catch (_) {}
+      throw new Error(msg);
+    }
+    showToast('Rejection arc canceled', 'success');
+    await loadRejectionTracker(true);
+  } catch (err) {
+    showToast(err && err.message ? err.message : 'Failed to cancel arc', 'error');
+  } finally {
+    cancelingRejectionArcId = '';
     renderRejectionTracker(rejectionTrackerArcs);
   }
 }
@@ -1866,11 +1909,18 @@ document.getElementById('arcSaveBtn').addEventListener('click', () => { void sav
 document.getElementById('arcTrackerRefreshBtn').addEventListener('click', () => { void loadRejectionTracker(true); });
 
 document.getElementById('panelRejectionTracker').addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-arc-tracker-action="forceNext"]');
+  const btn = e.target.closest('[data-arc-tracker-action]');
   if (!btn) return;
   const arcId = String(btn.dataset.arcId || '');
   if (!arcId) return;
-  void forceAdvanceRejectionArc(arcId);
+  const action = btn.dataset.arcTrackerAction;
+  if (action === 'forceNext') {
+    void forceAdvanceRejectionArc(arcId);
+    return;
+  }
+  if (action === 'cancelArc') {
+    void cancelRejectionArc(arcId);
+  }
 });
 
 document.getElementById('panelRejectionArc').addEventListener('click', (e) => {
