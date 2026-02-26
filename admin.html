@@ -160,6 +160,7 @@
     /* ── SUBMISSION DETAIL ── */
     .sub-detail { font-size: 0.78rem; color: var(--text-dim); max-width: 280px; }
     .sub-logline { font-size: 0.78rem; color: var(--text-dim); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mono-small { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.72rem; color: var(--text-dim); }
 
     /* ── LOADING / EMPTY ── */
     .state-msg { text-align: center; padding: 4rem 2rem; color: var(--text-dim); font-size: 0.9rem; }
@@ -441,6 +442,9 @@
     <button class="tab-btn" id="tabRejectionArc" onclick="switchTab('rejectionArc')">
       Rejection Arc
     </button>
+    <button class="tab-btn" id="tabRejectionTracker" onclick="switchTab('rejectionTracker')">
+      Rejection Tracker <span class="tab-count" id="arcTrackerCount">0</span>
+    </button>
   </div>
 
   <!-- FILMS PANEL -->
@@ -530,6 +534,30 @@
     </div>
   </div>
 
+  <!-- REJECTION TRACKER PANEL -->
+  <div id="panelRejectionTracker" style="display:none">
+    <div class="toolbar">
+      <button class="btn btn-edit" id="arcTrackerRefreshBtn" type="button">Refresh</button>
+      <span class="count-badge" id="arcTrackerToolbarStatus">Not loaded</span>
+    </div>
+    <div class="table-wrap">
+      <div id="arcTrackerState" class="state-msg">Open the tab to load active arcs…</div>
+      <table id="arcTrackerTable" style="display:none">
+        <thead>
+          <tr>
+            <th>Film / Submitter</th>
+            <th>Progress</th>
+            <th>Next Step</th>
+            <th>Last Sent</th>
+            <th>Random Name</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="arcTrackerBody"></tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
 <!-- ══ EDIT MODAL ══ -->
@@ -603,6 +631,10 @@ let rejectionArcLoaded = false;
 let rejectionArcDirty = false;
 let loadingRejectionArc = false;
 let savingRejectionArc = false;
+let rejectionTrackerArcs = [];
+let rejectionTrackerLoaded = false;
+let loadingRejectionTracker = false;
+let advancingRejectionArcId = '';
 
 // ══════════════════════════════════════════════════════════════
 // LOGIN
@@ -674,6 +706,10 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   rejectionArcDirty = false;
   loadingRejectionArc = false;
   savingRejectionArc = false;
+  rejectionTrackerArcs = [];
+  rejectionTrackerLoaded = false;
+  loadingRejectionTracker = false;
+  advancingRejectionArcId = '';
   document.getElementById('adminApp').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('pwInput').value = '';
@@ -687,11 +723,16 @@ function switchTab(tab) {
   document.getElementById('panelFilms').style.display = tab === 'films' ? 'block' : 'none';
   document.getElementById('panelSubmissions').style.display = tab === 'submissions' ? 'block' : 'none';
   document.getElementById('panelRejectionArc').style.display = tab === 'rejectionArc' ? 'block' : 'none';
+  document.getElementById('panelRejectionTracker').style.display = tab === 'rejectionTracker' ? 'block' : 'none';
   document.getElementById('tabFilms').classList.toggle('active', tab === 'films');
   document.getElementById('tabSubmissions').classList.toggle('active', tab === 'submissions');
   document.getElementById('tabRejectionArc').classList.toggle('active', tab === 'rejectionArc');
+  document.getElementById('tabRejectionTracker').classList.toggle('active', tab === 'rejectionTracker');
   if (tab === 'rejectionArc' && !rejectionArcLoaded) {
     void loadRejectionArc();
+  }
+  if (tab === 'rejectionTracker' && !rejectionTrackerLoaded) {
+    void loadRejectionTracker();
   }
 }
 
@@ -731,6 +772,166 @@ async function loadSubmissions() {
     document.getElementById('subsTabCount').textContent = submissions.length;
   } catch (err) {
     document.getElementById('subTableState').textContent = '⚠ Could not load submissions.';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// REJECTION TRACKER
+// ══════════════════════════════════════════════════════════════
+function formatTrackerDateTime(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString();
+}
+
+function renderRejectionTracker(arcs) {
+  const state = document.getElementById('arcTrackerState');
+  const table = document.getElementById('arcTrackerTable');
+  const body = document.getElementById('arcTrackerBody');
+  while (body.firstChild) body.removeChild(body.firstChild);
+
+  document.getElementById('arcTrackerCount').textContent = (arcs || []).length;
+  document.getElementById('arcTrackerToolbarStatus').textContent = `${(arcs || []).length} active arc${(arcs || []).length === 1 ? '' : 's'}`;
+
+  if (!arcs || arcs.length === 0) {
+    state.style.display = 'block';
+    state.textContent = 'No active rejection arcs.';
+    table.style.display = 'none';
+    return;
+  }
+
+  state.style.display = 'none';
+  table.style.display = 'table';
+  arcs.forEach(arc => {
+    const tr = document.createElement('tr');
+
+    const tdFilm = document.createElement('td');
+    tdFilm.className = 'td-title';
+    const strong = document.createElement('strong');
+    strong.textContent = arc.title || 'Untitled';
+    const small = document.createElement('small');
+    small.textContent = (arc.submitterName || '—') + (arc.recipient ? ' · ' + arc.recipient : '');
+    tdFilm.appendChild(strong);
+    tdFilm.appendChild(small);
+    tr.appendChild(tdFilm);
+
+    const tdProgress = document.createElement('td');
+    const sent = Number.isFinite(Number(arc.sentCount)) ? Number(arc.sentCount) : 0;
+    const total = Number.isFinite(Number(arc.totalCount)) ? Number(arc.totalCount) : 0;
+    tdProgress.textContent = `${sent}/${total} emails`;
+    if (arc.acceptanceTriggered) {
+      const status = document.createElement('div');
+      status.className = 'mono-small';
+      status.textContent = 'Acceptance step sent';
+      tdProgress.appendChild(status);
+    }
+    tr.appendChild(tdProgress);
+
+    const tdNext = document.createElement('td');
+    tdNext.textContent = arc.nextStepName || '—';
+    if (arc.nextStepAt) {
+      const nextTime = document.createElement('div');
+      nextTime.className = 'mono-small';
+      nextTime.textContent = formatTrackerDateTime(arc.nextStepAt);
+      tdNext.appendChild(nextTime);
+    }
+    tr.appendChild(tdNext);
+
+    const tdLast = document.createElement('td');
+    tdLast.textContent = arc.lastSentStepName || '—';
+    if (arc.lastSentAt) {
+      const lastTime = document.createElement('div');
+      lastTime.className = 'mono-small';
+      lastTime.textContent = formatTrackerDateTime(arc.lastSentAt);
+      tdLast.appendChild(lastTime);
+    }
+    tr.appendChild(tdLast);
+
+    const tdRandom = document.createElement('td');
+    tdRandom.textContent = arc.randomName || '—';
+    tr.appendChild(tdRandom);
+
+    const tdActions = document.createElement('td');
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    const forceBtn = document.createElement('button');
+    forceBtn.className = 'btn btn-edit';
+    forceBtn.textContent = advancingRejectionArcId === arc.arcId ? 'Forcing…' : 'Force Next';
+    forceBtn.disabled = !arc.nextStepName || advancingRejectionArcId === arc.arcId;
+    forceBtn.dataset.arcTrackerAction = 'forceNext';
+    forceBtn.dataset.arcId = arc.arcId || '';
+    actions.appendChild(forceBtn);
+    tdActions.appendChild(actions);
+    tr.appendChild(tdActions);
+
+    body.appendChild(tr);
+  });
+}
+
+async function loadRejectionTracker(force = false) {
+  if (loadingRejectionTracker) return;
+  if (rejectionTrackerLoaded && !force) return;
+  loadingRejectionTracker = true;
+  document.getElementById('arcTrackerState').style.display = 'block';
+  document.getElementById('arcTrackerState').textContent = 'Loading active rejection arcs…';
+  document.getElementById('arcTrackerTable').style.display = 'none';
+  document.getElementById('arcTrackerToolbarStatus').textContent = 'Loading…';
+  try {
+    const res = await fetch(`${API_BASE}/admin?action=rejectionArcTracker`, {
+      headers: { 'x-admin-password': adminPassword }
+    });
+    if (!res.ok) {
+      let msg = 'Failed to load tracker';
+      try {
+        const data = await res.json();
+        if (data && data.error) msg = data.error;
+      } catch (_) {}
+      throw new Error(msg);
+    }
+    const data = await res.json();
+    rejectionTrackerArcs = Array.isArray(data.arcs) ? data.arcs : [];
+    rejectionTrackerLoaded = true;
+    renderRejectionTracker(rejectionTrackerArcs);
+  } catch (err) {
+    rejectionTrackerLoaded = true;
+    document.getElementById('arcTrackerState').style.display = 'block';
+    document.getElementById('arcTrackerState').textContent = '⚠ ' + (err && err.message ? err.message : 'Could not load tracker.');
+    document.getElementById('arcTrackerTable').style.display = 'none';
+    document.getElementById('arcTrackerToolbarStatus').textContent = 'Load failed';
+  } finally {
+    loadingRejectionTracker = false;
+  }
+}
+
+async function forceAdvanceRejectionArc(arcId) {
+  if (!arcId || advancingRejectionArcId) return;
+  advancingRejectionArcId = arcId;
+  renderRejectionTracker(rejectionTrackerArcs);
+  try {
+    const res = await fetch(`${API_BASE}/admin?action=rejectionArcAdvance`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': adminPassword
+      },
+      body: JSON.stringify({ arcId })
+    });
+    if (!res.ok) {
+      let msg = 'Failed to force next arc step';
+      try {
+        const data = await res.json();
+        if (data && data.error) msg = data.error;
+      } catch (_) {}
+      throw new Error(msg);
+    }
+    showToast('Advanced to next arc step', 'success');
+    await loadRejectionTracker(true);
+  } catch (err) {
+    showToast(err && err.message ? err.message : 'Failed to force next step', 'error');
+  } finally {
+    advancingRejectionArcId = '';
+    renderRejectionTracker(rejectionTrackerArcs);
   }
 }
 
@@ -1662,6 +1863,15 @@ document.getElementById('arcReloadBtn').addEventListener('click', () => {
   void loadRejectionArc(true);
 });
 document.getElementById('arcSaveBtn').addEventListener('click', () => { void saveRejectionArc(); });
+document.getElementById('arcTrackerRefreshBtn').addEventListener('click', () => { void loadRejectionTracker(true); });
+
+document.getElementById('panelRejectionTracker').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-arc-tracker-action="forceNext"]');
+  if (!btn) return;
+  const arcId = String(btn.dataset.arcId || '');
+  if (!arcId) return;
+  void forceAdvanceRejectionArc(arcId);
+});
 
 document.getElementById('panelRejectionArc').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-arc-action]');
