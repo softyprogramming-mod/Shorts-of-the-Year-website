@@ -841,22 +841,29 @@ document.getElementById('approveConfirm').addEventListener('click', async () => 
 });
 
 async function rejectSubmission(mongoId, title, tr) {
-  if (!confirm(`Reject and delete "${title}"? This cannot be undone.`)) return;
+  if (!confirm(`Reject "${title}" and send rejection email? This cannot be undone.`)) return;
   try {
-    const res = await fetch(`${API_BASE}/admin?action=delete&id=${mongoId}`, {
+    const res = await fetch(`${API_BASE}/admin?action=reject&id=${mongoId}`, {
       method: 'DELETE',
       headers: { 'x-admin-password': adminPassword }
     });
-    if (!res.ok) throw new Error();
+    if (!res.ok) {
+      let msg = 'Failed to reject';
+      try {
+        const data = await res.json();
+        if (data && data.error) msg = data.error;
+      } catch (_) {}
+      throw new Error(msg);
+    }
     submissions = submissions.filter(s => {
       const sid = s._id?.$oid || s._id?.toString() || s._id;
       return sid !== mongoId;
     });
     renderSubsTable(submissions);
     document.getElementById('subsTabCount').textContent = submissions.length;
-    showToast('Submission rejected', 'success');
-  } catch {
-    showToast('Failed to reject', 'error');
+    showToast('Submission rejected and email sent', 'success');
+  } catch (err) {
+    showToast(err && err.message ? err.message : 'Failed to reject', 'error');
   }
 }
 
