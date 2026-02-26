@@ -427,6 +427,7 @@
     <h1>⬡ Softy Admin</h1>
     <div style="display:flex;gap:.75rem;align-items:center">
       <span id="filmCountLabel">— films</span>
+      <button class="btn btn-edit" id="refreshAllBtn" type="button">Refresh All</button>
       <button class="btn btn-logout" id="logoutBtn">Log out</button>
     </div>
   </header>
@@ -548,6 +549,7 @@
             <th>Film / Submitter</th>
             <th>Progress</th>
             <th>Next Step</th>
+            <th>Countdown</th>
             <th>Last Sent</th>
             <th>Random Name</th>
             <th>Actions</th>
@@ -636,6 +638,7 @@ let rejectionTrackerLoaded = false;
 let loadingRejectionTracker = false;
 let advancingRejectionArcId = '';
 let cancelingRejectionArcId = '';
+let trackerCountdownIntervalId = null;
 
 // ══════════════════════════════════════════════════════════════
 // LOGIN
@@ -676,8 +679,7 @@ async function tryLogin() {
     adminPassword = val;
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminApp').style.display = 'block';
-    void loadFilms();
-    void loadSubmissions();
+    await refreshAllAdminData_(false);
   } catch (_) {
     document.getElementById('loginError').textContent = 'Incorrect password.';
     document.getElementById('pwInput').value = '';
@@ -712,6 +714,10 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   loadingRejectionTracker = false;
   advancingRejectionArcId = '';
   cancelingRejectionArcId = '';
+  if (trackerCountdownIntervalId) {
+    clearInterval(trackerCountdownIntervalId);
+    trackerCountdownIntervalId = null;
+  }
   document.getElementById('adminApp').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('pwInput').value = '';
@@ -769,7 +775,18 @@ async function loadSubmissions() {
     });
     if (!res.ok) throw new Error();
     const data = await res.json();
-    submissions = (data.films || []).filter(f => f.pending === true && f.rejectionArcActive !== true);
+    const activeArcSubmissionIds = new Set(
+      (rejectionTrackerArcs || [])
+        .map(a => String(a && a.submissionId ? a.submissionId : '').trim())
+        .filter(Boolean)
+    );
+    submissions = (data.films || []).filter(f => {
+      if (f.pending !== true) return false;
+      if (f.rejectionArcActive === true) return false;
+      const sid = String(f.submissionId || '').trim();
+      if (sid && activeArcSubmissionIds.has(sid)) return false;
+      return true;
+    });
     renderSubsTable(submissions);
     document.getElementById('subsTabCount').textContent = submissions.length;
   } catch (err) {
@@ -785,6 +802,20 @@ function formatTrackerDateTime(ts) {
   const d = new Date(ts);
   if (Number.isNaN(d.getTime())) return '—';
   return d.toLocaleString();
+}
+
+function formatCountdownTo(ts) {
+  if (!ts) return '—';
+  const target = new Date(ts).getTime();
+  if (!Number.isFinite(target)) return '—';
+  let delta = Math.max(0, target - Date.now());
+  const hours = Math.floor(delta / 3600000);
+  delta -= hours * 3600000;
+  const mins = Math.floor(delta / 60000);
+  delta -= mins * 60000;
+  const secs = Math.floor(delta / 1000);
+  if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
+  return `${mins}m ${secs}s`;
 }
 
 function renderRejectionTracker(arcs) {
@@ -840,6 +871,11 @@ function renderRejectionTracker(arcs) {
     }
     tr.appendChild(tdNext);
 
+    const tdCountdown = document.createElement('td');
+    tdCountdown.className = 'mono-small';
+    tdCountdown.textContent = arc.nextStepAt ? formatCountdownTo(arc.nextStepAt) : '—';
+    tr.appendChild(tdCountdown);
+
     const tdLast = document.createElement('td');
     tdLast.textContent = arc.lastSentStepName || '—';
     if (arc.lastSentAt) {
@@ -880,6 +916,15 @@ function renderRejectionTracker(arcs) {
   });
 }
 
+function ensureTrackerCountdownTicker_() {
+  if (trackerCountdownIntervalId) return;
+  trackerCountdownIntervalId = setInterval(() => {
+    if (!rejectionTrackerLoaded) return;
+    if (!Array.isArray(rejectionTrackerArcs) || rejectionTrackerArcs.length === 0) return;
+    renderRejectionTracker(rejectionTrackerArcs);
+  }, 1000);
+}
+
 async function loadRejectionTracker(force = false) {
   if (loadingRejectionTracker) return;
   if (rejectionTrackerLoaded && !force) return;
@@ -903,6 +948,7 @@ async function loadRejectionTracker(force = false) {
     const data = await res.json();
     rejectionTrackerArcs = Array.isArray(data.arcs) ? data.arcs : [];
     rejectionTrackerLoaded = true;
+    ensureTrackerCountdownTicker_();
     renderRejectionTracker(rejectionTrackerArcs);
   } catch (err) {
     rejectionTrackerLoaded = true;
@@ -938,6 +984,7 @@ async function forceAdvanceRejectionArc(arcId) {
     }
     showToast('Advanced to next arc step', 'success');
     await loadRejectionTracker(true);
+    await loadSubmissions();
   } catch (err) {
     showToast(err && err.message ? err.message : 'Failed to force next step', 'error');
   } finally {
@@ -970,11 +1017,34 @@ async function cancelRejectionArc(arcId) {
     }
     showToast('Rejection arc canceled', 'success');
     await loadRejectionTracker(true);
+    await loadSubmissions();
   } catch (err) {
     showToast(err && err.message ? err.message : 'Failed to cancel arc', 'error');
   } finally {
     cancelingRejectionArcId = '';
     renderRejectionTracker(rejectionTrackerArcs);
+  }
+}
+
+async function refreshAllAdminData_(showToastOnSuccess = true) {
+  const btn = document.getElementById('refreshAllBtn');
+  const prev = btn ? btn.textContent : 'Refresh All';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Refreshing…';
+  }
+  try {
+    await loadRejectionTracker(true);
+    await loadFilms();
+    await loadSubmissions();
+    if (showToastOnSuccess) showToast('Admin refreshed', 'success');
+  } catch (_) {
+    if (showToastOnSuccess) showToast('Refresh failed', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = prev;
+    }
   }
 }
 
@@ -1914,6 +1984,7 @@ document.getElementById('arcReloadBtn').addEventListener('click', () => {
 });
 document.getElementById('arcSaveBtn').addEventListener('click', () => { void saveRejectionArc(); });
 document.getElementById('arcTrackerRefreshBtn').addEventListener('click', () => { void loadRejectionTracker(true); });
+document.getElementById('refreshAllBtn').addEventListener('click', () => { void refreshAllAdminData_(true); });
 
 document.getElementById('panelRejectionTracker').addEventListener('click', (e) => {
   const btn = e.target.closest('[data-arc-tracker-action]');
