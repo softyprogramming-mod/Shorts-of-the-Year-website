@@ -961,19 +961,42 @@ async function loadRejectionTracker(force = false) {
   }
 }
 
+function isNetworkFetchError_(err) {
+  const msg = String((err && err.message) || '');
+  return /Failed to fetch|NetworkError|Load failed|fetch/i.test(msg);
+}
+
+function sleep_(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchWithRetry_(url, options, retries = 1) {
+  let lastErr = null;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      return await fetch(url, options);
+    } catch (err) {
+      lastErr = err;
+      if (!isNetworkFetchError_(err) || attempt >= retries) throw err;
+      await sleep_(350 * (attempt + 1));
+    }
+  }
+  throw lastErr || new Error('Failed to fetch');
+}
+
 async function forceAdvanceRejectionArc(arcId) {
   if (!arcId || advancingRejectionArcId) return;
   advancingRejectionArcId = arcId;
   renderRejectionTracker(rejectionTrackerArcs);
   try {
-    const res = await fetch(`${API_BASE}/admin?action=rejectionArcAdvance`, {
+    const res = await fetchWithRetry_(`${API_BASE}/admin?action=rejectionArcAdvance`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-admin-password': adminPassword
       },
       body: JSON.stringify({ arcId })
-    });
+    }, 2);
     if (!res.ok) {
       let msg = 'Failed to force next arc step';
       try {
@@ -986,7 +1009,13 @@ async function forceAdvanceRejectionArc(arcId) {
     await loadRejectionTracker(true);
     await loadSubmissions();
   } catch (err) {
-    showToast(err && err.message ? err.message : 'Failed to force next step', 'error');
+    await loadRejectionTracker(true);
+    await loadSubmissions();
+    if (isNetworkFetchError_(err)) {
+      showToast('Network hiccup: action may have succeeded. Data refreshed.', 'error');
+    } else {
+      showToast(err && err.message ? err.message : 'Failed to force next step', 'error');
+    }
   } finally {
     advancingRejectionArcId = '';
     renderRejectionTracker(rejectionTrackerArcs);
@@ -999,14 +1028,14 @@ async function cancelRejectionArc(arcId) {
   cancelingRejectionArcId = arcId;
   renderRejectionTracker(rejectionTrackerArcs);
   try {
-    const res = await fetch(`${API_BASE}/admin?action=rejectionArcCancel`, {
+    const res = await fetchWithRetry_(`${API_BASE}/admin?action=rejectionArcCancel`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-admin-password': adminPassword
       },
       body: JSON.stringify({ arcId })
-    });
+    }, 2);
     if (!res.ok) {
       let msg = 'Failed to cancel arc';
       try {
@@ -1019,7 +1048,13 @@ async function cancelRejectionArc(arcId) {
     await loadRejectionTracker(true);
     await loadSubmissions();
   } catch (err) {
-    showToast(err && err.message ? err.message : 'Failed to cancel arc', 'error');
+    await loadRejectionTracker(true);
+    await loadSubmissions();
+    if (isNetworkFetchError_(err)) {
+      showToast('Network hiccup: cancel may have succeeded. Data refreshed.', 'error');
+    } else {
+      showToast(err && err.message ? err.message : 'Failed to cancel arc', 'error');
+    }
   } finally {
     cancelingRejectionArcId = '';
     renderRejectionTracker(rejectionTrackerArcs);
