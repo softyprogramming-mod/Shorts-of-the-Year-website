@@ -94,12 +94,17 @@
     .tabs {
       display: flex; gap: 0; border-bottom: 1px solid var(--border);
       padding: 0 2rem; background: var(--surface);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
     }
     .tab-btn {
       background: none; border: none; color: var(--text-dim); cursor: pointer;
       font-size: 0.85rem; font-family: var(--font); padding: 0.85rem 1.25rem;
       border-bottom: 2px solid transparent; margin-bottom: -1px;
       transition: color 0.15s, border-color 0.15s; display: flex; align-items: center; gap: 0.5rem;
+      flex: 0 0 auto;
+      white-space: nowrap;
     }
     .tab-btn:hover { color: var(--text); }
     .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
@@ -127,7 +132,7 @@
     .count-badge { margin-left: auto; font-size: 0.8rem; color: var(--text-dim); }
 
     /* ── TABLE ── */
-    .table-wrap { padding: 1.5rem 2rem; overflow-x: auto; }
+    .table-wrap { padding: 1.5rem 2rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
     thead th {
       text-align: left; padding: 0.6rem 0.75rem; color: var(--text-dim); font-weight: 500;
@@ -398,12 +403,132 @@
 
     @media (max-width: 600px) {
       header, .toolbar, .table-wrap { padding-left: 1rem; padding-right: 1rem; }
+      header {
+        padding-top: 0.9rem;
+        padding-bottom: 0.9rem;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+      header > div {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+      header span {
+        order: 1;
+      }
+      header #refreshAllBtn,
+      header #logoutBtn {
+        flex: 1 1 0;
+        justify-content: center;
+        min-height: 42px;
+      }
+      .tabs {
+        padding: 0 0.75rem;
+      }
+      .tab-btn {
+        padding: 0.9rem 0.95rem;
+      }
+      .toolbar {
+        gap: 0.75rem;
+      }
+      .toolbar > * {
+        width: 100%;
+      }
+      .toolbar .btn,
+      .toolbar .search-input,
+      .toolbar .filter-select {
+        width: 100%;
+        min-height: 44px;
+      }
+      .count-badge {
+        margin-left: 0;
+        width: 100%;
+      }
       .form-grid { grid-template-columns: 1fr; }
-      .tabs { padding: 0 1rem; }
       .panel-section { padding-left: 1rem; padding-right: 1rem; }
       .arc-step-body { grid-template-columns: 1fr; }
       .arc-delay-grid { grid-template-columns: 1fr; }
       .arc-updated { margin-left: 0; width: 100%; }
+      .table-wrap {
+        padding-top: 1rem;
+      }
+      table {
+        min-width: 760px;
+      }
+      .actions {
+        gap: 0.4rem;
+      }
+      .actions .btn {
+        min-height: 40px;
+      }
+      .td-title strong,
+      .sub-logline {
+        max-width: none;
+      }
+      .modal {
+        max-height: calc(100vh - 1.5rem);
+        padding: 1.1rem;
+        border-radius: 10px;
+      }
+      .modal h2 {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+      }
+      .modal-actions,
+      .confirm-actions {
+        flex-direction: column-reverse;
+      }
+      .modal-actions .btn,
+      .confirm-actions .btn {
+        width: 100%;
+        justify-content: center;
+        min-height: 44px;
+      }
+      .confirm-box {
+        padding: 1.1rem;
+      }
+      .arc-shell-head,
+      .arc-meta-row,
+      .arc-step-head,
+      .arc-step-footer {
+        padding-left: 0.9rem;
+        padding-right: 0.9rem;
+      }
+      .arc-step-body {
+        padding: 0.9rem;
+      }
+      .arc-step-controls {
+        width: 100%;
+      }
+      .arc-step-controls .arc-toggle {
+        width: 100%;
+      }
+      .arc-step-footer .btn {
+        width: 100%;
+        justify-content: center;
+        min-height: 42px;
+      }
+      #toast {
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .toolbar {
+        align-items: stretch;
+      }
+      .search-input {
+        width: min(100%, 320px);
+      }
+      .filter-select {
+        min-width: 0;
+      }
+      .modal {
+        max-width: 92vw;
+      }
     }
   </style>
 </head>
@@ -639,6 +764,7 @@ let loadingRejectionTracker = false;
 let advancingRejectionArcId = '';
 let cancelingRejectionArcId = '';
 let trackerCountdownIntervalId = null;
+let dismissedRejectionArcIds = new Set();
 
 // ══════════════════════════════════════════════════════════════
 // LOGIN
@@ -818,16 +944,24 @@ function formatCountdownTo(ts) {
   return `${mins}m ${secs}s`;
 }
 
+function getVisibleRejectionTrackerArcs_(arcs) {
+  return (Array.isArray(arcs) ? arcs : []).filter(arc => {
+    const arcId = String(arc && arc.arcId ? arc.arcId : '').trim();
+    return !arcId || !dismissedRejectionArcIds.has(arcId);
+  });
+}
+
 function renderRejectionTracker(arcs) {
   const state = document.getElementById('arcTrackerState');
   const table = document.getElementById('arcTrackerTable');
   const body = document.getElementById('arcTrackerBody');
   while (body.firstChild) body.removeChild(body.firstChild);
 
-  document.getElementById('arcTrackerCount').textContent = (arcs || []).length;
-  document.getElementById('arcTrackerToolbarStatus').textContent = `${(arcs || []).length} active arc${(arcs || []).length === 1 ? '' : 's'}`;
+  const visibleArcs = getVisibleRejectionTrackerArcs_(arcs);
+  document.getElementById('arcTrackerCount').textContent = visibleArcs.length;
+  document.getElementById('arcTrackerToolbarStatus').textContent = `${visibleArcs.length} active arc${visibleArcs.length === 1 ? '' : 's'}`;
 
-  if (!arcs || arcs.length === 0) {
+  if (!visibleArcs.length) {
     state.style.display = 'block';
     state.textContent = 'No active rejection arcs.';
     table.style.display = 'none';
@@ -836,7 +970,7 @@ function renderRejectionTracker(arcs) {
 
   state.style.display = 'none';
   table.style.display = 'table';
-  arcs.forEach(arc => {
+  visibleArcs.forEach(arc => {
     const tr = document.createElement('tr');
 
     const tdFilm = document.createElement('td');
@@ -947,6 +1081,10 @@ async function loadRejectionTracker(force = false) {
     }
     const data = await res.json();
     rejectionTrackerArcs = Array.isArray(data.arcs) ? data.arcs : [];
+    const liveArcIds = new Set(rejectionTrackerArcs.map(arc => String(arc && arc.arcId ? arc.arcId : '').trim()).filter(Boolean));
+    dismissedRejectionArcIds.forEach(arcId => {
+      if (!liveArcIds.has(arcId)) dismissedRejectionArcIds.delete(arcId);
+    });
     rejectionTrackerLoaded = true;
     ensureTrackerCountdownTicker_();
     renderRejectionTracker(rejectionTrackerArcs);
@@ -1027,6 +1165,7 @@ async function cancelRejectionArc(arcId) {
   if (!confirm('Cancel this rejection arc and stop all remaining emails?')) return;
   cancelingRejectionArcId = arcId;
   renderRejectionTracker(rejectionTrackerArcs);
+  let cancelSucceeded = false;
   try {
     const res = await fetchWithRetry_(`${API_BASE}/admin?action=rejectionArcCancel`, {
       method: 'POST',
@@ -1044,12 +1183,17 @@ async function cancelRejectionArc(arcId) {
       } catch (_) {}
       throw new Error(msg);
     }
+    cancelSucceeded = true;
+    dismissedRejectionArcIds.add(String(arcId));
     rejectionTrackerArcs = rejectionTrackerArcs.filter(a => String(a && a.arcId ? a.arcId : '') !== String(arcId));
     renderRejectionTracker(rejectionTrackerArcs);
     showToast('Rejection arc canceled', 'success');
-    await loadRejectionTracker(true);
-    await loadSubmissions();
+    try {
+      await loadRejectionTracker(true);
+      await loadSubmissions();
+    } catch (_) {}
   } catch (err) {
+    dismissedRejectionArcIds.delete(String(arcId));
     await loadRejectionTracker(true);
     await loadSubmissions();
     if (isNetworkFetchError_(err)) {
@@ -1059,7 +1203,11 @@ async function cancelRejectionArc(arcId) {
     }
   } finally {
     cancelingRejectionArcId = '';
-    renderRejectionTracker(rejectionTrackerArcs);
+    if (cancelSucceeded) {
+      renderRejectionTracker(rejectionTrackerArcs);
+    } else {
+      renderRejectionTracker(rejectionTrackerArcs);
+    }
   }
 }
 
