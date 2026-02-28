@@ -1,5 +1,14 @@
 # 🎬 SHORTS OF THE YEAR - START HERE!
 
+Important: this file predates the current API + MongoDB + rejection-arc system.
+
+Current source of truth:
+- live site files in this repo
+- Vercel API in `/softy-api-main`
+- Google Apps Script in `/google-apps-script.js`
+
+Use `/README.md` and `/CHECKLIST.md` first for the current setup model.
+
 ## 🎉 YOUR WEBSITE IS READY!
 
 I've built you a complete, automated short film curation website that:

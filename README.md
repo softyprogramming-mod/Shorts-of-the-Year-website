@@ -1,85 +1,89 @@
 # Shorts of the Year
 
-A fully automated short film curation website with AI-generated reviews.
+Shorts of the Year is a static site front-end with a Vercel API and Google Apps Script automation layer.
 
-## Features
+## Current Architecture
 
-- 📽️ **Automatic Film Curation:** 99% acceptance rate with 1% rejection
-- ✍️ **Auto-Generated Reviews:** Professional, curatorial reviews from 200+ template sentences
-- 📧 **Email Automation:** Acceptance/rejection emails sent 24 hours after submission
-- 🌐 **Self-Updating Website:** New films automatically appear on your site
-- 📱 **Instagram Notifications:** Get notified with pre-written captions ready to post
-- 💰 **100% Free Hosting:** Via GitHub Pages (just keep your domain registration)
+- Static site on GitHub Pages:
+  - `/Users/willkempner/Dropbox/Projects/WEBSITES/Shorts-of-the-Year-website-main/index.html`
+  - `/Users/willkempner/Dropbox/Projects/WEBSITES/Shorts-of-the-Year-website-main/film.html`
+  - `/Users/willkempner/Dropbox/Projects/WEBSITES/Shorts-of-the-Year-website-main/store.html`
+  - `/Users/willkempner/Dropbox/Projects/WEBSITES/Shorts-of-the-Year-website-main/submit.html`
+  - `/Users/willkempner/Dropbox/Projects/WEBSITES/Shorts-of-the-Year-website-main/admin.html`
+- API on Vercel:
+  - `/Users/willkempner/Dropbox/Projects/WEBSITES/Shorts-of-the-Year-website-main/softy-api-main/api/admin.js`
+  - `/Users/willkempner/Dropbox/Projects/WEBSITES/Shorts-of-the-Year-website-main/softy-api-main/api/films.js`
+- Automation in Google Apps Script:
+  - `/Users/willkempner/Dropbox/Projects/WEBSITES/Shorts-of-the-Year-website-main/google-apps-script.js`
+- MongoDB is the source of truth for films, submissions, admin settings, and ordering.
 
-## What's Included
+## Current Feature Set
 
-### Website Files
-- `index.html` - Homepage with featured film and grid
-- `film.html` - Individual film pages with embedded video
-- `store.html` - Merch page (sold out shorts joke)
-- `submit.html` - Google Form embed page
-- `films.json` - Film database (auto-updated)
-- `css/style.css` - Dark, minimal design
-- `js/main.js` - Homepage functionality
-- `js/film.js` - Film page functionality
+- Homepage hero + film grid sourced from the live API
+- Individual film pages with Vimeo/YouTube support
+- Store page with lightbox product viewing
+- Embedded Google Form submission page
+- Admin panel with:
+  - secure password verification through API
+  - films list, edit, add, delete, show/hide
+  - drag reordering of live films
+  - pending submissions review
+  - full read-only submission details
+  - review generation
+  - rejection arc editor
+  - rejection tracker with force-next and cancel actions
+- Automated review generation in:
+  - Apps Script
+  - admin API
+  - admin fallback UI
+- Acceptance flow:
+  - random decision delay between 1 and 3 days after submission
+  - acceptance email
+  - delayed publish 12 hours later
+  - “now live on SoftY” email after publish
+- Rejection flow:
+  - configurable rejection arc stored through admin
+  - consistent `[RANDOM NAME]` per arc
+  - `[FILM NAME]` and `[SUBMITTERS NAME]` token replacement
 
-### Automation
-- `google-apps-script.js` - Complete automation system with:
-  - Form submission handler
-  - 24-hour delay system
-  - 99%/1% acceptance algorithm
-  - Template sentence generator (50 openings, 100 middles, 50 closings)
-  - Email system
-  - GitHub integration
-  - Instagram notifications
+## Important Deployment Surfaces
 
-### Documentation
-- `SETUP-GUIDE.md` - Complete step-by-step setup instructions
+If you change these files, deploy them in the matching place:
 
-## Quick Start
+- Static site files:
+  - publish the repo to GitHub Pages
+- API files:
+  - redeploy the Vercel project in `/Users/willkempner/Dropbox/Projects/WEBSITES/Shorts-of-the-Year-website-main/softy-api-main`
+- Apps Script:
+  - save the script
+  - redeploy the Apps Script Web App when webhook behavior changes
 
-See `SETUP-GUIDE.md` for detailed instructions.
+## Important Secrets / Settings
 
-1. Upload to GitHub Pages
-2. Create Google Form
-3. Set up Google Apps Script
-4. Connect GoDaddy domain
-5. Done!
+Apps Script Script Properties:
 
-## Template Review System
+- `API_SECRET`
+- `ADMIN_PASSWORD`
+- `WEBHOOK_SECRET`
 
-Reviews are generated from:
-- **50 opening sentences** - Introduce the film and director
-- **100 middle sentences** - Analyze technique, style, performances
-- **50 closing sentences** - Conclude with impact and recommendation
+Vercel Environment Variables:
 
-This creates **millions of unique combinations** with a professional, curatorial tone.
+- `MONGODB_URI`
+- `API_SECRET`
+- `ADMIN_PASSWORD`
+- `ALLOWED_ORIGINS`
+- `APPS_SCRIPT_WEBHOOK_URL`
+- `APPS_SCRIPT_WEBHOOK_SECRET`
 
-## Tech Stack
+## Operational Notes
 
-- **Frontend:** Pure HTML, CSS, JavaScript (no frameworks, no build process)
-- **Hosting:** GitHub Pages (free)
-- **Automation:** Google Apps Script
-- **Data Storage:** JSON file on GitHub
-- **Email:** Gmail via Google Apps Script
+- Keep exactly one `onFormSubmit` trigger in Apps Script.
+- Do not manually run `onFormSubmit` from the Apps Script editor.
+- If Apps Script webhook logic changes, redeploy the Web App or the live `/exec` endpoint will still run old code.
+- Existing live films are ordered by `sortOrder` first; the top live film becomes the homepage hero.
 
-## Customization
+## Docs
 
-- **Acceptance Rate:** Change `ACCEPTANCE_RATE` in Google Apps Script
-- **Review Templates:** Add more sentences to the arrays
-- **Design:** Edit `css/style.css`
-- **Email Text:** Modify email functions in Apps Script
-
-## Cost
-
-**$0/month**
-
-Just maintain your GoDaddy domain registration (~$12-20/year).
-
-## Support
-
-All instructions are in `SETUP-GUIDE.md`. No coding knowledge required!
-
----
-
-Built for automated short film curation with professional-quality reviews.
+- `/Users/willkempner/Dropbox/Projects/WEBSITES/Shorts-of-the-Year-website-main/SETUP-GUIDE.md`
+- `/Users/willkempner/Dropbox/Projects/WEBSITES/Shorts-of-the-Year-website-main/START-HERE.md`
+- `/Users/willkempner/Dropbox/Projects/WEBSITES/Shorts-of-the-Year-website-main/CHECKLIST.md`

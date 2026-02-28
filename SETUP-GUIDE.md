@@ -1,6 +1,16 @@
 # SHORTS OF THE YEAR - COMPLETE SETUP GUIDE
 
-This guide will walk you through setting up your entire website system. No coding experience needed!
+This guide is partially legacy.
+
+Current production architecture is:
+- static site on GitHub Pages
+- Vercel API for films/admin
+- Google Apps Script for submission timing, emails, and webhook actions
+- MongoDB as the data source
+
+Use `/README.md` and `/CHECKLIST.md` as the current high-level reference when this document conflicts with the live system.
+
+This guide will walk you through the overall setup. No coding experience needed!
 
 ---
 

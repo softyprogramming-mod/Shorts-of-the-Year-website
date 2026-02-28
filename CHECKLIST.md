@@ -1,84 +1,73 @@
-# SETUP CHECKLIST
+# Setup Checklist
 
-Use this to track your progress!
+Use this against the current stack, not the older `films.json` / GitHub-token workflow.
 
-## ☐ STEP 1: GitHub Setup (15 min)
-- [ ] Create GitHub account
-- [ ] Create new repository named "shortsoftheyear"
-- [ ] Upload all website files
-- [ ] Enable GitHub Pages in Settings
-- [ ] Get Personal Access Token
-- [ ] Save token somewhere safe
+## Static Site
 
-## ☐ STEP 2: Google Form (10 min)
-- [ ] Create form at forms.google.com
-- [ ] Add all 13 questions
-- [ ] Get form embed URL
-- [ ] Update submit.html with form URL
-- [ ] Test form by filling it out once
+- [ ] GitHub Pages is publishing the repo root from `main`
+- [ ] Custom domain is configured in GitHub Pages
+- [ ] DNS records point to GitHub Pages correctly
+- [ ] Homepage loads
+- [ ] Film pages load
+- [ ] Store page loads
+- [ ] Submit page loads
+- [ ] Admin page loads
 
-## ☐ STEP 3: Google Apps Script (15 min)
-- [ ] Open Script Editor from form
-- [ ] Paste automation code
-- [ ] Update CONFIG with GitHub token
-- [ ] Update CONFIG with GitHub username
-- [ ] Update CONFIG with your email
-- [ ] Save the script
-- [ ] Set up onFormSubmit trigger
-- [ ] Grant permissions
-- [ ] Test script runs without errors
+## Vercel API
 
-## ☐ STEP 4: GoDaddy Domain (10 min)
-- [ ] Login to GoDaddy
-- [ ] Go to DNS Management for shortsoftheyear.com
-- [ ] Add 4 A records (185.199.108-111.153)
-- [ ] Add 1 CNAME record (www → your-username.github.io)
-- [ ] Add custom domain in GitHub Pages settings
-- [ ] Enable HTTPS
-- [ ] Wait for DNS propagation (check whatsmydns.net)
+- [ ] Vercel project for `/softy-api-main` is deployed
+- [ ] `MONGODB_URI` is set
+- [ ] `API_SECRET` is set
+- [ ] `ADMIN_PASSWORD` is set
+- [ ] `ALLOWED_ORIGINS` is set
+- [ ] `APPS_SCRIPT_WEBHOOK_URL` is set
+- [ ] `APPS_SCRIPT_WEBHOOK_SECRET` is set
 
-## ☐ STEP 5: Testing (5 min)
-- [ ] Submit test form
-- [ ] Check Google Apps Script execution log
-- [ ] Wait for email (or reduce delay for testing)
-- [ ] Check films.json updated on GitHub
-- [ ] Visit shortsoftheyear.com to see new film
+## Google Apps Script
 
-## ☐ STEP 6: Merch Photos (5 min)
-- [ ] Upload clothing photos to images/ folder
-- [ ] Edit store.html to reference photos
-- [ ] Check store page looks good
+- [ ] Latest `/google-apps-script.js` is saved
+- [ ] Script Properties include:
+  - [ ] `API_SECRET`
+  - [ ] `ADMIN_PASSWORD`
+  - [ ] `WEBHOOK_SECRET`
+- [ ] Exactly one `onFormSubmit` trigger exists
+- [ ] Web App is deployed as:
+  - [ ] `Execute as: Me`
+  - [ ] `Who has access: Anyone`
+- [ ] Web App `/exec` URL matches Vercel `APPS_SCRIPT_WEBHOOK_URL`
 
-## ☐ FINAL CHECKS
-- [ ] Website loads at shortsoftheyear.com
-- [ ] Form submissions work
-- [ ] Emails arrive
-- [ ] Films appear on website
-- [ ] Instagram notifications arrive
-- [ ] Store page shows your photos
+## Submission / Approval Flow
 
----
+- [ ] Test submission appears in Admin `Submissions`
+- [ ] Acceptance email sends
+- [ ] Film publishes 12 hours after acceptance email
+- [ ] “Film is now live on SoftY” email sends
+- [ ] New accepted film rises to the top live position
 
-## Quick Reference
+## Rejection Arc
 
-**GitHub Repo URL:** https://github.com/YOUR-USERNAME/shortsoftheyear
-**Website URL:** https://shortsoftheyear.com
-**Form URL:** [Get from Google Forms]
-**Apps Script:** [Get from Google Forms → Script Editor]
+- [ ] Rejection Arc config loads in admin
+- [ ] `Enable custom rejection arc` is set correctly
+- [ ] Rejection Tracker loads without webhook errors
+- [ ] Rejecting a submission starts the arc
+- [ ] Active arc appears in `Rejection Tracker`
+- [ ] `Force Next` works
+- [ ] `Cancel Arc` works
 
-**Important Files:**
-- `films.json` - Film database
-- `google-apps-script.js` - Automation code
-- `SETUP-GUIDE.md` - Detailed instructions
+## Admin
 
-**Key Settings (in Google Apps Script CONFIG):**
-- GITHUB_TOKEN: [Your token]
-- GITHUB_REPO: [Your username]/shortsoftheyear
-- EMAIL_FROM: shortsoftheyear@gmail.com
-- ACCEPTANCE_RATE: 0.99 (99%)
-- DELAY_HOURS: 24
-- INSTAGRAM_NOTIFICATION_EMAIL: [Your email]
+- [ ] Films tab loads
+- [ ] Add film works
+- [ ] Edit/save works
+- [ ] Generate review works
+- [ ] Drag reorder works
+- [ ] Submissions view button works
+- [ ] Rejection Arc editor saves
+- [ ] Rejection Tracker updates
 
----
+## Operational Safety
 
-**Stuck?** Check SETUP-GUIDE.md troubleshooting section!
+- [ ] Do not manually run `onFormSubmit`
+- [ ] If webhook code changes, redeploy the Apps Script Web App
+- [ ] If API code changes, redeploy Vercel
+- [ ] If frontend code changes, republish GitHub Pages
