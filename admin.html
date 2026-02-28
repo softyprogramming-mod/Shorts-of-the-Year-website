@@ -1044,6 +1044,8 @@ async function cancelRejectionArc(arcId) {
       } catch (_) {}
       throw new Error(msg);
     }
+    rejectionTrackerArcs = rejectionTrackerArcs.filter(a => String(a && a.arcId ? a.arcId : '') !== String(arcId));
+    renderRejectionTracker(rejectionTrackerArcs);
     showToast('Rejection arc canceled', 'success');
     await loadRejectionTracker(true);
     await loadSubmissions();
