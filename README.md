@@ -30,6 +30,7 @@ Shorts of the Year is a static site front-end with a Vercel API and Google Apps 
   - pending submissions review
   - full read-only submission details
   - review generation
+  - acceptance email resend for already-approved films
   - rejection arc editor
   - rejection tracker with force-next and cancel actions
 - Automated review generation in:
@@ -57,6 +58,7 @@ If you change these files, deploy them in the matching place:
 - Apps Script:
   - save the script
   - redeploy the Apps Script Web App when webhook behavior changes
+  - copy the full `/Users/willkempner/Dropbox/Projects/WEBSITES/GITHUB DESKTOP/Shorts-of-the-Year-website/google-apps-script.js` into the live Apps Script project
 
 ## Important Secrets / Settings
 
@@ -75,11 +77,15 @@ Vercel Environment Variables:
 - `APPS_SCRIPT_WEBHOOK_URL`
 - `APPS_SCRIPT_WEBHOOK_SECRET`
 
+`APPS_SCRIPT_WEBHOOK_SECRET` in Vercel must match `WEBHOOK_SECRET` in Apps Script Script Properties. If `APPS_SCRIPT_WEBHOOK_SECRET` is not set, the API falls back to `ADMIN_PASSWORD`, but using a dedicated webhook secret is cleaner.
+
 ## Operational Notes
 
 - Keep exactly one `onFormSubmit` trigger in Apps Script.
 - Do not manually run `onFormSubmit` from the Apps Script editor.
 - If Apps Script webhook logic changes, redeploy the Web App or the live `/exec` endpoint will still run old code.
+- Manual admin approval now calls the Apps Script `manualApprove` webhook before publishing. If the webhook or email fails, the film remains pending and the admin page shows the error.
+- Already-approved films can use the Films tab `Email` button to send or resend the acceptance email without editing MongoDB.
 - Existing live films are ordered by `sortOrder` first; the top live film becomes the homepage hero.
 
 ## Docs

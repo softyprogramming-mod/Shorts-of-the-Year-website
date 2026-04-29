@@ -262,6 +262,71 @@ const QUALITIES = [
 // ==================== MAIN FUNCTIONS ====================
 
 /**
+ * Webhook endpoint for Vercel admin actions.
+ * Deploy this script as a Web App and put the /exec URL in Vercel as
+ * APPS_SCRIPT_WEBHOOK_URL.
+ */
+function doPost(e) {
+  try {
+    const payload = parseWebhookPayload(e);
+    validateWebhookSecret(payload.secret);
+
+    if (payload.action === 'manualApprove') {
+      return jsonResponse(handleManualApprove(payload));
+    }
+
+    return jsonResponse({
+      success: false,
+      error: 'Unknown webhook action: ' + String(payload.action || '')
+    });
+  } catch (error) {
+    Logger.log('Webhook error: ' + error);
+    return jsonResponse({
+      success: false,
+      error: error && error.message ? error.message : String(error)
+    });
+  }
+}
+
+/**
+ * Send the normal acceptance email when a film is manually approved in Admin.
+ */
+function handleManualApprove(payload) {
+  const film = payload && payload.film ? payload.film : {};
+  const review = String(payload && payload.review ? payload.review : '');
+  const formData = {
+    title: String(film.title || ''),
+    director: String(film.director || ''),
+    writer: String(film.writer || ''),
+    producer: String(film.producer || ''),
+    genre: String(film.genre || ''),
+    runtime: String(film.runtime || ''),
+    logline: String(film.logline || ''),
+    directorStatement: String(film.directorStatement || ''),
+    email: String(film.email || ''),
+    filmLink: String(film.filmLink || ''),
+    twitter: String(film.twitter || ''),
+    onlinePremiere: String(film.onlinePremiere || ''),
+    completionDate: String(film.completionDate || ''),
+    cast: String(film.cast || ''),
+    language: String(film.language || '')
+  };
+
+  if (!formData.email) throw new Error('Missing filmmaker email');
+  if (!formData.title) throw new Error('Missing film title');
+  if (!formData.director) throw new Error('Missing director name');
+
+  sendAcceptanceEmail(formData, review);
+
+  return {
+    success: true,
+    action: 'manualApprove',
+    submissionId: String(payload.submissionId || ''),
+    emailSent: true
+  };
+}
+
+/**
  * Trigger function when form is submitted
  * Set this up in Apps Script triggers
  */
@@ -565,6 +630,37 @@ function updateGitHubFilmsJson(newFilm) {
 }
 
 // ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Parse JSON posted by the Vercel API.
+ */
+function parseWebhookPayload(e) {
+  const raw = e && e.postData && e.postData.contents ? e.postData.contents : '{}';
+  const payload = JSON.parse(raw);
+  if (!payload || typeof payload !== 'object') throw new Error('Invalid webhook payload');
+  return payload;
+}
+
+/**
+ * Confirm Vercel is allowed to call this Web App.
+ * In Apps Script, set Script Property WEBHOOK_SECRET.
+ * In Vercel, set APPS_SCRIPT_WEBHOOK_SECRET to the same value.
+ */
+function validateWebhookSecret(incomingSecret) {
+  const props = PropertiesService.getScriptProperties();
+  const expected = String(props.getProperty('WEBHOOK_SECRET') || props.getProperty('ADMIN_PASSWORD') || '');
+  if (!expected) throw new Error('WEBHOOK_SECRET script property is not set');
+  if (String(incomingSecret || '') !== expected) throw new Error('Unauthorized webhook');
+}
+
+/**
+ * Return JSON to the Vercel API.
+ */
+function jsonResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data || {}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 
 /**
  * Extract form data from submission event

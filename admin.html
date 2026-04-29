@@ -66,6 +66,8 @@
     .btn-toggle { background: transparent; border: 1px solid var(--border); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
     .btn-toggle.is-live { color: var(--yellow); border-color: rgba(224,194,82,0.3); }
     .btn-toggle.is-hidden { color: var(--green); border-color: rgba(82,201,122,0.3); }
+    .btn-email { background: transparent; color: var(--blue); border: 1px solid rgba(82,148,224,0.3); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
+    .btn-email:hover { background: rgba(82,148,224,0.1); }
     .btn-delete { background: transparent; color: var(--red); border: 1px solid rgba(224,82,82,0.3); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
     .btn-delete:hover { background: rgba(224,82,82,0.1); }
     .btn-approve { background: transparent; color: var(--green); border: 1px solid rgba(82,201,122,0.3); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
@@ -1859,6 +1861,13 @@ function createFilmRow(film) {
   toggleBtn.textContent = film.live ? 'Hide' : 'Show';
   toggleBtn.addEventListener('click', () => toggleFilm(mongoId, film.live, tr));
 
+  const emailBtn = document.createElement('button');
+  emailBtn.className = 'btn btn-email';
+  emailBtn.textContent = 'Email';
+  emailBtn.title = 'Send acceptance email';
+  emailBtn.disabled = !film.email;
+  emailBtn.addEventListener('click', () => sendAcceptanceEmailForFilm(mongoId, film.title, emailBtn));
+
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'btn btn-delete';
   deleteBtn.textContent = 'Delete';
@@ -1866,11 +1875,40 @@ function createFilmRow(film) {
 
   actions.appendChild(editBtn);
   actions.appendChild(toggleBtn);
+  actions.appendChild(emailBtn);
   actions.appendChild(deleteBtn);
   tdActions.appendChild(actions);
   tr.appendChild(tdActions);
 
   return tr;
+}
+
+async function sendAcceptanceEmailForFilm(id, title, btn) {
+  if (!confirm(`Send acceptance email for "${title}"?`)) return;
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  try {
+    const res = await fetch(`${API_BASE}/admin?action=sendAcceptanceEmail&id=${id}`, {
+      method: 'POST',
+      headers: { 'x-admin-password': adminPassword }
+    });
+    if (!res.ok) {
+      let message = 'Failed to send acceptance email';
+      try {
+        const data = await res.json();
+        message = data.error || message;
+      } catch (_) {}
+      throw new Error(message);
+    }
+    showToast('Acceptance email sent', 'success');
+  } catch (error) {
+    showToast(error.message || 'Failed to send acceptance email', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
 
 function getFilmId(film) {
@@ -2091,7 +2129,14 @@ document.getElementById('approveConfirm').addEventListener('click', async () => 
       },
       body: JSON.stringify({ review: approveReviewText })
     });
-    if (!res.ok) throw new Error();
+    if (!res.ok) {
+      let message = 'Failed to approve';
+      try {
+        const data = await res.json();
+        message = data.error || message;
+      } catch (_) {}
+      throw new Error(message);
+    }
 
     document.getElementById('approveModal').classList.remove('open');
     approvingSubmission = null;
@@ -2108,8 +2153,8 @@ document.getElementById('approveConfirm').addEventListener('click', async () => 
     // Reload films tab to show newly approved film
     await loadFilms();
     showToast('Film approved and now live!', 'success');
-  } catch {
-    showToast('Failed to approve — check API supports action=approve', 'error');
+  } catch (error) {
+    showToast(error.message || 'Failed to approve', 'error');
   } finally {
     btn.disabled = false;
     btn.textContent = '✓ Approve & Go Live';
