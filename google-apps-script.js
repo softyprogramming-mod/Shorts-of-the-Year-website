@@ -22,6 +22,7 @@ const CONFIG = {
   GITHUB_TOKEN: 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN', // Create at github.com/settings/tokens
   GITHUB_REPO: 'YOUR_USERNAME/shortsoftheyear', // Your GitHub repo
   GITHUB_FILE_PATH: 'films.json', // Path to films.json in repo
+  API_URL: 'https://softy-api-phi.vercel.app/api/films',
   EMAIL_FROM: 'shortsoftheyear@gmail.com',
   ACCEPTANCE_RATE: 0.99, // 99% acceptance
   DELAY_HOURS: 24,
@@ -339,17 +340,22 @@ function onFormSubmit(e) {
     
     // Store submission data in Script Properties
     const submissionId = Utilities.getUuid();
-    PropertiesService.getScriptProperties().setProperty(
+    const props = PropertiesService.getScriptProperties();
+    props.setProperty(
       submissionId,
       JSON.stringify(formData)
     );
     
     // Create time-based trigger
-    ScriptApp.newTrigger('processSubmission')
+    const trigger = ScriptApp.newTrigger('processSubmission')
       .timeBased()
       .at(triggerTime)
-      .create()
-      .setUniqueId(submissionId);
+      .create();
+
+    props.setProperty('trigger_' + trigger.getUniqueId(), submissionId);
+
+    // Save pending record to MongoDB immediately so Admin can see it.
+    savePendingToMongo(formData, submissionId);
     
     Logger.log('Submission scheduled for processing in 24 hours');
   } catch (error) {
@@ -361,13 +367,18 @@ function onFormSubmit(e) {
  * Process the submission after 24 hours
  */
 function processSubmission(e) {
+  let triggerId = null;
+  let submissionId = null;
   try {
-    const triggerId = e.triggerUid;
+    triggerId = e && e.triggerUid ? e.triggerUid : null;
+    if (!triggerId) throw new Error('Missing triggerUid');
+
     const props = PropertiesService.getScriptProperties();
-    const formDataJson = props.getProperty(triggerId);
+    submissionId = props.getProperty('trigger_' + triggerId) || triggerId;
+    const formDataJson = props.getProperty(submissionId);
     
     if (!formDataJson) {
-      Logger.log('No data found for trigger: ' + triggerId);
+      Logger.log('No data found for submission: ' + submissionId);
       return;
     }
     
@@ -383,7 +394,8 @@ function processSubmission(e) {
     }
     
     // Clean up
-    props.deleteProperty(triggerId);
+    props.deleteProperty(submissionId);
+    props.deleteProperty('trigger_' + triggerId);
     deleteTrigger(triggerId);
     
   } catch (error) {
@@ -585,6 +597,52 @@ Post this to Instagram when ready!
 // ==================== GITHUB INTEGRATION ====================
 
 /**
+ * Save a pending submission to MongoDB through the Vercel API.
+ */
+function savePendingToMongo(formData, submissionId) {
+  const apiSecret = PropertiesService.getScriptProperties().getProperty('API_SECRET');
+  if (!apiSecret) throw new Error('API_SECRET script property is not set');
+
+  const pendingFilm = {
+    submissionId: submissionId,
+    timestamp: new Date().toISOString(),
+    title: formData.title || '',
+    director: formData.director || '',
+    writer: formData.writer || '',
+    producer: formData.producer || '',
+    genre: formData.genre || '',
+    runtime: formData.runtime || '',
+    logline: formData.logline || '',
+    directorStatement: formData.directorStatement || '',
+    email: formData.email || '',
+    filmLink: formData.filmLink || '',
+    password: formData.password || '',
+    twitter: formData.twitter || '',
+    onlinePremiere: formData.onlinePremiere || '',
+    thumbnail: extractThumbnail(formData.filmLink || ''),
+    slug: generateSlug(formData.title || 'submission'),
+    pending: true,
+    live: false,
+    accepted: false
+  };
+
+  const response = UrlFetchApp.fetch(CONFIG.API_URL, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'x-api-secret': apiSecret
+    },
+    payload: JSON.stringify(pendingFilm),
+    muteHttpExceptions: true
+  });
+
+  const code = response.getResponseCode();
+  if (code < 200 || code >= 300) {
+    throw new Error('Failed to save pending submission to MongoDB: HTTP ' + code + ' ' + response.getContentText());
+  }
+}
+
+/**
  * Update films.json on GitHub
  */
 function updateGitHubFilmsJson(newFilm) {
@@ -667,26 +725,31 @@ function jsonResponse(data) {
  */
 function extractFormData(e) {
   const responses = e.response.getItemResponses();
-  const data = {};
+  const data = {
+    email: typeof e.response.getRespondentEmail === 'function'
+      ? (e.response.getRespondentEmail() || '')
+      : ''
+  };
   
   responses.forEach(response => {
     const question = response.getItem().getTitle();
+    const normalizedQuestion = String(question || '').toLowerCase();
     const answer = response.getResponse();
     
     // Map form questions to data fields
-    if (question.includes('Title')) data.title = answer;
-    if (question.includes('Director')) data.director = answer;
-    if (question.includes('Writer')) data.writer = answer;
-    if (question.includes('Producer')) data.producer = answer;
-    if (question.includes('Genre')) data.genre = answer;
-    if (question.includes('Runtime')) data.runtime = answer;
-    if (question.includes('Logline')) data.logline = answer;
-    if (question.includes('Statement')) data.directorStatement = answer;
-    if (question.includes('Email')) data.email = answer;
-    if (question.includes('Link')) data.filmLink = answer;
-    if (question.includes('Password')) data.password = answer;
-    if (question.includes('Twitter') || question.includes('handle')) data.twitter = answer;
-    if (question.includes('Premiere')) data.onlinePremiere = answer;
+    if (normalizedQuestion.includes('title')) data.title = answer;
+    if (normalizedQuestion.includes('director')) data.director = answer;
+    if (normalizedQuestion.includes('writer')) data.writer = answer;
+    if (normalizedQuestion.includes('producer')) data.producer = answer;
+    if (normalizedQuestion.includes('genre')) data.genre = answer;
+    if (normalizedQuestion.includes('runtime')) data.runtime = answer;
+    if (normalizedQuestion.includes('logline')) data.logline = answer;
+    if (normalizedQuestion.includes('statement')) data.directorStatement = answer;
+    if (normalizedQuestion.includes('email')) data.email = answer;
+    if (normalizedQuestion.includes('link')) data.filmLink = answer;
+    if (normalizedQuestion.includes('password')) data.password = answer;
+    if (normalizedQuestion.includes('twitter') || normalizedQuestion.includes('instagram') || normalizedQuestion.includes('handle')) data.twitter = answer;
+    if (normalizedQuestion.includes('premiere')) data.onlinePremiere = answer;
   });
   
   return data;

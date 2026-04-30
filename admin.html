@@ -2121,13 +2121,22 @@ document.getElementById('approveConfirm').addEventListener('click', async () => 
   btn.textContent = 'Approving…';
 
   try {
+    let emailOverride = '';
+    if (!String(sub.email || '').trim()) {
+      emailOverride = prompt('This submission is missing an email. Enter the filmmaker email to send the acceptance email:') || '';
+      emailOverride = emailOverride.trim();
+      if (!emailOverride) {
+        throw new Error('Approval canceled: email is required');
+      }
+    }
+
     const res = await fetch(`${API_BASE}/admin?action=approve&id=${mongoId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'x-admin-password': adminPassword
       },
-      body: JSON.stringify({ review: approveReviewText })
+      body: JSON.stringify({ review: approveReviewText, email: emailOverride })
     });
     if (!res.ok) {
       let message = 'Failed to approve';
