@@ -4,7 +4,8 @@ let allFilms = [];
 let displayedFilms = 0;
 const filmsPerLoad = 9;
 let featuredTitleInteractiveTimer = null;
-const FILMS_API_URL = '/api/films';
+const FILMS_API_URL = 'https://softy-api-phi.vercel.app/api/films';
+const LOCAL_FILMS_URL = 'films.json';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Homepage mobile: allow native pull-to-refresh behavior.
@@ -30,25 +31,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupLoadMore();
 });
 
-// Load films from MongoDB API. Do not fall back to films.json because it can
-// serve old public data when an in-app browser has a transient API failure.
+// Load films from MongoDB API first. Some in-app browsers fail cross-domain
+// fetches, so fall back to the same-site static snapshot.
 async function loadFilms() {
-    try {
-        const response = await fetch(FILMS_API_URL, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        const films = Array.isArray(data.films) ? data.films : [];
-        allFilms = films.filter(film => film.live || film.accepted);
-        if (allFilms.length > 0) {
-            clearLoadError();
-            return;
+    const sources = [FILMS_API_URL, LOCAL_FILMS_URL];
+    let lastError = null;
+
+    for (const source of sources) {
+        try {
+            const response = await fetch(source, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            const films = Array.isArray(data.films) ? data.films : [];
+            allFilms = films.filter(film => film.live || film.accepted);
+            if (allFilms.length > 0) {
+                clearLoadError();
+                return;
+            }
+            lastError = new Error(`No live films returned from ${source}`);
+        } catch (error) {
+            lastError = error;
+            console.error(`Error loading films from ${source}:`, error);
         }
-        throw new Error('No live films returned from API');
-    } catch (error) {
-        allFilms = [];
-        showLoadError(error);
-        console.error('Error loading films from API:', error);
     }
+
+    allFilms = [];
+    showLoadError(lastError);
 }
 
 function clearLoadError() {

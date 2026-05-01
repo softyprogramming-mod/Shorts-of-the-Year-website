@@ -39,13 +39,29 @@
   });
   function getFilms(cb) {
     if (filmsCache) { cb(filmsCache); return; }
-    fetch('/api/films')
-      .then(function (r) { return r.json(); })
+    fetchFilmsData()
       .then(function (data) {
         filmsCache = (data.films || []).filter(function (f) { return f.live; });
         cb(filmsCache);
       })
       .catch(function () { cb([]); });
+  }
+  function fetchFilmsData() {
+    var sources = ['https://softy-api-phi.vercel.app/api/films', 'films.json'];
+    var index = 0;
+
+    function tryNext() {
+      var source = sources[index++];
+      if (!source) return Promise.reject(new Error('Unable to load films'));
+      return fetch(source, { cache: 'no-store' })
+        .then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
+        .catch(function () { return tryNext(); });
+    }
+
+    return tryNext();
   }
   function addHighlightedText(container, text, query) {
     var source = String(text || '');

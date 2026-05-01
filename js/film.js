@@ -13,8 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadFilmData() {
     try {
-        const response = await fetch('/api/films');
-        const data = await response.json();
+        const data = await fetchFilmsData();
         const film = (data.films || []).find(f => f.slug === filmId);
 
         if (!film || !film.live) {
@@ -27,6 +26,24 @@ async function loadFilmData() {
         console.error('Error loading film:', error);
         window.location.href = '/';
     }
+}
+
+async function fetchFilmsData() {
+    const sources = ['https://softy-api-phi.vercel.app/api/films', 'films.json'];
+    let lastError = null;
+
+    for (const source of sources) {
+        try {
+            const response = await fetch(source, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            lastError = error;
+            console.error(`Error loading film data from ${source}:`, error);
+        }
+    }
+
+    throw lastError || new Error('Unable to load film data');
 }
 
 function displayFilm(film) {
