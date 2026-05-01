@@ -708,6 +708,12 @@ function onFormSubmit(e) {
 
     // Save pending record to MongoDB immediately so admin can see it
     savePendingToMongo(formData, submissionId);
+    try {
+      sendSubmissionReceivedEmail(formData);
+    } catch (receiptError) {
+      Logger.log('Submission received email failed: ' + receiptError);
+      notifyAdmin_('submission received email failed', receiptError);
+    }
   } catch (error) {
     notifyAdmin_('onFormSubmit failed', error);
     Logger.log('Error in onFormSubmit: ' + error);
@@ -1598,7 +1604,22 @@ function manualRejectSubmission_(submissionId) {
   var props = PropertiesService.getScriptProperties();
   var formDataJson = props.getProperty(submissionId);
   if (!formDataJson) {
-    // We can still try to delete from Mongo/cancel any stale trigger, but email data is gone.
+    var fallbackFilm = getFilmBySubmissionId_(submissionId);
+    if (fallbackFilm) {
+      var fallbackArcStart = startConfiguredRejectionArcOrFallback_(fallbackFilm, submissionId);
+      cancelSubmissionTriggerBySubmissionId_(submissionId);
+      Logger.log('Manual rejection flow started from Mongo fallback: ' + submissionId);
+      return {
+        success: true,
+        submissionId: submissionId,
+        rejectionMode: fallbackArcStart && fallbackArcStart.mode ? fallbackArcStart.mode : 'simple',
+        rejectionArcStarted: !!(fallbackArcStart && fallbackArcStart.started),
+        rejectionArcId: fallbackArcStart && fallbackArcStart.arcId ? fallbackArcStart.arcId : '',
+        rejectionArcHasAcceptanceStep: !!(fallbackArcStart && fallbackArcStart.hasAcceptanceStep),
+        rejectionArcPendingRetained: !!(fallbackArcStart && fallbackArcStart.pendingRecordRetained)
+      };
+    }
+
     cancelSubmissionTriggerBySubmissionId_(submissionId);
     deleteFromMongo(submissionId);
     return { success: false, error: 'Submission data not found (email not sent)', submissionId: submissionId };
@@ -1684,9 +1705,12 @@ function processSubmission(e) {
 
 function handleAcceptance(formData, submissionId) {
   const review = generateReview(formData);
+  const approved = approveInMongo(submissionId, review);
+  if (!approved || approved.success !== true) {
+    throw new Error('approveInMongo failed during acceptance for ' + submissionId);
+  }
   sendAcceptanceEmail(formData, review);
-  schedulePublishTrigger_(submissionId, formData, review);
-  Logger.log('Acceptance email sent; publish scheduled: ' + (formData.title || '(no title)'));
+  Logger.log('Acceptance email sent; film published immediately: ' + (formData.title || '(no title)'));
 }
 
 function handleRejection(formData, submissionId) {
@@ -2065,6 +2089,26 @@ function approveInMongo(submissionId, review) {
   }
 }
 
+function getFilmBySubmissionId_(submissionId) {
+  try {
+    const adminPassword = getAdminPassword_();
+    const listRes = UrlFetchApp.fetch(CONFIG.API_BASE + '/admin?action=list', {
+      headers: { 'x-admin-password': adminPassword },
+      muteHttpExceptions: true
+    });
+
+    if (listRes.getResponseCode() !== 200) {
+      throw new Error('Could not fetch film list. HTTP ' + listRes.getResponseCode() + ' ' + listRes.getContentText());
+    }
+
+    const data = JSON.parse(listRes.getContentText());
+    return (data.films || []).find(function(f) { return f.submissionId === submissionId; }) || null;
+  } catch (error) {
+    Logger.log('Failed to fetch film by submissionId: ' + error);
+    return null;
+  }
+}
+
 function sendFilmNowLiveEmail_(filmData) {
   var recipient = normalizeEmail_(filmData && filmData.email);
   if (!recipient) {
@@ -2133,6 +2177,35 @@ function deleteFromMongo(submissionId) {
 
 // ==================== EMAIL FUNCTIONS ====================
 
+function sendSubmissionReceivedEmail(formData) {
+  var recipient = normalizeEmail_(formData.email);
+  if (!recipient) {
+    Logger.log('Skipping submission received email: missing/invalid recipient');
+    return;
+  }
+
+  var title = formData.title || 'your film';
+  var director = formData.director || 'there';
+  var subject = 'We received your submission to Shorts of the Year';
+
+  var htmlBody = ''
+    + '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">'
+    + '<p>Dear ' + escapeHtml_(director) + ',</p>'
+    + '<p>Thank you for submitting "<strong>' + escapeHtml_(title) + '</strong>" to Shorts of the Year.</p>'
+    + '<p>Your submission has been received. One of our jurors will watch it soon, and we’ll get back to you once a decision has been made.</p>'
+    + '<p>Best regards,<br><strong>The Shorts of the Year Team</strong></p>'
+    + '<p style="color:#999; font-size:12px;">www.shortsoftheyear.com &nbsp;|&nbsp; @shortsoftheyear</p>'
+    + '</div>';
+
+  var plainBody = ''
+    + 'Dear ' + director + ',\n\n'
+    + 'Thank you for submitting "' + title + '" to Shorts of the Year.\n\n'
+    + 'Your submission has been received. One of our jurors will watch it soon, and we’ll get back to you once a decision has been made.\n\n'
+    + 'Best regards,\nThe Shorts of the Year Team\n\nwww.shortsoftheyear.com | @shortsoftheyear';
+
+  sendEmailWithBcc_(recipient, subject, plainBody, htmlBody);
+}
+
 function sendAcceptanceEmail(formData, review) {
   var recipient = normalizeEmail_(formData.email);
   if (!recipient) throw new Error("Missing/invalid recipient email (acceptance).");
@@ -2145,7 +2218,7 @@ function sendAcceptanceEmail(formData, review) {
     + "<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;\">"
     + "<p>Dear " + escapeHtml_(director) + ",</p>"
     + "<p>Congratulations! We're thrilled to inform you that \"<strong>" + escapeHtml_(title) + "</strong>\" has been selected for Shorts of the Year.</p>"
-    + "<p>Your film will be featured on our website at <a href=\"https://www.shortsoftheyear.com\">www.shortsoftheyear.com</a> approximately 12 hours from this email.</p>"
+    + "<p>Your film is now featured on our website at <a href=\"https://www.shortsoftheyear.com\">www.shortsoftheyear.com</a>.</p>"
     + "<p>Keep your eyes peeled for your review to be featured on the site soon.</p>"
     + "<p>As an official selection, you can use our laurel on your poster and promotional materials!</p>"
     + "<div style=\"text-align: center; margin: 20px 0;\">"
@@ -2160,7 +2233,7 @@ function sendAcceptanceEmail(formData, review) {
   var plainBody = ""
     + "Dear " + director + ",\n\n"
     + "Congratulations! We're thrilled to inform you that \"" + title + "\" has been selected for Shorts of the Year.\n\n"
-    + "Your film will be featured on our website at www.shortsoftheyear.com approximately 12 hours from this email.\n\n"
+    + "Your film is now featured on our website at www.shortsoftheyear.com.\n\n"
     + "Keep your eyes peeled for your review to be featured on the site soon.\n\n"
     + "As an official selection, you can use our laurel on your poster and promotional materials!\n\n"
     + "We'll also be sharing your film on our social media channels. If you have a Twitter/Instagram handle you'd like us to tag, please reply to this email.\n\n"

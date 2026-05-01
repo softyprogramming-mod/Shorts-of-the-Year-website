@@ -40,8 +40,7 @@ Shorts of the Year is a static site front-end with a Vercel API and Google Apps 
 - Acceptance flow:
   - random decision delay between 1 and 3 days after submission
   - acceptance email
-  - delayed publish 12 hours later
-  - “now live on SoftY” email after publish
+  - immediate publish when accepted
 - Rejection flow:
   - configurable rejection arc stored through admin
   - consistent `[RANDOM NAME]` per arc

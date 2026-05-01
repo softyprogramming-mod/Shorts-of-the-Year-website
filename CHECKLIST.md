@@ -42,8 +42,7 @@ Use this against the current stack, not the older `films.json` / GitHub-token wo
 - [ ] Manual admin approval sends the acceptance email
 - [ ] Films tab `Email` button resends the acceptance email for an already-approved film
 - [ ] Auto acceptance email sends
-- [ ] Film publishes 12 hours after acceptance email
-- [ ] “Film is now live on SoftY” email sends
+- [ ] Film publishes immediately on manual or auto acceptance
 - [ ] New accepted film rises to the top live position
 
 ## Rejection Arc
