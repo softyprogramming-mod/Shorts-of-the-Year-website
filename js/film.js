@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadFilmData() {
     try {
-        const response = await fetch('https://softy-api-phi.vercel.app/api/films');
+        const response = await fetch('/api/films');
         const data = await response.json();
         const film = (data.films || []).find(f => f.slug === filmId);
 

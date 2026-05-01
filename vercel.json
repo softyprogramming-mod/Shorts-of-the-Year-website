@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://softy-api-phi.vercel.app/api/:path*"
+    }
+  ]
+}

@@ -39,7 +39,7 @@
   });
   function getFilms(cb) {
     if (filmsCache) { cb(filmsCache); return; }
-    fetch('https://softy-api-phi.vercel.app/api/films')
+    fetch('/api/films')
       .then(function (r) { return r.json(); })
       .then(function (data) {
         filmsCache = (data.films || []).filter(function (f) { return f.live; });

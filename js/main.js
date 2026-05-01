@@ -4,7 +4,7 @@ let allFilms = [];
 let displayedFilms = 0;
 const filmsPerLoad = 9;
 let featuredTitleInteractiveTimer = null;
-const FILMS_API_URL = 'https://softy-api-phi.vercel.app/api/films';
+const FILMS_API_URL = '/api/films';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Homepage mobile: allow native pull-to-refresh behavior.
