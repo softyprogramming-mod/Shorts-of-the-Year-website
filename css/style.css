@@ -538,6 +538,40 @@ mark {
   opacity: 0;
 }
 
+.masthead--error {
+  min-height: 420px;
+}
+
+.home-load-error {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: min(420px, calc(100% - 48px));
+  color: var(--white);
+  text-align: center;
+  font-size: 16px;
+}
+
+.home-load-error button {
+  border: 1px solid rgba(255,255,255,0.45);
+  background: transparent;
+  color: var(--white);
+  border-radius: 999px;
+  padding: 8px 18px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.home-load-error button:hover {
+  background: rgba(255,255,255,0.12);
+}
+
 /* Full-area clickable link */
 .masthead-full-link {
   position: absolute;
@@ -619,6 +653,7 @@ mark {
 
 @media (max-width: 768px) {
   .masthead { height: 70vh; min-height: 0; }
+  .masthead--error { min-height: 420px; }
   .masthead::before {
     background: linear-gradient(to bottom, rgba(0,0,0,0.01) 0%, rgba(0,0,0,0.18) 48%, rgba(0,0,0,0.7) 100%);
   }

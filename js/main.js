@@ -4,6 +4,8 @@ let allFilms = [];
 let displayedFilms = 0;
 const filmsPerLoad = 9;
 let featuredTitleInteractiveTimer = null;
+const FILMS_API_URL = 'https://softy-api-phi.vercel.app/api/films';
+const LOCAL_FILMS_URL = 'films.json';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Homepage mobile: allow native pull-to-refresh behavior.
@@ -31,14 +33,53 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Load films from MongoDB API
 async function loadFilms() {
-    try {
-        const response = await fetch('https://softy-api-phi.vercel.app/api/films');
-        const data = await response.json();
-        // Respect API order (admin drag-reorder sets the homepage hero order).
-        allFilms = (data.films || []).filter(film => film.live);
-    } catch (error) {
-        console.error('Error loading films:', error);
+    const sources = [FILMS_API_URL, LOCAL_FILMS_URL];
+    let lastError = null;
+
+    for (const source of sources) {
+        try {
+            const response = await fetch(source, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            const films = Array.isArray(data.films) ? data.films : [];
+            allFilms = films.filter(film => film.live || film.accepted);
+            if (allFilms.length > 0) {
+                clearLoadError();
+                return;
+            }
+            lastError = new Error(`No films returned from ${source}`);
+        } catch (error) {
+            lastError = error;
+            console.error(`Error loading films from ${source}:`, error);
+        }
     }
+
+    allFilms = [];
+    showLoadError(lastError);
+}
+
+function clearLoadError() {
+    const existing = document.getElementById('homeLoadError');
+    if (existing) existing.remove();
+}
+
+function showLoadError(error) {
+    const masthead = document.getElementById('masthead');
+    if (!masthead || document.getElementById('homeLoadError')) return;
+
+    masthead.classList.add('masthead--ready', 'masthead--error');
+    const message = document.createElement('div');
+    message.id = 'homeLoadError';
+    message.className = 'home-load-error';
+    message.innerHTML = '<strong>Films are taking longer than usual to load.</strong><button type="button">Retry</button>';
+    message.querySelector('button').addEventListener('click', async () => {
+        message.remove();
+        await loadFilms();
+        displayFeaturedFilm();
+        displayFilmGrid(true);
+    });
+    masthead.appendChild(message);
+    if (error) console.error('All film sources failed:', error);
 }
 
 // Display featured film (most recent)
@@ -104,8 +145,13 @@ function displayFeaturedFilm() {
 }
 
 // Display film grid
-function displayFilmGrid() {
+function displayFilmGrid(reset = false) {
     const grid = document.getElementById('filmsGrid');
+    if (!grid) return;
+    if (reset) {
+        grid.innerHTML = '';
+        displayedFilms = 0;
+    }
 
     const filmsToShow = allFilms.slice(1, displayedFilms + filmsPerLoad + 1);
 
@@ -118,7 +164,11 @@ function displayFilmGrid() {
     displayedFilms = filmsToShow.length;
 
     if (displayedFilms >= allFilms.length - 1) {
-        document.getElementById('loadMore').style.display = 'none';
+        const loadMore = document.getElementById('loadMore');
+        if (loadMore) loadMore.style.display = 'none';
+    } else {
+        const loadMore = document.getElementById('loadMore');
+        if (loadMore) loadMore.style.display = '';
     }
 }
 
@@ -163,6 +213,7 @@ function createFilmItem(film) {
 
 function setupLoadMore() {
     const loadMoreBtn = document.getElementById('loadMore');
+    if (!loadMoreBtn) return;
     loadMoreBtn.addEventListener('click', displayFilmGrid);
 }
 
