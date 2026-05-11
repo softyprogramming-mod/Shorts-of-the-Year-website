@@ -773,6 +773,7 @@ let films = [];
 let submissions = [];
 let editingFilm = null;
 let modalReadOnly = false;
+let modalSubmissionReview = false;
 let deletingId = null;
 let approvingSubmission = null;
 let approveReviewText = '';
@@ -2225,10 +2226,10 @@ function createSubRow(sub) {
 
   const viewBtn = document.createElement('button');
   viewBtn.className = 'btn btn-edit';
-  viewBtn.textContent = 'View';
+  viewBtn.textContent = 'Review';
   viewBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    openEditModal(sub, { readOnly: true, titlePrefix: 'Submission' });
+    openEditModal(sub, { submissionReview: true, titlePrefix: 'Review Submission' });
   });
 
   const approveBtn = document.createElement('button');
@@ -2251,7 +2252,7 @@ function createSubRow(sub) {
   tr.style.cursor = 'pointer';
   tr.addEventListener('click', (e) => {
     if (e.target.closest('button')) return;
-    openEditModal(sub, { readOnly: true, titlePrefix: 'Submission' });
+    openEditModal(sub, { submissionReview: true, titlePrefix: 'Review Submission' });
   });
 
   return tr;
@@ -2262,7 +2263,7 @@ function createSubRow(sub) {
 // ══════════════════════════════════════════════════════════════
 function openApproveModal(sub, mongoId) {
   approvingSubmission = { sub, mongoId };
-  approveReviewText = generateReview(sub);
+  approveReviewText = String(sub.review || '').trim() || generateReview(sub);
   document.getElementById('approveFilmName').textContent =
     `"${sub.title}" by ${sub.director} will go live immediately and an acceptance email will be sent.`;
   document.getElementById('approveReviewPreview').textContent = approveReviewText;
@@ -3136,6 +3137,7 @@ async function deriveThumbnailFromVideoLink(url) {
 function openEditModal(film, options = {}) {
   editingFilm = film;
   modalReadOnly = !!options.readOnly;
+  modalSubmissionReview = !!options.submissionReview;
   isCreatingFilm = !!options.create;
   const form = document.getElementById('editForm');
   const saveBtn = document.getElementById('modalSave');
@@ -3190,7 +3192,7 @@ function openEditModal(film, options = {}) {
     form.appendChild(group);
   });
   saveBtn.style.display = modalReadOnly ? 'none' : 'inline-flex';
-  saveBtn.textContent = isCreatingFilm ? 'Create film' : 'Save changes';
+  saveBtn.textContent = isCreatingFilm ? 'Create film' : (modalSubmissionReview ? 'Save draft review' : 'Save changes');
   cancelBtn.textContent = modalReadOnly ? 'Close' : 'Cancel';
   document.getElementById('editModal').classList.add('open');
 }
@@ -3204,6 +3206,7 @@ function closeEditModal() {
   document.getElementById('modalCancel').textContent = 'Cancel';
   editingFilm = null;
   modalReadOnly = false;
+  modalSubmissionReview = false;
   isCreatingFilm = false;
 }
 
@@ -3248,6 +3251,7 @@ document.getElementById('modalSave').addEventListener('click', async () => {
   const updates = getEditFormValues();
   const btn = document.getElementById('modalSave');
   const originalLabel = btn.textContent;
+  const wasSubmissionReview = modalSubmissionReview;
   btn.disabled = true; btn.textContent = isCreatingFilm ? 'Creating…' : 'Saving…';
   try {
     if (!String(updates.thumbnail || '').trim() && String(updates.filmLink || '').trim()) {
@@ -3261,8 +3265,15 @@ document.getElementById('modalSave').addEventListener('click', async () => {
 
     if (!updates.slug) updates.slug = slugifyTitle(updates.title);
     if (!updates.timestamp) updates.timestamp = new Date().toISOString();
-    updates.pending = false;
-    updates.accepted = true;
+
+    if (wasSubmissionReview) {
+      updates.pending = true;
+      updates.accepted = false;
+      updates.live = false;
+    } else {
+      updates.pending = false;
+      updates.accepted = true;
+    }
 
     let res;
     if (isCreatingFilm) {
@@ -3287,10 +3298,14 @@ document.getElementById('modalSave').addEventListener('click', async () => {
       Object.assign(editingFilm, updates);
     }
     closeEditModal();
-    applyFilters();
-    showToast(isCreatingFilm ? 'Film created' : 'Film saved', 'success');
+    if (wasSubmissionReview) {
+      renderSubsTable(submissions);
+    } else {
+      applyFilters();
+    }
+    showToast(isCreatingFilm ? 'Film created' : (wasSubmissionReview ? 'Draft review saved' : 'Film saved'), 'success');
   } catch {
-    showToast(isCreatingFilm ? 'Failed to create film' : 'Failed to save', 'error');
+    showToast(isCreatingFilm ? 'Failed to create film' : (wasSubmissionReview ? 'Failed to save draft review' : 'Failed to save'), 'error');
   }
   finally { btn.disabled = false; btn.textContent = originalLabel; }
 });
