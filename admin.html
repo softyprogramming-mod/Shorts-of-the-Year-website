@@ -933,7 +933,8 @@ async function loadSubmissions() {
   document.getElementById('subsTable').style.display = 'none';
   try {
     const res = await fetch(`${API_BASE}/admin?action=list`, {
-      headers: { 'x-admin-password': adminPassword }
+      headers: { 'x-admin-password': adminPassword },
+      cache: 'no-store'
     });
     if (!res.ok) throw new Error();
     const data = await res.json();
@@ -2077,7 +2078,7 @@ function formatDuration(ms) {
 }
 
 function getSubmissionDecisionTarget(sub) {
-  if (sub.autoPaused === true) return { ms: 0, exact: true, paused: true };
+  if (isSubmissionPaused(sub)) return { ms: 0, exact: true, paused: true };
   const exact = parseDateMs(sub.scheduledDecisionAt);
   if (exact) return { ms: exact, exact: true };
 
@@ -2256,8 +2257,9 @@ function createSubRow(sub) {
   rejectBtn.addEventListener('click', () => rejectSubmission(mongoId, sub.title, tr));
 
   const pauseBtn = document.createElement('button');
-  pauseBtn.className = sub.autoPaused === true ? 'btn btn-resume' : 'btn btn-pause';
-  pauseBtn.textContent = sub.autoPaused === true ? 'Resume' : 'Pause';
+  const paused = isSubmissionPaused(sub);
+  pauseBtn.className = paused ? 'btn btn-resume' : 'btn btn-pause';
+  pauseBtn.textContent = paused ? 'Resume' : 'Pause';
   pauseBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     toggleSubmissionPause(mongoId, sub);
@@ -2298,8 +2300,14 @@ function patchSubmissionInState(mongoId, patch) {
   if (idx >= 0) submissions[idx] = { ...submissions[idx], ...patch };
 }
 
+function isSubmissionPaused(sub) {
+  if (!sub) return false;
+  if (sub.autoPaused === true || sub.autoPaused === 'true') return true;
+  return !!sub.autoPausedAt && !sub.autoResumedAt;
+}
+
 async function toggleSubmissionPause(mongoId, sub) {
-  const isPaused = sub.autoPaused === true;
+  const isPaused = isSubmissionPaused(sub);
   const action = isPaused ? 'resumeSubmission' : 'pauseSubmission';
   const label = isPaused ? 'resume' : 'pause';
   try {
