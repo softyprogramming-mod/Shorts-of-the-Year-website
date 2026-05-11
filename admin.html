@@ -2474,6 +2474,35 @@ const GENRE_ADJECTIVES_CLIENT = {
   'Action': ['kinetic','muscular','high-octane','propulsive','viscerally staged']
 };
 
+function normalizeReviewGenreClient(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return 'OTHER';
+  if (GENRE_ADJECTIVES_CLIENT[raw]) return raw;
+
+  const compact = raw.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '');
+  const aliases = {
+    drama: 'Drama',
+    dramatic: 'Drama',
+    comedy: 'Comedy',
+    comedic: 'Comedy',
+    documentary: 'Documentary',
+    doc: 'Documentary',
+    docs: 'Documentary',
+    horror: 'Horror',
+    scifi: 'Sci-Fi',
+    sciencefiction: 'Sci-Fi',
+    thriller: 'Thriller',
+    animation: 'Animation',
+    animated: 'Animation',
+    experimental: 'Experimental',
+    experiment: 'Experimental',
+    xr: 'Experimental',
+    romance: 'Romance',
+    action: 'Action'
+  };
+  return aliases[compact] || 'OTHER';
+}
+
 const OPENINGS_CLIENT = [
   '{DIRECTOR} brings us {TITLE}, a {GENRE_ADJ} exploration',
   'In {TITLE}, director {DIRECTOR} crafts a {GENRE_ADJ} narrative',
@@ -2688,7 +2717,8 @@ function generateReview(formData) {
   const opening = randomChoice(OPENINGS_CLIENT);
   const middles = pickMiddleSentencesClient();
   const closing = randomChoice(CLOSINGS_CLIENT);
-  const genreAdjs = GENRE_ADJECTIVES_CLIENT[formData.genre] || ['compelling','engaging','thoughtful'];
+  const genre = normalizeReviewGenreClient(formData.genre);
+  const genreAdjs = GENRE_ADJECTIVES_CLIENT[genre] || ['compelling','engaging','thoughtful'];
   const genreAdj = randomChoice(genreAdjs);
   const quality1 = randomChoice(QUALITIES_CLIENT);
   const quality2 = randomChoice(QUALITIES_CLIENT.filter(q => q !== quality1));
@@ -2700,7 +2730,7 @@ function generateReview(formData) {
   review = review
     .replace(/{TITLE}/g, formData.title || 'this film')
     .replace(/{DIRECTOR}/g, director)
-    .replace(/{GENRE}/g, (formData.genre || 'film').toLowerCase())
+    .replace(/{GENRE}/g, genre === 'OTHER' ? 'film' : genre.toLowerCase())
     .replace(/{GENRE_ADJ}/g, genreAdj)
     .replace(/{QUALITY}/g, quality1)
     .replace(/{QUALITY}/g, quality2);
