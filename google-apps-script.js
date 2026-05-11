@@ -1824,10 +1824,17 @@ function processSubmission(e) {
   let submissionId = null;
 
   try {
-    if (!triggerId) throw new Error('Missing triggerUid');
+    if (!triggerId) {
+      Logger.log('Ignoring processSubmission run without triggerUid.');
+      return;
+    }
 
     submissionId = props.getProperty('trigger_' + triggerId);
-    if (!submissionId) throw new Error('No submission ID for trigger ' + triggerId);
+    if (!submissionId) {
+      Logger.log('Ignoring stale processSubmission trigger with no submission ID: ' + triggerId);
+      deleteTrigger(triggerId);
+      return;
+    }
 
     const formDataJson = props.getProperty(submissionId);
     if (!formDataJson) throw new Error('No submission data for ' + submissionId);

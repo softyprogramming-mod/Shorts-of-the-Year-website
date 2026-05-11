@@ -68,6 +68,9 @@
     .btn-toggle.is-hidden { color: var(--green); border-color: rgba(82,201,122,0.3); }
     .btn-email { background: transparent; color: var(--blue); border: 1px solid rgba(82,148,224,0.3); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
     .btn-email:hover { background: rgba(82,148,224,0.1); }
+    .btn-post { background: transparent; color: var(--orange); border: 1px solid rgba(224,122,82,0.35); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
+    .btn-post:hover { background: rgba(224,122,82,0.1); }
+    .btn-post.is-posted { color: var(--green); border-color: rgba(82,201,122,0.3); }
     .btn-delete { background: transparent; color: var(--red); border: 1px solid rgba(224,82,82,0.3); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
     .btn-delete:hover { background: rgba(224,82,82,0.1); }
     .btn-approve { background: transparent; color: var(--green); border: 1px solid rgba(82,201,122,0.3); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
@@ -229,6 +232,17 @@
     .confirm-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
     .btn-confirm-approve { background: var(--green); color: #000; border: none; font-weight: 600; }
     .btn-confirm-approve:hover { opacity: 0.85; }
+    .post-modal { max-width: 780px; }
+    .post-preview-grid { display: grid; grid-template-columns: minmax(220px, 0.8fr) minmax(260px, 1.2fr); gap: 1rem; align-items: start; }
+    .post-image-wrap { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; min-height: 220px; display: flex; align-items: center; justify-content: center; }
+    .post-image-wrap img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; opacity: 0.9; }
+    .post-fields { display: grid; gap: 0.75rem; }
+    .post-fields label { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
+    .post-fields textarea { width: 100%; min-height: 260px; resize: vertical; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); padding: 0.75rem; font: inherit; line-height: 1.45; outline: none; }
+    .post-fields textarea:focus { border-color: #555; }
+    .post-meta { color: var(--text-dim); font-size: 0.78rem; line-height: 1.45; }
+    .post-warning { color: var(--orange); font-size: 0.8rem; line-height: 1.45; display: none; }
+    .post-warning.visible { display: block; }
 
     /* ── REJECTION ARC ── */
     .panel-section {
@@ -563,6 +577,9 @@
       .modal {
         max-width: 92vw;
       }
+      .post-preview-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -733,6 +750,30 @@
   </div>
 </div>
 
+<!-- ══ INSTAGRAM POST MODAL ══ -->
+<div class="modal-backdrop" id="postModal">
+  <div class="modal post-modal">
+    <h2 id="postModalTitle">Post to Instagram</h2>
+    <div class="post-preview-grid">
+      <div>
+        <div class="post-image-wrap">
+          <img id="postPreviewImage" src="" alt="">
+        </div>
+        <p class="post-meta" id="postImageMeta" style="margin-top:0.75rem;"></p>
+      </div>
+      <div class="post-fields">
+        <label for="postCaptionInput">Caption</label>
+        <textarea id="postCaptionInput" spellcheck="true"></textarea>
+        <p class="post-warning" id="postWarning"></p>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" id="postCancel">Cancel</button>
+      <button class="btn btn-save" id="postPublish">Post</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ APPROVE CONFIRM ══ -->
 <div class="confirm-backdrop" id="approveModal">
   <div class="confirm-box">
@@ -779,6 +820,9 @@ let editingFilm = null;
 let modalReadOnly = false;
 let modalSubmissionReview = false;
 let deletingId = null;
+let postingFilm = null;
+let postingFilmId = null;
+let postingPreview = null;
 let approvingSubmission = null;
 let approveReviewText = '';
 let adminPassword = '';
@@ -1903,6 +1947,13 @@ function createFilmRow(film) {
   emailBtn.disabled = !film.email;
   emailBtn.addEventListener('click', () => sendAcceptanceEmailForFilm(mongoId, film.title, emailBtn));
 
+  const postBtn = document.createElement('button');
+  postBtn.className = film.instagramPostedAt ? 'btn btn-post is-posted' : 'btn btn-post';
+  postBtn.textContent = film.instagramPostedAt ? 'Posted' : 'Post';
+  postBtn.title = 'Preview and post to Instagram';
+  postBtn.disabled = !film.thumbnail || !film.live;
+  postBtn.addEventListener('click', () => openInstagramPostModal(film, mongoId));
+
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'btn btn-delete';
   deleteBtn.textContent = 'Delete';
@@ -1910,6 +1961,7 @@ function createFilmRow(film) {
 
   actions.appendChild(editBtn);
   actions.appendChild(toggleBtn);
+  actions.appendChild(postBtn);
   actions.appendChild(emailBtn);
   actions.appendChild(deleteBtn);
   tdActions.appendChild(actions);
@@ -1945,6 +1997,142 @@ async function sendAcceptanceEmailForFilm(id, title, btn) {
     btn.textContent = originalText;
   }
 }
+
+function normalizeInstagramHandleClient(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  const first = raw.split(/[,\s]+/).find(Boolean) || '';
+  if (!first) return '';
+  try {
+    if (/^https?:\/\//i.test(first)) {
+      const parsed = new URL(first);
+      const host = parsed.hostname.replace(/^www\./i, '');
+      if (host.toLowerCase() === 'instagram.com') {
+        const segment = parsed.pathname.split('/').filter(Boolean)[0] || '';
+        return segment ? '@' + segment.replace(/^@+/, '') : '';
+      }
+    }
+  } catch (_) {}
+  return '@' + first.replace(/^@+/, '').replace(/[^A-Za-z0-9._]/g, '');
+}
+
+function buildInstagramCaptionClient(film) {
+  const review = String(film?.review || '').trim();
+  const title = String(film?.title || 'Untitled').trim();
+  const director = String(film?.director || 'the filmmaker').trim();
+  const handle = normalizeInstagramHandleClient(film?.instagram || film?.twitter || '');
+  const credit = `${title} by ${director}${handle ? ` (${handle})` : ''}`;
+  return [review || credit, review ? credit : '', 'Now playing on ShortsOfTheYear.com'].filter(Boolean).join('\n\n');
+}
+
+function closeInstagramPostModal() {
+  document.getElementById('postModal').classList.remove('open');
+  postingFilm = null;
+  postingFilmId = null;
+  postingPreview = null;
+  document.getElementById('postPreviewImage').src = '';
+  document.getElementById('postCaptionInput').value = '';
+  document.getElementById('postWarning').classList.remove('visible');
+  document.getElementById('postWarning').textContent = '';
+  document.getElementById('postPublish').disabled = false;
+  document.getElementById('postPublish').textContent = 'Post';
+}
+
+async function openInstagramPostModal(film, mongoId) {
+  postingFilm = film;
+  postingFilmId = mongoId;
+  postingPreview = null;
+
+  document.getElementById('postModalTitle').textContent = `Post: ${film.title || 'Untitled'}`;
+  document.getElementById('postPreviewImage').src = film.thumbnail || '';
+  document.getElementById('postCaptionInput').value = buildInstagramCaptionClient(film);
+  document.getElementById('postImageMeta').textContent = 'Loading Instagram preview...';
+  document.getElementById('postWarning').classList.remove('visible');
+  document.getElementById('postWarning').textContent = '';
+  document.getElementById('postPublish').disabled = true;
+  document.getElementById('postPublish').textContent = 'Loading...';
+  document.getElementById('postModal').classList.add('open');
+
+  try {
+    const res = await fetch(`${API_BASE}/admin?action=instagramPreview&id=${mongoId}`, {
+      method: 'GET',
+      headers: { 'x-admin-password': adminPassword }
+    });
+    if (!res.ok) {
+      let message = 'Instagram preview unavailable';
+      try {
+        const data = await res.json();
+        message = data.error || message;
+      } catch (_) {}
+      throw new Error(message);
+    }
+    const data = await res.json();
+    postingPreview = data;
+    document.getElementById('postPreviewImage').src = data.imageUrl || film.thumbnail || '';
+    document.getElementById('postCaptionInput').value = data.caption || buildInstagramCaptionClient(film);
+    document.getElementById('postImageMeta').textContent = data.alreadyPostedAt
+      ? `Already posted ${formatShortDateTime(data.alreadyPostedAt)}. Posting again will create a new Instagram post.`
+      : 'This will publish the film thumbnail as an Instagram image post.';
+    document.getElementById('postPublish').disabled = false;
+    document.getElementById('postPublish').textContent = data.alreadyPostedAt ? 'Post again' : 'Post';
+  } catch (error) {
+    document.getElementById('postImageMeta').textContent = '';
+    document.getElementById('postWarning').textContent = error.message || 'Instagram preview unavailable';
+    document.getElementById('postWarning').classList.add('visible');
+    document.getElementById('postPublish').disabled = true;
+    document.getElementById('postPublish').textContent = 'Post';
+  }
+}
+
+document.getElementById('postCancel').addEventListener('click', closeInstagramPostModal);
+document.getElementById('postModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeInstagramPostModal(); });
+document.getElementById('postPublish').addEventListener('click', async () => {
+  if (!postingFilmId || !postingFilm) return;
+  if (postingFilm.instagramPostedAt && !confirm(`"${postingFilm.title}" already has an Instagram post recorded. Post it again?`)) return;
+
+  const btn = document.getElementById('postPublish');
+  const warning = document.getElementById('postWarning');
+  const caption = document.getElementById('postCaptionInput').value.trim();
+  btn.disabled = true;
+  btn.textContent = 'Posting...';
+  warning.classList.remove('visible');
+  warning.textContent = '';
+
+  try {
+    const res = await fetch(`${API_BASE}/admin?action=postInstagram&id=${postingFilmId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': adminPassword
+      },
+      body: JSON.stringify({ caption })
+    });
+    if (!res.ok) {
+      let message = 'Failed to post to Instagram';
+      try {
+        const data = await res.json();
+        message = data.error || message;
+      } catch (_) {}
+      throw new Error(message);
+    }
+    const data = await res.json();
+    Object.assign(postingFilm, {
+      instagramPostedAt: data.instagramPostedAt,
+      instagramPostId: data.instagramPostId,
+      instagramPostCaption: data.caption,
+      instagramPostImageUrl: data.imageUrl
+    });
+    closeInstagramPostModal();
+    applyFilters();
+    showToast('Posted to Instagram', 'success');
+  } catch (error) {
+    warning.textContent = error.message || 'Failed to post to Instagram';
+    warning.classList.add('visible');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = postingFilm && postingFilm.instagramPostedAt ? 'Post again' : 'Post';
+  }
+});
 
 function getFilmId(film) {
   return film && (film._id?.$oid || film._id?.toString() || film._id);
@@ -3089,7 +3277,7 @@ const EDITABLE_FIELDS = [
   { key: 'review', label: 'Review', full: true, textarea: true, rows: 5 },
   { key: 'filmLink', label: 'Film link', full: true },
   { key: 'thumbnail', label: 'Thumbnail URL', full: true },
-  { key: 'twitter', label: 'Twitter handle' },
+  { key: 'twitter', label: 'Instagram / Twitter handle' },
   { key: 'onlinePremiere', label: 'Online premiere?' },
   { key: 'completionDate', label: 'Completion date' },
   { key: 'directorStatement', label: 'Director statement', full: true, textarea: true },
