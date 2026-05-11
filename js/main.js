@@ -215,7 +215,7 @@ function createFilmItem(film) {
 function setupLoadMore() {
     const loadMoreBtn = document.getElementById('loadMore');
     if (!loadMoreBtn) return;
-    loadMoreBtn.addEventListener('click', displayFilmGrid);
+    loadMoreBtn.addEventListener('click', () => displayFilmGrid(false));
 }
 
 // Only allow http/https URLs

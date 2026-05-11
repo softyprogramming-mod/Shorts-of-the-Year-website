@@ -19,7 +19,8 @@ const CONFIG = {
   MAX_DELAY_HOURS: 72,
   PUBLISH_DELAY_HOURS_AFTER_ACCEPTANCE: 12,
   BCC_EMAIL: 'softyprogramming@gmail.com',
-  ADMIN_EMAIL: 'softyprogramming@gmail.com'
+  ADMIN_EMAIL: 'softyprogramming@gmail.com',
+  OWNER_ALERT_EMAIL: 'softyprogramming@gmail.com'
 };
 
 const REJECTION_ARC_FIRST_NAMES = [
@@ -724,6 +725,16 @@ function onFormSubmit(e) {
       submissionReceivedEmailAt: receiptSent ? new Date().toISOString() : '',
       submissionReceivedEmailError: receiptErrorMessage
     });
+
+    sendOwnerAlert_(
+      'New SoftY submission: ' + (formData.title || 'Untitled'),
+      'New submission received\n\n'
+        + 'Title: ' + (formData.title || '') + '\n'
+        + 'Director: ' + (formData.director || '') + '\n'
+        + 'Email: ' + (formData.email || '') + '\n'
+        + 'Film link: ' + (formData.filmLink || '') + '\n'
+        + 'Receipt email: ' + (receiptSent ? 'sent' : ('failed/unknown ' + receiptErrorMessage))
+    );
   } catch (error) {
     notifyAdmin_('onFormSubmit failed', error);
     Logger.log('Error in onFormSubmit: ' + error);
@@ -764,6 +775,7 @@ function doPost(e) {
       };
 
       sendAcceptanceEmail(formData, review);
+      sendOwnerFilmLiveAlert_(formData);
       return jsonResponse_({
         success: true,
         action: 'manualApprove',
@@ -1720,6 +1732,12 @@ function handleAcceptance(formData, submissionId) {
     throw new Error('approveInMongo failed during acceptance for ' + submissionId);
   }
   sendAcceptanceEmail(formData, review);
+  sendOwnerFilmLiveAlert_(Object.assign({}, formData, {
+    slug: approved.slug || formData.slug || '',
+    email: approved.email || formData.email || '',
+    title: approved.title || formData.title || '',
+    director: approved.director || formData.director || ''
+  }));
   Logger.log('Acceptance email sent; film published immediately: ' + (formData.title || '(no title)'));
 }
 
@@ -1752,6 +1770,12 @@ function publishAcceptedSubmission(e) {
     }
 
     sendFilmNowLiveEmail_({
+      title: approved.title || payload.title || '',
+      director: approved.director || '',
+      email: approved.email || '',
+      slug: approved.slug || ''
+    });
+    sendOwnerFilmLiveAlert_({
       title: approved.title || payload.title || '',
       director: approved.director || '',
       email: approved.email || '',
@@ -2152,6 +2176,46 @@ function sendFilmNowLiveEmail_(filmData) {
     + '</div>';
 
   sendEmailWithBcc_(recipient, subject, plainBody, htmlBody);
+}
+
+function getOwnerAlertRecipients_() {
+  var props = PropertiesService.getScriptProperties();
+  var recipients = [];
+  var email = normalizeEmail_(props.getProperty('OWNER_ALERT_EMAIL') || CONFIG.OWNER_ALERT_EMAIL);
+  var sms = normalizeEmail_(props.getProperty('OWNER_SMS_EMAIL'));
+  if (email) recipients.push(email);
+  if (sms && recipients.indexOf(sms) === -1) recipients.push(sms);
+  return recipients;
+}
+
+function sendOwnerAlert_(subject, body) {
+  var recipients = getOwnerAlertRecipients_();
+  if (!recipients.length) return;
+  try {
+    MailApp.sendEmail({
+      to: recipients.join(','),
+      subject: String(subject || 'SoftY alert').slice(0, 180),
+      body: String(body || '')
+    });
+  } catch (error) {
+    Logger.log('Owner alert failed: ' + error);
+  }
+}
+
+function sendOwnerFilmLiveAlert_(filmData) {
+  var title = String((filmData && filmData.title) || 'Untitled');
+  var director = String((filmData && filmData.director) || '');
+  var slug = String((filmData && filmData.slug) || '').trim();
+  var link = slug
+    ? CONFIG.SITE_URL.replace(/\/$/, '') + '/film.html?id=' + encodeURIComponent(slug)
+    : CONFIG.SITE_URL.replace(/\/$/, '');
+  sendOwnerAlert_(
+    'SoftY film live: ' + title,
+    'Film is live on Shorts of the Year\n\n'
+      + 'Title: ' + title + '\n'
+      + 'Director: ' + director + '\n'
+      + 'Link: ' + link
+  );
 }
 
 /**
