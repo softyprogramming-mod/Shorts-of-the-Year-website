@@ -166,7 +166,35 @@
 
     /* ── SUBMISSION DETAIL ── */
     .sub-detail { font-size: 0.78rem; color: var(--text-dim); max-width: 280px; }
-    .sub-logline { font-size: 0.78rem; color: var(--text-dim); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #panelSubmissions .table-wrap { overflow-x: hidden; }
+    #subsTable { table-layout: fixed; min-width: 0; }
+    #subsTable th, #subsTable td { overflow-wrap: anywhere; word-break: normal; }
+    #subsTable th:nth-child(1) { width: 20%; }
+    #subsTable th:nth-child(2) { width: 9%; }
+    #subsTable th:nth-child(3) { width: 7%; }
+    #subsTable th:nth-child(4) { width: 28%; }
+    #subsTable th:nth-child(5) { width: 22%; }
+    #subsTable th:nth-child(6) { width: 7%; }
+    #subsTable th:nth-child(7) { width: 7%; }
+    .sub-logline {
+      display: -webkit-box;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      max-width: 100%;
+      overflow: hidden;
+      white-space: normal;
+      line-height: 1.45;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+    }
+    .submission-tracker { display: grid; gap: 0.42rem; min-width: 0; }
+    .tracker-line { display: flex; align-items: flex-start; gap: 0.42rem; color: var(--text-dim); font-size: 0.76rem; line-height: 1.35; min-width: 0; }
+    .tracker-dot { width: 0.48rem; height: 0.48rem; border-radius: 99px; flex: 0 0 auto; margin-top: 0.25rem; background: var(--text-dim); }
+    .tracker-dot.ok { background: var(--green); }
+    .tracker-dot.warn { background: var(--orange); }
+    .tracker-dot.err { background: var(--red); }
+    .tracker-primary { color: var(--text); font-weight: 500; }
+    .tracker-note { display: block; color: var(--text-dim); font-size: 0.7rem; margin-top: 0.08rem; }
     .mono-small { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.72rem; color: var(--text-dim); }
 
     /* ── LOADING / EMPTY ── */
@@ -617,7 +645,7 @@
         <thead>
           <tr>
             <th>Title / Director</th><th>Genre</th><th>Runtime</th>
-            <th>Logline</th><th>Submitted</th><th>Actions</th>
+            <th>Logline</th><th>Submissions Tracker</th><th>Submitted</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="subsBody"></tbody>
@@ -766,6 +794,7 @@ let loadingRejectionTracker = false;
 let advancingRejectionArcId = '';
 let cancelingRejectionArcId = '';
 let trackerCountdownIntervalId = null;
+let submissionTrackerIntervalId = null;
 let dismissedRejectionArcIds = new Set();
 
 // ══════════════════════════════════════════════════════════════
@@ -2010,6 +2039,135 @@ function renderSubsTable(list) {
   document.getElementById('subTableState').style.display = 'none';
   document.getElementById('subsTable').style.display = 'table';
   list.forEach(sub => body.appendChild(createSubRow(sub)));
+  updateSubmissionCountdowns();
+  if (submissionTrackerIntervalId) clearInterval(submissionTrackerIntervalId);
+  submissionTrackerIntervalId = setInterval(updateSubmissionCountdowns, 30 * 1000);
+}
+
+function parseDateMs(value) {
+  const ms = value ? new Date(value).getTime() : NaN;
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function formatShortDateTime(value) {
+  const ms = parseDateMs(value);
+  if (!ms) return '';
+  return new Date(ms).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
+
+function formatDuration(ms) {
+  const abs = Math.max(0, Math.abs(ms));
+  const totalMinutes = Math.ceil(abs / 60000);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
+function getSubmissionDecisionTarget(sub) {
+  const exact = parseDateMs(sub.scheduledDecisionAt);
+  if (exact) return { ms: exact, exact: true };
+
+  const submitted = parseDateMs(sub.timestamp);
+  if (!submitted) return { ms: 0, exact: false };
+  const maxHours = Number(sub.autoDecisionMaxHours || 72);
+  return { ms: submitted + maxHours * 60 * 60 * 1000, exact: false };
+}
+
+function createTrackerLine(dotClass, primary, note, countdownTarget) {
+  const line = document.createElement('div');
+  line.className = 'tracker-line';
+
+  const dot = document.createElement('span');
+  dot.className = `tracker-dot ${dotClass || ''}`.trim();
+  line.appendChild(dot);
+
+  const text = document.createElement('span');
+  const main = document.createElement('span');
+  main.className = countdownTarget ? 'tracker-primary tracker-countdown' : 'tracker-primary';
+  if (countdownTarget) {
+    main.dataset.targetMs = String(countdownTarget.ms || 0);
+    main.dataset.exact = countdownTarget.exact ? '1' : '0';
+    main.dataset.doneText = countdownTarget.exact ? 'Due now' : 'Window ended';
+  }
+  main.textContent = primary;
+  text.appendChild(main);
+
+  if (note) {
+    const small = document.createElement('span');
+    small.className = 'tracker-note';
+    small.textContent = note;
+    text.appendChild(small);
+  }
+
+  line.appendChild(text);
+  return line;
+}
+
+function createSubmissionTracker(sub) {
+  const tracker = document.createElement('div');
+  tracker.className = 'submission-tracker';
+
+  if (sub.submissionReceivedEmailSent === true) {
+    tracker.appendChild(createTrackerLine(
+      'ok',
+      'Receipt email sent',
+      sub.submissionReceivedEmailAt ? formatShortDateTime(sub.submissionReceivedEmailAt) : ''
+    ));
+  } else if (sub.submissionReceivedEmailError) {
+    tracker.appendChild(createTrackerLine(
+      'err',
+      'Receipt email failed',
+      String(sub.submissionReceivedEmailError).slice(0, 120)
+    ));
+  } else {
+    tracker.appendChild(createTrackerLine(
+      'warn',
+      'Receipt email unknown',
+      'Older submission or missing tracker metadata'
+    ));
+  }
+
+  const target = getSubmissionDecisionTarget(sub);
+  if (target.ms) {
+    tracker.appendChild(createTrackerLine(
+      'warn',
+      'Calculating...',
+      target.exact
+        ? `Laurel/live email scheduled for ${formatShortDateTime(target.ms)}`
+        : `Estimated from submit time; exact trigger was not stored`,
+      target
+    ));
+  } else {
+    tracker.appendChild(createTrackerLine(
+      'warn',
+      'No countdown available',
+      'Missing submit timestamp'
+    ));
+  }
+
+  return tracker;
+}
+
+function updateSubmissionCountdowns() {
+  document.querySelectorAll('.tracker-countdown').forEach(el => {
+    const targetMs = Number(el.dataset.targetMs || 0);
+    if (!targetMs) return;
+    const diff = targetMs - Date.now();
+    if (diff <= 0) {
+      el.textContent = el.dataset.doneText || 'Due now';
+      return;
+    }
+    const prefix = el.dataset.exact === '1' ? 'Laurel/live email in ' : 'By ';
+    el.textContent = prefix + formatDuration(diff);
+  });
 }
 
 function createSubRow(sub) {
@@ -2048,6 +2206,10 @@ function createSubRow(sub) {
   loglineSpan.title = sub.logline || '';
   tdLogline.appendChild(loglineSpan);
   tr.appendChild(tdLogline);
+
+  const tdTracker = document.createElement('td');
+  tdTracker.appendChild(createSubmissionTracker(sub));
+  tr.appendChild(tdTracker);
 
   const tdDate = document.createElement('td');
   tdDate.style.color = 'var(--text-dim)';

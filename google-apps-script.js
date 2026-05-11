@@ -706,14 +706,24 @@ function onFormSubmit(e) {
     props.setProperty('trigger_' + trigger.getUniqueId(), submissionId);
     Logger.log('Scheduled ' + submissionId + ' at ' + triggerTime.toISOString());
 
-    // Save pending record to MongoDB immediately so admin can see it
-    savePendingToMongo(formData, submissionId);
+    var receiptSent = false;
+    var receiptErrorMessage = '';
     try {
       sendSubmissionReceivedEmail(formData);
+      receiptSent = true;
     } catch (receiptError) {
+      receiptErrorMessage = String(receiptError && receiptError.message ? receiptError.message : receiptError);
       Logger.log('Submission received email failed: ' + receiptError);
       notifyAdmin_('submission received email failed', receiptError);
     }
+
+    // Save pending record to MongoDB immediately so admin can see it
+    savePendingToMongo(formData, submissionId, {
+      scheduledDecisionAt: triggerTime.toISOString(),
+      submissionReceivedEmailSent: receiptSent,
+      submissionReceivedEmailAt: receiptSent ? new Date().toISOString() : '',
+      submissionReceivedEmailError: receiptErrorMessage
+    });
   } catch (error) {
     notifyAdmin_('onFormSubmit failed', error);
     Logger.log('Error in onFormSubmit: ' + error);
@@ -1987,8 +1997,9 @@ function getApiSecret_() {
 /**
  * POST a pending submission to MongoDB immediately on form receipt
  */
-function savePendingToMongo(formData, submissionId) {
+function savePendingToMongo(formData, submissionId, tracker) {
   try {
+    tracker = tracker || {};
     const pendingFilm = {
       submissionId: submissionId,
       timestamp: new Date().toISOString(),
@@ -2012,7 +2023,13 @@ function savePendingToMongo(formData, submissionId) {
       review: '',
       pending: true,
       live: false,
-      accepted: false
+      accepted: false,
+      submissionReceivedEmailSent: tracker.submissionReceivedEmailSent === true,
+      submissionReceivedEmailAt: tracker.submissionReceivedEmailAt || '',
+      submissionReceivedEmailError: tracker.submissionReceivedEmailError || '',
+      scheduledDecisionAt: tracker.scheduledDecisionAt || '',
+      autoDecisionMinHours: CONFIG.MIN_DELAY_HOURS,
+      autoDecisionMaxHours: CONFIG.MAX_DELAY_HOURS
     };
 
     UrlFetchApp.fetch(CONFIG.API_BASE + '/films', {
