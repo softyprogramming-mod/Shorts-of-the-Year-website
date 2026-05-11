@@ -74,6 +74,10 @@
     .btn-approve:hover { background: rgba(82,201,122,0.1); }
     .btn-reject { background: transparent; color: var(--red); border: 1px solid rgba(224,82,82,0.3); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
     .btn-reject:hover { background: rgba(224,82,82,0.1); }
+    .btn-pause { background: transparent; color: var(--yellow); border: 1px solid rgba(224,194,82,0.3); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
+    .btn-pause:hover { background: rgba(224,194,82,0.1); }
+    .btn-resume { background: transparent; color: var(--blue); border: 1px solid rgba(82,148,224,0.3); font-size: 0.78rem; padding: 0.4rem 0.75rem; }
+    .btn-resume:hover { background: rgba(82,148,224,0.1); }
     .btn-cancel { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
     .btn-cancel:hover { color: var(--text); }
     .btn-save { background: var(--accent); color: #000; }
@@ -2073,6 +2077,7 @@ function formatDuration(ms) {
 }
 
 function getSubmissionDecisionTarget(sub) {
+  if (sub.autoPaused === true) return { ms: 0, exact: true, paused: true };
   const exact = parseDateMs(sub.scheduledDecisionAt);
   if (exact) return { ms: exact, exact: true };
 
@@ -2137,7 +2142,15 @@ function createSubmissionTracker(sub) {
   }
 
   const target = getSubmissionDecisionTarget(sub);
-  if (target.ms) {
+  if (target.paused) {
+    tracker.appendChild(createTrackerLine(
+      'warn',
+      'Auto acceptance paused',
+      sub.autoPauseRemainingMs
+        ? `Will resume with about ${formatDuration(Number(sub.autoPauseRemainingMs))} left`
+        : 'Resume to restart the countdown'
+    ));
+  } else if (target.ms) {
     tracker.appendChild(createTrackerLine(
       'warn',
       'Calculating...',
@@ -2242,8 +2255,17 @@ function createSubRow(sub) {
   rejectBtn.textContent = 'Reject';
   rejectBtn.addEventListener('click', () => rejectSubmission(mongoId, sub.title, tr));
 
+  const pauseBtn = document.createElement('button');
+  pauseBtn.className = sub.autoPaused === true ? 'btn btn-resume' : 'btn btn-pause';
+  pauseBtn.textContent = sub.autoPaused === true ? 'Resume' : 'Pause';
+  pauseBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleSubmissionPause(mongoId, sub);
+  });
+
   actions.appendChild(viewBtn);
   actions.appendChild(approveBtn);
+  actions.appendChild(pauseBtn);
   actions.appendChild(rejectBtn);
   tdActions.appendChild(actions);
   tr.appendChild(tdActions);
@@ -2256,6 +2278,45 @@ function createSubRow(sub) {
   });
 
   return tr;
+}
+
+function replaceSubmissionInState(updated) {
+  if (!updated) return;
+  const updatedId = updated._id?.$oid || updated._id?.toString() || updated._id;
+  const idx = submissions.findIndex(s => {
+    const sid = s._id?.$oid || s._id?.toString() || s._id;
+    return sid === updatedId;
+  });
+  if (idx >= 0) submissions[idx] = updated;
+}
+
+async function toggleSubmissionPause(mongoId, sub) {
+  const isPaused = sub.autoPaused === true;
+  const action = isPaused ? 'resumeSubmission' : 'pauseSubmission';
+  const label = isPaused ? 'resume' : 'pause';
+  try {
+    const res = await fetch(`${API_BASE}/admin?action=${action}&id=${mongoId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': adminPassword
+      }
+    });
+    if (!res.ok) {
+      let message = `Failed to ${label}`;
+      try {
+        const data = await res.json();
+        message = data.error || message;
+      } catch (_) {}
+      throw new Error(message);
+    }
+    const data = await res.json();
+    replaceSubmissionInState(data.film);
+    renderSubsTable(submissions);
+    showToast(isPaused ? 'Submission resumed' : 'Submission paused', 'success');
+  } catch (error) {
+    showToast(error.message || `Failed to ${label} submission`, 'error');
+  }
 }
 
 // ══════════════════════════════════════════════════════════════

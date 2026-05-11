@@ -800,6 +800,32 @@ function doPost(e) {
       return jsonResponse_(result);
     }
 
+    if (action === 'pauseSubmission') {
+      var pauseSecret = String(body.secret || '');
+      var pauseExpected = getWebhookSecret_();
+      if (!pauseSecret || pauseSecret !== pauseExpected) {
+        return jsonResponse_({ success: false, error: 'Unauthorized' });
+      }
+      var pauseSubmissionId = String(body.submissionId || '');
+      if (!pauseSubmissionId) {
+        return jsonResponse_({ success: false, error: 'Missing submissionId' });
+      }
+      return jsonResponse_(pauseSubmission_(pauseSubmissionId, body.scheduledDecisionAt || ''));
+    }
+
+    if (action === 'resumeSubmission') {
+      var resumeSecret = String(body.secret || '');
+      var resumeExpected = getWebhookSecret_();
+      if (!resumeSecret || resumeSecret !== resumeExpected) {
+        return jsonResponse_({ success: false, error: 'Unauthorized' });
+      }
+      var resumeSubmissionId = String(body.submissionId || '');
+      if (!resumeSubmissionId) {
+        return jsonResponse_({ success: false, error: 'Missing submissionId' });
+      }
+      return jsonResponse_(resumeSubmission_(resumeSubmissionId));
+    }
+
     if (action === 'arcTracker') {
       var secret2 = String(body.secret || '');
       var expected2 = getWebhookSecret_();
@@ -1688,6 +1714,108 @@ function schedulePublishTrigger_(submissionId, formData, review) {
     'Scheduled publish for ' + submissionId + ' at ' + publishTime.toISOString() +
     ' (+' + CONFIG.PUBLISH_DELAY_HOURS_AFTER_ACCEPTANCE + 'h after acceptance email)'
   );
+}
+
+function findSubmissionTriggerId_(submissionId) {
+  var props = PropertiesService.getScriptProperties();
+  var all = props.getProperties();
+  var liveTriggers = ScriptApp.getProjectTriggers();
+  var liveTriggerIds = {};
+  liveTriggers.forEach(function(t) {
+    if (String(t.getHandlerFunction() || '') === 'processSubmission') {
+      liveTriggerIds[t.getUniqueId()] = true;
+    }
+  });
+
+  var keys = Object.keys(all);
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    if (key.indexOf('trigger_') !== 0) continue;
+    if (all[key] !== submissionId) continue;
+    var triggerId = key.replace(/^trigger_/, '');
+    if (liveTriggerIds[triggerId]) return triggerId;
+  }
+  return '';
+}
+
+function pauseSubmission_(submissionId, scheduledDecisionAt) {
+  var props = PropertiesService.getScriptProperties();
+  var formDataJson = props.getProperty(submissionId);
+  if (!formDataJson) {
+    return { success: false, error: 'No active Apps Script submission data for ' + submissionId };
+  }
+
+  var triggerId = findSubmissionTriggerId_(submissionId);
+  var now = Date.now();
+  var scheduledMs = scheduledDecisionAt ? new Date(String(scheduledDecisionAt)).getTime() : NaN;
+  var remainingMs = Number.isFinite(scheduledMs) ? Math.max(60 * 1000, scheduledMs - now) : 0;
+  if (!remainingMs) {
+    remainingMs = Math.round(
+      (Math.random() * (CONFIG.MAX_DELAY_HOURS - CONFIG.MIN_DELAY_HOURS) + CONFIG.MIN_DELAY_HOURS)
+      * 60 * 60 * 1000
+    );
+  }
+
+  if (triggerId) {
+    deleteTrigger(triggerId);
+    props.deleteProperty('trigger_' + triggerId);
+  }
+
+  var pausedAt = new Date().toISOString();
+  props.setProperty('paused_' + submissionId, JSON.stringify({
+    submissionId: submissionId,
+    pausedAt: pausedAt,
+    remainingMs: remainingMs
+  }));
+
+  return {
+    success: true,
+    submissionId: submissionId,
+    pausedAt: pausedAt,
+    remainingMs: remainingMs,
+    triggerDeleted: !!triggerId
+  };
+}
+
+function resumeSubmission_(submissionId) {
+  var props = PropertiesService.getScriptProperties();
+  var formDataJson = props.getProperty(submissionId);
+  if (!formDataJson) {
+    return { success: false, error: 'No active Apps Script submission data for ' + submissionId };
+  }
+
+  var existingTriggerId = findSubmissionTriggerId_(submissionId);
+  if (existingTriggerId) {
+    return { success: false, error: 'Submission already has an active trigger' };
+  }
+
+  var pausedJson = props.getProperty('paused_' + submissionId);
+  var paused = {};
+  try { paused = pausedJson ? JSON.parse(pausedJson) : {}; } catch (_) {}
+  var remainingMs = Math.max(60 * 1000, Number(paused.remainingMs || 0));
+  if (!remainingMs) {
+    remainingMs = Math.round(
+      (Math.random() * (CONFIG.MAX_DELAY_HOURS - CONFIG.MIN_DELAY_HOURS) + CONFIG.MIN_DELAY_HOURS)
+      * 60 * 60 * 1000
+    );
+  }
+
+  var scheduledAt = new Date(Date.now() + remainingMs);
+  var trigger = ScriptApp.newTrigger('processSubmission')
+    .timeBased()
+    .at(scheduledAt)
+    .create();
+
+  props.setProperty('trigger_' + trigger.getUniqueId(), submissionId);
+  props.deleteProperty('paused_' + submissionId);
+
+  return {
+    success: true,
+    submissionId: submissionId,
+    scheduledDecisionAt: scheduledAt.toISOString(),
+    remainingMs: remainingMs,
+    triggerId: trigger.getUniqueId()
+  };
 }
 
 function processSubmission(e) {
