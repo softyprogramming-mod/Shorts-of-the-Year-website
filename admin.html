@@ -240,6 +240,9 @@
     .post-fields label { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
     .post-fields textarea { width: 100%; min-height: 260px; resize: vertical; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); padding: 0.75rem; font: inherit; line-height: 1.45; outline: none; }
     .post-fields textarea:focus { border-color: #555; }
+    .post-fields textarea.post-extra-images { min-height: 92px; font-size: 0.78rem; }
+    .post-option { display: flex; align-items: flex-start; gap: 0.55rem; color: var(--text); font-size: 0.82rem; line-height: 1.35; }
+    .post-option input { margin-top: 0.15rem; accent-color: var(--accent); }
     .post-meta { color: var(--text-dim); font-size: 0.78rem; line-height: 1.45; }
     .post-warning { color: var(--orange); font-size: 0.8rem; line-height: 1.45; display: none; }
     .post-warning.visible { display: block; }
@@ -764,6 +767,12 @@
       <div class="post-fields">
         <label for="postCaptionInput">Caption</label>
         <textarea id="postCaptionInput" spellcheck="true"></textarea>
+        <label class="post-option" for="postIncludeGenerated">
+          <input type="checkbox" id="postIncludeGenerated" checked>
+          <span>Include generated Softy laurel image</span>
+        </label>
+        <label for="postManualImagesInput">Extra image URLs</label>
+        <textarea id="postManualImagesInput" class="post-extra-images" spellcheck="false" placeholder="Paste public HTTPS image URLs, one per line. If you add any, Instagram will post a carousel."></textarea>
         <p class="post-warning" id="postWarning"></p>
       </div>
     </div>
@@ -2032,6 +2041,8 @@ function closeInstagramPostModal() {
   postingPreview = null;
   document.getElementById('postPreviewImage').src = '';
   document.getElementById('postCaptionInput').value = '';
+  document.getElementById('postIncludeGenerated').checked = true;
+  document.getElementById('postManualImagesInput').value = '';
   document.getElementById('postWarning').classList.remove('visible');
   document.getElementById('postWarning').textContent = '';
   document.getElementById('postPublish').disabled = false;
@@ -2046,6 +2057,8 @@ async function openInstagramPostModal(film, mongoId) {
   document.getElementById('postModalTitle').textContent = `Post: ${film.title || 'Untitled'}`;
   document.getElementById('postPreviewImage').src = film.thumbnail || '';
   document.getElementById('postCaptionInput').value = buildInstagramCaptionClient(film);
+  document.getElementById('postIncludeGenerated').checked = true;
+  document.getElementById('postManualImagesInput').value = '';
   document.getElementById('postImageMeta').textContent = 'Loading Instagram preview...';
   document.getElementById('postWarning').classList.remove('visible');
   document.getElementById('postWarning').textContent = '';
@@ -2072,7 +2085,7 @@ async function openInstagramPostModal(film, mongoId) {
     document.getElementById('postCaptionInput').value = data.caption || buildInstagramCaptionClient(film);
     document.getElementById('postImageMeta').textContent = data.alreadyPostedAt
       ? `Already posted ${formatShortDateTime(data.alreadyPostedAt)}. Posting again will create a new Instagram post.`
-      : 'This will publish the film thumbnail as an Instagram image post.';
+      : 'Preview uses the film thumbnail. Keep the generated laurel image, or uncheck it and paste your own public image URLs. Multiple images will post as a carousel.';
     document.getElementById('postPublish').disabled = false;
     document.getElementById('postPublish').textContent = data.alreadyPostedAt ? 'Post again' : 'Post';
   } catch (error) {
@@ -2093,6 +2106,16 @@ document.getElementById('postPublish').addEventListener('click', async () => {
   const btn = document.getElementById('postPublish');
   const warning = document.getElementById('postWarning');
   const caption = document.getElementById('postCaptionInput').value.trim();
+  const includeGeneratedLaurel = document.getElementById('postIncludeGenerated').checked;
+  const manualImageUrls = document.getElementById('postManualImagesInput').value
+    .split(/\n+/)
+    .map(v => v.trim())
+    .filter(Boolean);
+  if (!includeGeneratedLaurel && manualImageUrls.length === 0) {
+    warning.textContent = 'Keep the generated laurel image or add at least one public HTTPS image URL.';
+    warning.classList.add('visible');
+    return;
+  }
   btn.disabled = true;
   btn.textContent = 'Posting...';
   warning.classList.remove('visible');
@@ -2105,7 +2128,7 @@ document.getElementById('postPublish').addEventListener('click', async () => {
         'Content-Type': 'application/json',
         'x-admin-password': adminPassword
       },
-      body: JSON.stringify({ caption })
+      body: JSON.stringify({ caption, includeGeneratedLaurel, manualImageUrls })
     });
     if (!res.ok) {
       let message = 'Failed to post to Instagram';
@@ -2120,7 +2143,9 @@ document.getElementById('postPublish').addEventListener('click', async () => {
       instagramPostedAt: data.instagramPostedAt,
       instagramPostId: data.instagramPostId,
       instagramPostCaption: data.caption,
-      instagramPostImageUrl: data.imageUrl
+      instagramPostImageUrl: data.imageUrl,
+      instagramPostImageUrls: data.imageUrls,
+      instagramPostType: data.postType
     });
     closeInstagramPostModal();
     applyFilters();
