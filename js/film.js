@@ -107,7 +107,10 @@ function embedVideo(url) {
         }
     } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
         const youtubeId = extractYouTubeId(url);
-        embedUrl = `https://www.youtube.com/embed/${youtubeId}`;
+        if (youtubeId) embedUrl = `https://www.youtube.com/embed/${youtubeId}`;
+    } else if (url.includes('drive.google.com')) {
+        const driveId = extractGoogleDriveId(url);
+        if (driveId) embedUrl = `https://drive.google.com/file/d/${encodeURIComponent(driveId)}/preview`;
     }
 
     if (embedUrl) {
@@ -138,8 +141,22 @@ function extractVimeoData(url) {
 }
 
 function extractYouTubeId(url) {
-    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
     return match ? match[1] : '';
+}
+
+function extractGoogleDriveId(url) {
+    try {
+        const parsed = new URL(String(url || ''));
+        const fileMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/);
+        if (fileMatch && fileMatch[1]) return fileMatch[1];
+        const idParam = parsed.searchParams.get('id');
+        if (idParam) return idParam;
+    } catch (_) {
+        const match = String(url || '').match(/drive\.google\.com\/file\/d\/([^/]+)/);
+        return match && match[1] ? match[1] : '';
+    }
+    return '';
 }
 
 const menuButton = document.getElementById('menuButton');

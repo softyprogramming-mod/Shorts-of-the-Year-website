@@ -2680,9 +2680,28 @@ function extractVimeoIdClient(url) {
   return m && m[1] ? m[1] : '';
 }
 
+function extractGoogleDriveIdClient(url) {
+  try {
+    const parsed = new URL(String(url || ''));
+    const fileMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/);
+    if (fileMatch && fileMatch[1]) return fileMatch[1];
+    const idParam = parsed.searchParams.get('id');
+    if (idParam) return idParam;
+  } catch (_) {
+    const m = String(url || '').match(/drive\.google\.com\/file\/d\/([^/]+)/i);
+    return m && m[1] ? m[1] : '';
+  }
+  return '';
+}
+
 async function deriveThumbnailFromVideoLink(url) {
   const u = String(url || '').trim();
   if (!u) return '';
+
+  const driveId = extractGoogleDriveIdClient(u);
+  if (driveId) {
+    return `https://drive.google.com/thumbnail?id=${encodeURIComponent(driveId)}&sz=w1280`;
+  }
 
   const ytId = extractYouTubeIdClient(u);
   if (ytId) {

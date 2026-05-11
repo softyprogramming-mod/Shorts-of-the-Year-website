@@ -2376,6 +2376,11 @@ function generateSlug(title) {
 
 function extractThumbnail(url) {
   var u = String(url || '');
+  var driveId = extractGoogleDriveId_(u);
+  if (driveId) {
+    return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(driveId) + '&sz=w1280';
+  }
+
   if (u.includes('vimeo.com')) {
     try {
       // Use oEmbed API — works for private/unlisted videos with hash
@@ -2412,6 +2417,20 @@ function extractThumbnail(url) {
     }
   }
   return 'https://raw.githubusercontent.com/softyprogramming-mod/Shorts-of-the-Year-website/main/images/placeholder.jpg';
+}
+
+function extractGoogleDriveId_(url) {
+  try {
+    var parsed = new URL(String(url || ''));
+    var fileMatch = parsed.pathname.match(/\/file\/d\/([^/]+)/);
+    if (fileMatch && fileMatch[1]) return fileMatch[1];
+    var idParam = parsed.searchParams.get('id');
+    if (idParam) return idParam;
+  } catch (_) {
+    var m = String(url || '').match(/drive\.google\.com\/file\/d\/([^/]+)/i);
+    return m && m[1] ? m[1] : '';
+  }
+  return '';
 }
 
 function randomChoice(arr) {
