@@ -2290,6 +2290,14 @@ function replaceSubmissionInState(updated) {
   if (idx >= 0) submissions[idx] = updated;
 }
 
+function patchSubmissionInState(mongoId, patch) {
+  const idx = submissions.findIndex(s => {
+    const sid = s._id?.$oid || s._id?.toString() || s._id;
+    return sid === mongoId;
+  });
+  if (idx >= 0) submissions[idx] = { ...submissions[idx], ...patch };
+}
+
 async function toggleSubmissionPause(mongoId, sub) {
   const isPaused = sub.autoPaused === true;
   const action = isPaused ? 'resumeSubmission' : 'pauseSubmission';
@@ -2311,7 +2319,21 @@ async function toggleSubmissionPause(mongoId, sub) {
       throw new Error(message);
     }
     const data = await res.json();
-    replaceSubmissionInState(data.film);
+    if (data.film) {
+      replaceSubmissionInState(data.film);
+    } else if (isPaused) {
+      patchSubmissionInState(mongoId, {
+        autoPaused: false,
+        autoResumedAt: new Date().toISOString(),
+        scheduledDecisionAt: data.result && data.result.scheduledDecisionAt ? data.result.scheduledDecisionAt : sub.scheduledDecisionAt
+      });
+    } else {
+      patchSubmissionInState(mongoId, {
+        autoPaused: true,
+        autoPausedAt: new Date().toISOString(),
+        autoPauseRemainingMs: data.result && data.result.remainingMs ? data.result.remainingMs : sub.autoPauseRemainingMs
+      });
+    }
     renderSubsTable(submissions);
     showToast(isPaused ? 'Submission resumed' : 'Submission paused', 'success');
   } catch (error) {
@@ -3325,13 +3347,14 @@ document.getElementById('modalSave').addEventListener('click', async () => {
     }
 
     if (!updates.slug) updates.slug = slugifyTitle(updates.title);
-    if (!updates.timestamp) updates.timestamp = new Date().toISOString();
 
     if (wasSubmissionReview) {
+      updates.timestamp = editingFilm.timestamp || updates.timestamp || new Date().toISOString();
       updates.pending = true;
       updates.accepted = false;
       updates.live = false;
     } else {
+      if (!updates.timestamp) updates.timestamp = new Date().toISOString();
       updates.pending = false;
       updates.accepted = true;
     }
