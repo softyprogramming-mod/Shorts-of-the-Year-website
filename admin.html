@@ -252,7 +252,23 @@
     .post-fields label { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
     .post-fields textarea { width: 100%; min-height: 260px; resize: vertical; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); padding: 0.75rem; font: inherit; line-height: 1.45; outline: none; }
     .post-fields textarea:focus { border-color: #555; }
-    .post-fields textarea.post-extra-images { min-height: 92px; font-size: 0.78rem; }
+    .post-upload-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .post-upload-row input[type="file"] { display: none; }
+    .post-upload-list { display: grid; gap: 0.45rem; }
+    .post-upload-item {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      align-items: center;
+      gap: 0.55rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.45rem;
+      min-width: 0;
+    }
+    .post-upload-item img { width: 42px; height: 42px; border-radius: 4px; object-fit: cover; display: block; }
+    .post-upload-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); font-size: 0.78rem; }
+    .post-upload-item button { padding: 0.28rem 0.48rem; font-size: 0.72rem; }
     .post-option { display: flex; align-items: flex-start; gap: 0.55rem; color: var(--text); font-size: 0.82rem; line-height: 1.35; }
     .post-option input { margin-top: 0.15rem; accent-color: var(--accent); }
     .post-meta { color: var(--text-dim); font-size: 0.78rem; line-height: 1.45; }
@@ -784,8 +800,13 @@
           <input type="checkbox" id="postIncludeGenerated" checked>
           <span>Include generated Softy laurel image</span>
         </label>
-        <label for="postManualImagesInput">Extra image URLs</label>
-        <textarea id="postManualImagesInput" class="post-extra-images" spellcheck="false" placeholder="Paste public HTTPS image URLs, one per line. If you add any, Instagram will post a carousel."></textarea>
+        <label>Extra images</label>
+        <div class="post-upload-row">
+          <input type="file" id="postImageUploadInput" accept="image/jpeg,image/png,image/webp" multiple>
+          <button class="btn btn-edit" type="button" id="postUploadImagesBtn">Upload images</button>
+          <span class="post-meta" id="postUploadMeta">Add images for a carousel.</span>
+        </div>
+        <div class="post-upload-list" id="postUploadedImagesList"></div>
         <p class="post-warning" id="postWarning"></p>
       </div>
     </div>
@@ -845,6 +866,7 @@ let deletingId = null;
 let postingFilm = null;
 let postingFilmId = null;
 let postingPreview = null;
+let postUploadedImages = [];
 let approvingSubmission = null;
 let approveReviewText = '';
 let adminPassword = '';
@@ -2052,11 +2074,13 @@ function closeInstagramPostModal() {
   postingFilm = null;
   postingFilmId = null;
   postingPreview = null;
+  postUploadedImages = [];
   document.getElementById('postPreviewImage').src = '';
   document.querySelector('.post-image-wrap')?.classList.remove('hide-laurel');
   document.getElementById('postCaptionInput').value = '';
   document.getElementById('postIncludeGenerated').checked = true;
-  document.getElementById('postManualImagesInput').value = '';
+  document.getElementById('postImageUploadInput').value = '';
+  renderPostUploadedImages();
   document.getElementById('postWarning').classList.remove('visible');
   document.getElementById('postWarning').textContent = '';
   document.getElementById('postPublish').disabled = false;
@@ -2066,6 +2090,111 @@ function closeInstagramPostModal() {
 function syncInstagramLaurelPreview() {
   const includeGenerated = document.getElementById('postIncludeGenerated').checked;
   document.querySelector('.post-image-wrap')?.classList.toggle('hide-laurel', !includeGenerated);
+}
+
+function renderPostUploadedImages() {
+  const list = document.getElementById('postUploadedImagesList');
+  const meta = document.getElementById('postUploadMeta');
+  while (list.firstChild) list.removeChild(list.firstChild);
+  if (!postUploadedImages.length) {
+    meta.textContent = 'Add images for a carousel.';
+    return;
+  }
+  meta.textContent = `${postUploadedImages.length} extra image${postUploadedImages.length === 1 ? '' : 's'} uploaded.`;
+  postUploadedImages.forEach((image, index) => {
+    const row = document.createElement('div');
+    row.className = 'post-upload-item';
+    const thumb = document.createElement('img');
+    thumb.src = image.url;
+    thumb.alt = '';
+    const label = document.createElement('span');
+    label.textContent = image.name || image.url;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn btn-delete';
+    remove.textContent = 'Remove';
+    remove.addEventListener('click', () => {
+      postUploadedImages.splice(index, 1);
+      renderPostUploadedImages();
+    });
+    row.appendChild(thumb);
+    row.appendChild(label);
+    row.appendChild(remove);
+    list.appendChild(row);
+  });
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error(`Could not read ${file.name || 'image'}`));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadInstagramPostImages(files) {
+  if (!postingFilmId || !files.length) return;
+  const warning = document.getElementById('postWarning');
+  const uploadBtn = document.getElementById('postUploadImagesBtn');
+  const allowed = new Set(['image/jpeg', 'image/png', 'image/webp']);
+  const picked = Array.from(files).filter(file => allowed.has(file.type));
+  if (!picked.length) {
+    warning.textContent = 'Choose JPG, PNG, or WebP images.';
+    warning.classList.add('visible');
+    return;
+  }
+  const maxExtraImages = document.getElementById('postIncludeGenerated').checked ? 9 : 10;
+  if (postUploadedImages.length + picked.length > maxExtraImages) {
+    warning.textContent = `You can add up to ${maxExtraImages} uploaded image${maxExtraImages === 1 ? '' : 's'} for one Instagram post.`;
+    warning.classList.add('visible');
+    return;
+  }
+  const totalBytes = picked.reduce((sum, file) => sum + file.size, 0);
+  if (totalBytes > 10 * 1024 * 1024) {
+    warning.textContent = 'Upload 10 MB or less at a time.';
+    warning.classList.add('visible');
+    return;
+  }
+
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = 'Uploading...';
+  warning.classList.remove('visible');
+  warning.textContent = '';
+  try {
+    const images = await Promise.all(picked.map(async file => ({
+      name: file.name,
+      mimeType: file.type,
+      dataUrl: await fileToDataUrl(file)
+    })));
+    const res = await fetch(`${API_BASE}/admin?action=uploadInstagramImages&id=${postingFilmId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': adminPassword
+      },
+      body: JSON.stringify({ images })
+    });
+    if (!res.ok) {
+      let message = 'Failed to upload images';
+      try {
+        const data = await res.json();
+        message = data.error || message;
+      } catch (_) {}
+      throw new Error(message);
+    }
+    const data = await res.json();
+    postUploadedImages.push(...(data.images || []));
+    renderPostUploadedImages();
+    showToast('Images uploaded', 'success');
+  } catch (error) {
+    warning.textContent = error.message || 'Failed to upload images';
+    warning.classList.add('visible');
+  } finally {
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = 'Upload images';
+    document.getElementById('postImageUploadInput').value = '';
+  }
 }
 
 async function openInstagramPostModal(film, mongoId) {
@@ -2078,7 +2207,9 @@ async function openInstagramPostModal(film, mongoId) {
   document.getElementById('postCaptionInput').value = buildInstagramCaptionClient(film);
   document.getElementById('postIncludeGenerated').checked = true;
   syncInstagramLaurelPreview();
-  document.getElementById('postManualImagesInput').value = '';
+  postUploadedImages = [];
+  document.getElementById('postImageUploadInput').value = '';
+  renderPostUploadedImages();
   document.getElementById('postImageMeta').textContent = 'Loading Instagram preview...';
   document.getElementById('postWarning').classList.remove('visible');
   document.getElementById('postWarning').textContent = '';
@@ -2105,7 +2236,7 @@ async function openInstagramPostModal(film, mongoId) {
     document.getElementById('postCaptionInput').value = data.caption || buildInstagramCaptionClient(film);
     document.getElementById('postImageMeta').textContent = data.alreadyPostedAt
       ? `Already posted ${formatShortDateTime(data.alreadyPostedAt)}. Posting again will create a new Instagram post.`
-      : 'Preview uses the film thumbnail. Keep the generated laurel image, or uncheck it and paste your own public image URLs. Multiple images will post as a carousel.';
+      : 'Preview uses the film thumbnail with the Softy laurel. Upload extra images to make an Instagram carousel, or uncheck the generated image to post only uploaded images.';
     document.getElementById('postPublish').disabled = false;
     document.getElementById('postPublish').textContent = data.alreadyPostedAt ? 'Post again' : 'Post';
   } catch (error) {
@@ -2118,6 +2249,12 @@ async function openInstagramPostModal(film, mongoId) {
 }
 
 document.getElementById('postIncludeGenerated').addEventListener('change', syncInstagramLaurelPreview);
+document.getElementById('postUploadImagesBtn').addEventListener('click', () => {
+  document.getElementById('postImageUploadInput').click();
+});
+document.getElementById('postImageUploadInput').addEventListener('change', e => {
+  uploadInstagramPostImages(e.target.files || []);
+});
 
 document.getElementById('postCancel').addEventListener('click', closeInstagramPostModal);
 document.getElementById('postModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeInstagramPostModal(); });
@@ -2129,12 +2266,14 @@ document.getElementById('postPublish').addEventListener('click', async () => {
   const warning = document.getElementById('postWarning');
   const caption = document.getElementById('postCaptionInput').value.trim();
   const includeGeneratedLaurel = document.getElementById('postIncludeGenerated').checked;
-  const manualImageUrls = document.getElementById('postManualImagesInput').value
-    .split(/\n+/)
-    .map(v => v.trim())
-    .filter(Boolean);
+  const manualImageUrls = postUploadedImages.map(image => image.url).filter(Boolean);
+  if (manualImageUrls.length + (includeGeneratedLaurel ? 1 : 0) > 10) {
+    warning.textContent = 'Instagram allows up to 10 images in one carousel. Remove one uploaded image or uncheck the generated laurel image.';
+    warning.classList.add('visible');
+    return;
+  }
   if (!includeGeneratedLaurel && manualImageUrls.length === 0) {
-    warning.textContent = 'Keep the generated laurel image or add at least one public HTTPS image URL.';
+    warning.textContent = 'Keep the generated laurel image or upload at least one image.';
     warning.classList.add('visible');
     return;
   }
