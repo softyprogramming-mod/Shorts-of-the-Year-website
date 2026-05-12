@@ -234,8 +234,20 @@
     .btn-confirm-approve:hover { opacity: 0.85; }
     .post-modal { max-width: 780px; }
     .post-preview-grid { display: grid; grid-template-columns: minmax(220px, 0.8fr) minmax(260px, 1.2fr); gap: 1rem; align-items: start; }
-    .post-image-wrap { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; min-height: 220px; display: flex; align-items: center; justify-content: center; }
+    .post-image-wrap { position: relative; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; min-height: 220px; display: flex; align-items: center; justify-content: center; }
     .post-image-wrap img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; opacity: 0.9; }
+    .post-image-wrap img.post-laurel-preview {
+      position: absolute;
+      top: 7%;
+      left: 50%;
+      width: 42%;
+      height: auto;
+      transform: translateX(-50%);
+      object-fit: contain;
+      opacity: 1;
+      pointer-events: none;
+    }
+    .post-image-wrap.hide-laurel img.post-laurel-preview { display: none; }
     .post-fields { display: grid; gap: 0.75rem; }
     .post-fields label { color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
     .post-fields textarea { width: 100%; min-height: 260px; resize: vertical; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); padding: 0.75rem; font: inherit; line-height: 1.45; outline: none; }
@@ -761,6 +773,7 @@
       <div>
         <div class="post-image-wrap">
           <img id="postPreviewImage" src="" alt="">
+          <img id="postLaurelPreview" class="post-laurel-preview" src="images/softy-laurel-white.png" alt="">
         </div>
         <p class="post-meta" id="postImageMeta" style="margin-top:0.75rem;"></p>
       </div>
@@ -2040,6 +2053,7 @@ function closeInstagramPostModal() {
   postingFilmId = null;
   postingPreview = null;
   document.getElementById('postPreviewImage').src = '';
+  document.querySelector('.post-image-wrap')?.classList.remove('hide-laurel');
   document.getElementById('postCaptionInput').value = '';
   document.getElementById('postIncludeGenerated').checked = true;
   document.getElementById('postManualImagesInput').value = '';
@@ -2047,6 +2061,11 @@ function closeInstagramPostModal() {
   document.getElementById('postWarning').textContent = '';
   document.getElementById('postPublish').disabled = false;
   document.getElementById('postPublish').textContent = 'Post';
+}
+
+function syncInstagramLaurelPreview() {
+  const includeGenerated = document.getElementById('postIncludeGenerated').checked;
+  document.querySelector('.post-image-wrap')?.classList.toggle('hide-laurel', !includeGenerated);
 }
 
 async function openInstagramPostModal(film, mongoId) {
@@ -2058,6 +2077,7 @@ async function openInstagramPostModal(film, mongoId) {
   document.getElementById('postPreviewImage').src = film.thumbnail || '';
   document.getElementById('postCaptionInput').value = buildInstagramCaptionClient(film);
   document.getElementById('postIncludeGenerated').checked = true;
+  syncInstagramLaurelPreview();
   document.getElementById('postManualImagesInput').value = '';
   document.getElementById('postImageMeta').textContent = 'Loading Instagram preview...';
   document.getElementById('postWarning').classList.remove('visible');
@@ -2096,6 +2116,8 @@ async function openInstagramPostModal(film, mongoId) {
     document.getElementById('postPublish').textContent = 'Post';
   }
 }
+
+document.getElementById('postIncludeGenerated').addEventListener('change', syncInstagramLaurelPreview);
 
 document.getElementById('postCancel').addEventListener('click', closeInstagramPostModal);
 document.getElementById('postModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeInstagramPostModal(); });
