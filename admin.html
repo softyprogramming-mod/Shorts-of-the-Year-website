@@ -288,19 +288,40 @@
 
     /* ── SUBMISSION DETAIL ── */
     .sub-detail { font-size: 0.78rem; color: var(--text-dim); max-width: 280px; }
-    #panelSubmissions .table-wrap { overflow-x: auto; }
-    #subsTable { table-layout: fixed; min-width: 1420px; }
+    #panelSubmissions .table-wrap { overflow-x: hidden; }
+    #subsTable { table-layout: fixed; width: 100%; min-width: 0; }
     #subsTable th, #subsTable td { overflow-wrap: normal; word-break: normal; }
-    #subsTable th:nth-child(1) { width: 112px; }
-    #subsTable th:nth-child(2) { width: 250px; }
-    #subsTable th:nth-child(3) { width: 120px; }
-    #subsTable th:nth-child(4) { width: 90px; }
-    #subsTable th:nth-child(5) { width: 350px; }
-    #subsTable th:nth-child(6) { width: 330px; }
-    #subsTable th:nth-child(7) { width: 110px; }
-    #subsTable th:nth-child(8) { width: 160px; }
-    #subsTable .actions { flex-direction: column; align-items: stretch; gap: 0.45rem; min-width: 132px; }
-    #subsTable .actions .btn { width: 100%; justify-content: center; min-height: 36px; padding-left: 0.65rem; padding-right: 0.65rem; }
+    #subsTable th:nth-child(1) { width: 96px; }
+    #subsTable th:nth-child(2) { width: 24%; }
+    #subsTable th:nth-child(3) { width: 105px; }
+    #subsTable th:nth-child(4) { width: 86px; }
+    #subsTable th:nth-child(5) { width: auto; }
+    #subsTable th:nth-child(6) { width: 96px; }
+    #subsTable th:nth-child(7) { width: 136px; }
+    #subsTable .td-thumb img { width: 72px; height: 41px; }
+    #subsTable .td-title strong { max-width: 100%; }
+    #subsTable .td-title small {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+    #subsTable .actions { flex-direction: column; align-items: stretch; gap: 0.35rem; min-width: 0; }
+    #subsTable .actions .btn { width: 100%; justify-content: center; min-height: 32px; padding: 0.35rem 0.5rem; font-size: 0.74rem; }
+    #subsTable tbody tr.submission-main-row { border-bottom: none; }
+    #subsTable tbody tr.submission-tracker-row { background: var(--surface); }
+    #subsTable tbody tr.submission-tracker-row:hover { background: var(--surface); }
+    #subsTable .submission-tracker-cell { padding: 0 0.75rem 0.95rem 0.75rem; }
+    #subsTable .submission-tracker {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.45rem 1.25rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 0.7rem 0 0;
+    }
+    #subsTable .tracker-line { max-width: 360px; }
     .sub-logline {
       display: -webkit-box;
       font-size: 0.78rem;
@@ -906,7 +927,7 @@
         <thead>
           <tr>
             <th></th><th>Title / Director</th><th>Genre</th><th>Runtime</th>
-            <th>Logline</th><th>Submissions Tracker</th><th>Submitted</th><th>Actions</th>
+            <th>Logline</th><th>Submitted</th><th>Actions</th>
           </tr>
         </thead>
         <tbody id="subsBody"></tbody>
@@ -2798,7 +2819,9 @@ function updateSubmissionCountdowns() {
 }
 
 function createSubRow(sub) {
+  const fragment = document.createDocumentFragment();
   const tr = document.createElement('tr');
+  tr.className = 'submission-main-row';
   const mongoId = sub._id?.$oid || sub._id?.toString() || sub._id;
 
   const tdThumb = document.createElement('td');
@@ -2842,10 +2865,6 @@ function createSubRow(sub) {
   loglineSpan.title = sub.logline || '';
   tdLogline.appendChild(loglineSpan);
   tr.appendChild(tdLogline);
-
-  const tdTracker = document.createElement('td');
-  tdTracker.appendChild(createSubmissionTracker(sub));
-  tr.appendChild(tdTracker);
 
   const tdDate = document.createElement('td');
   tdDate.style.color = 'var(--text-dim)';
@@ -2900,7 +2919,21 @@ function createSubRow(sub) {
     openEditModal(sub, { submissionReview: true, titlePrefix: 'Review Submission' });
   });
 
-  return tr;
+  const trackerTr = document.createElement('tr');
+  trackerTr.className = 'submission-tracker-row';
+  const tdTracker = document.createElement('td');
+  tdTracker.className = 'submission-tracker-cell';
+  tdTracker.colSpan = 7;
+  tdTracker.appendChild(createSubmissionTracker(sub));
+  trackerTr.appendChild(tdTracker);
+  trackerTr.style.cursor = 'pointer';
+  trackerTr.addEventListener('click', () => {
+    openEditModal(sub, { submissionReview: true, titlePrefix: 'Review Submission' });
+  });
+
+  fragment.appendChild(tr);
+  fragment.appendChild(trackerTr);
+  return fragment;
 }
 
 function replaceSubmissionInState(updated) {
