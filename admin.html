@@ -236,6 +236,55 @@
 
     .actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
     .actions .btn { white-space: nowrap; }
+    #filmsTable th:nth-child(8),
+    #filmsTable td:nth-child(8) { width: 390px; }
+    #filmsTable .actions { gap: 0.35rem; flex-wrap: nowrap; }
+    #filmsTable .actions .btn {
+      min-height: 34px;
+      justify-content: center;
+      padding: 0.34rem 0.62rem;
+      border-radius: 7px;
+      background: rgba(255,255,255,0.035);
+      color: var(--text-dim);
+      border-color: var(--border);
+      font-size: 0.76rem;
+      line-height: 1;
+    }
+    #filmsTable .actions .btn:hover {
+      background: rgba(255,255,255,0.065);
+      color: var(--text);
+      opacity: 1;
+    }
+    #filmsTable .actions .btn-toggle.is-live {
+      color: #d8c967;
+      border-color: rgba(224,194,82,0.24);
+      background: rgba(224,194,82,0.055);
+    }
+    #filmsTable .actions .btn-toggle.is-hidden {
+      color: #70d895;
+      border-color: rgba(82,201,122,0.24);
+      background: rgba(82,201,122,0.055);
+    }
+    #filmsTable .actions .btn-post {
+      color: #e69a76;
+      border-color: rgba(224,122,82,0.24);
+      background: rgba(224,122,82,0.05);
+    }
+    #filmsTable .actions .btn-post.is-posted {
+      color: #70d895;
+      border-color: rgba(82,201,122,0.24);
+      background: rgba(82,201,122,0.055);
+    }
+    #filmsTable .actions .btn-email {
+      color: #75a9e8;
+      border-color: rgba(82,148,224,0.24);
+      background: rgba(82,148,224,0.05);
+    }
+    #filmsTable .actions .btn-delete {
+      color: #e46a6a;
+      border-color: rgba(224,82,82,0.24);
+      background: rgba(224,82,82,0.045);
+    }
 
     /* ── SUBMISSION DETAIL ── */
     .sub-detail { font-size: 0.78rem; color: var(--text-dim); max-width: 280px; }
