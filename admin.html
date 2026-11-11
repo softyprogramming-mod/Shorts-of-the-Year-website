@@ -6,6 +6,11 @@
   <title>Admin · Shorts of the Year</title>
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://softy-api-phi.vercel.app https://vimeo.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
+  <script>
+    if (location.protocol === 'http:' && /^(www\.)?shortsoftheyear\.com$/.test(location.hostname)) {
+      location.replace('https://shortsoftheyear.com' + location.pathname + location.search + location.hash);
+    }
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -2767,6 +2772,8 @@ function formatDuration(ms) {
 
 function getSubmissionDecisionTarget(sub) {
   if (isSubmissionPaused(sub)) return { ms: 0, exact: true, paused: true };
+  const publish = parseDateMs(sub.scheduledPublishAt);
+  if (publish) return { ms: publish, exact: true };
   const exact = parseDateMs(sub.scheduledDecisionAt);
   if (exact) return { ms: exact, exact: true };
 
@@ -2961,6 +2968,12 @@ function createSubRow(sub) {
   });
 
   actions.appendChild(viewBtn);
+  if (sub.scheduledPublishAt) {
+    approveBtn.disabled = true;
+    rejectBtn.disabled = true;
+    pauseBtn.disabled = true;
+    approveBtn.textContent = 'Publication scheduled';
+  }
   actions.appendChild(approveBtn);
   actions.appendChild(pauseBtn);
   actions.appendChild(rejectBtn);
@@ -4063,15 +4076,16 @@ document.getElementById('modalSave').addEventListener('click', async () => {
       }
     }
 
-    if (!updates.slug) updates.slug = slugifyTitle(updates.title);
+    if (isCreatingFilm) {
+      updates.slug = slugifyTitle(updates.title);
+      updates.timestamp = new Date().toISOString();
+    }
 
     if (wasSubmissionReview) {
-      updates.timestamp = editingFilm.timestamp || updates.timestamp || new Date().toISOString();
       updates.pending = true;
       updates.accepted = false;
       updates.live = false;
     } else {
-      if (!updates.timestamp) updates.timestamp = new Date().toISOString();
       updates.pending = false;
       updates.accepted = true;
     }

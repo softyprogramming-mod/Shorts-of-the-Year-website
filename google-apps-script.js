@@ -3,9 +3,9 @@
  *
  * Flow:
  * 1. Form submitted → save pending record to Vercel/MongoDB immediately
- * 2. Random 1–3 day delay trigger fires → 99% accept, 1% reject
+ * 2. A shared worker processes decisions after a random 1-3 day delay
  * 3. Accept → generate review + send acceptance email
- * 4. Separate 12-hour publish trigger fires → set live in MongoDB
+ * 4. The shared worker publishes about 12 hours after acceptance
  * 5. Reject → delete from MongoDB, send rejection email
  */
 
@@ -688,62 +688,66 @@ const QUALITIES = [
 // ==================== MAIN FUNCTIONS ====================
 
 function onFormSubmit(e) {
+  const lock = LockService.getScriptLock();
   try {
-    autoWorkflowMaintenance_();
+    if (!e || (!e.response && !e.namedValues)) throw new Error('Missing Google Forms submission event.');
+    lock.waitLock(30000);
     const formData = extractFormData(e);
-    const randomHours =
-      Math.random() * (CONFIG.MAX_DELAY_HOURS - CONFIG.MIN_DELAY_HOURS) + CONFIG.MIN_DELAY_HOURS;
-    const triggerTime = new Date(Date.now() + randomHours * 60 * 60 * 1000);
+    formData.filmLink = normalizeSubmissionFilmLink_(formData.filmLink);
+    if (!formData.filmLink) throw new Error('Link to Film is not a supported YouTube or Vimeo video URL. Check the original Forms response.');
+    if (!normalizeEmail_(formData.email)) throw new Error('Submission is missing a valid email address.');
 
-    const submissionId = 'submission_' + Date.now();
+    const now = Date.now();
+    const hours = CONFIG.MIN_DELAY_HOURS + Math.random() * (CONFIG.MAX_DELAY_HOURS - CONFIG.MIN_DELAY_HOURS);
+    const submissionId = 'submission_' + now + '_' + Utilities.getUuid();
+    const intakeKey = 'intake_' + submissionId;
     const props = PropertiesService.getScriptProperties();
-    props.setProperty(submissionId, JSON.stringify(formData));
-
-    const trigger = ScriptApp.newTrigger('processSubmission')
-      .timeBased()
-      .at(triggerTime)
-      .create();
-
-    props.setProperty('trigger_' + trigger.getUniqueId(), submissionId);
-    Logger.log('Scheduled ' + submissionId + ' at ' + triggerTime.toISOString());
-
-    var receiptSent = false;
-    var receiptErrorMessage = '';
-    try {
-      sendSubmissionReceivedEmail(formData);
-      receiptSent = true;
-    } catch (receiptError) {
-      receiptErrorMessage = String(receiptError && receiptError.message ? receiptError.message : receiptError);
-      Logger.log('Submission received email failed: ' + receiptError);
-      notifyAdmin_('submission received email failed', receiptError);
-    }
-
-    // Save pending record to MongoDB immediately so admin can see it
-    savePendingToMongo(formData, submissionId, {
-      scheduledDecisionAt: triggerTime.toISOString(),
-      submissionReceivedEmailSent: receiptSent,
-      submissionReceivedEmailAt: receiptSent ? new Date().toISOString() : '',
-      submissionReceivedEmailError: receiptErrorMessage
-    });
-
-    sendOwnerAlert_(
-      'New SoftY submission: ' + (formData.title || 'Untitled'),
-      'New submission received\n\n'
-        + 'Title: ' + (formData.title || '') + '\n'
-        + 'Director: ' + (formData.director || '') + '\n'
-        + 'Email: ' + (formData.email || '') + '\n'
-        + 'Film link: ' + (formData.filmLink || '') + '\n'
-        + 'Receipt email: ' + (receiptSent ? 'sent' : ('failed/unknown ' + receiptErrorMessage))
-    );
+    props.setProperty(intakeKey, JSON.stringify({ submissionId: submissionId, formData: formData, decisionAt: now + Math.round(hours * 3600000) }));
+    const jobId = queueWorkflowJob_('finishIntake_', intakeKey, now);
+    try { finishIntake_({ triggerUid: jobId }); }
+    catch (error) { retryWorkflowJob_(jobId, 'finishIntake_', intakeKey, error); }
   } catch (error) {
     notifyAdmin_('onFormSubmit failed', error);
     Logger.log('Error in onFormSubmit: ' + error);
+  } finally {
+    if (lock.hasLock()) lock.releaseLock();
   }
 }
 
+function finishIntake_(e) {
+  const props = PropertiesService.getScriptProperties();
+  const job = readWorkflowJob_(e.triggerUid);
+  if (!job) return;
+  const raw = props.getProperty(job.payloadKey);
+  if (!raw) { deleteTrigger(e.triggerUid); return; }
+  const intake = JSON.parse(raw);
+  const formData = intake.formData;
+  if (!intake.mongoId) {
+    intake.mongoId = savePendingToMongo(formData, intake.submissionId, {
+      scheduledDecisionAt: new Date(intake.decisionAt).toISOString()
+    });
+    props.setProperty(job.payloadKey, JSON.stringify(intake));
+  }
+  if (!intake.receiptSentAt) {
+    sendSubmissionReceivedEmail(formData);
+    intake.receiptSentAt = new Date().toISOString();
+    props.setProperty(job.payloadKey, JSON.stringify(intake));
+  }
+  updateFilmWorkflowStatus_(intake.mongoId, { submissionReceivedEmailSent: true, submissionReceivedEmailAt: intake.receiptSentAt, submissionReceivedEmailError: '' });
+  props.setProperty(intake.submissionId, JSON.stringify(formData));
+  if (!findSubmissionTriggerId_(intake.submissionId)) {
+    queueWorkflowJob_('processSubmission', intake.submissionId, intake.decisionAt);
+  }
+  sendOwnerAlert_('New SoftY submission: ' + formData.title,
+    'Receipt sent. Review the submission in Admin: ' + CONFIG.SITE_URL + '/admin');
+  props.deleteProperty(job.payloadKey);
+  deleteTrigger(e.triggerUid);
+}
+
 function doPost(e) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) return jsonResponse_({ success: false, error: 'Workflow is busy; please retry.' });
   try {
-    autoWorkflowMaintenance_();
     var body = parseWebhookBody_(e);
     var action = String(body.action || '');
 
@@ -774,8 +778,8 @@ function doPost(e) {
         language: String(film.language || '')
       };
 
-      sendAcceptanceEmail(formData, review);
-      sendOwnerFilmLiveAlert_(formData);
+      sendAcceptanceEmail(formData, review, false);
+
       return jsonResponse_({
         success: true,
         action: 'manualApprove',
@@ -866,6 +870,8 @@ function doPost(e) {
     notifyAdmin_('doPost webhook failed', error);
     Logger.log('doPost webhook error: ' + error);
     return jsonResponse_({ success: false, error: String(error) });
+  } finally {
+    lock.releaseLock();
   }
 }
 
@@ -892,6 +898,7 @@ function getWebhookSecret_() {
 }
 
 function cancelSubmissionTriggerBySubmissionId_(submissionId) {
+  cancelQueuedWorkflowJobs_('processSubmission', submissionId);
   var props = PropertiesService.getScriptProperties();
   var all = props.getProperties();
   Object.keys(all).forEach(function(key) {
@@ -916,8 +923,7 @@ function getRejectionArcConfig_() {
     var data = JSON.parse(res.getContentText());
     return normalizeRejectionArcConfigForGas_(data && data.config ? data.config : null);
   } catch (error) {
-    Logger.log('Failed to fetch rejection arc config: ' + error);
-    return null;
+    throw new Error('Failed to fetch rejection arc config: ' + error);
   }
 }
 
@@ -1006,10 +1012,7 @@ function executeRejectionArcStep_(step, arcState) {
   if (!step || !step.enabled) return arcState;
   if (step.stepType === 'acceptance_builtin') {
     var review = generateReview(formData);
-    sendAcceptanceEmail(formData, review);
-    if (arcState && arcState.submissionId) {
-      schedulePublishTrigger_(arcState.submissionId, formData, review);
-    }
+    scheduleAcceptedFilm_(formData, arcState.submissionId, review);
     arcState.acceptanceTriggered = true;
     arcState.acceptanceTriggeredAt = new Date().toISOString();
     arcState = markRejectionArcStepSent_(arcState, step);
@@ -1037,32 +1040,14 @@ function scheduleRejectionArcStepTrigger_(arcStateKey, arcState, scheduledStep) 
     runAt = new Date(Date.now() + 60 * 1000);
   }
 
-  var payloadKey = 'rejection_arc_step_' + arcState.arcId + '_' + Math.random().toString(36).slice(2, 8);
+  var payloadKey = 'rejection_arc_step_' + arcState.arcId + '_' + Number(scheduledStep.stepIndex || 0);
   props.setProperty(payloadKey, JSON.stringify({
     arcStateKey: arcStateKey,
     stepIndex: Number(scheduledStep.stepIndex || 0),
     stepId: scheduledStep.stepId || ('step_' + (Number(scheduledStep.stepIndex || 0) + 1))
   }));
 
-  var trigger = null;
-  try {
-    trigger = ScriptApp.newTrigger('processRejectionArcStep')
-      .timeBased()
-      .at(runAt)
-      .create();
-  } catch (err) {
-    var msg = String(err || '');
-    if (/too many triggers/i.test(msg)) {
-      cleanupStaleRejectionArcTriggerMappings_();
-      trigger = ScriptApp.newTrigger('processRejectionArcStep')
-        .timeBased()
-        .at(runAt)
-        .create();
-    } else {
-      throw err;
-    }
-  }
-  props.setProperty('rejection_arc_trigger_' + trigger.getUniqueId(), payloadKey);
+  queueWorkflowJob_('processRejectionArcStep', payloadKey, runAt.getTime());
 
   if (!arcState.scheduledStepPayloadKeys) arcState.scheduledStepPayloadKeys = [];
   arcState.scheduledStepPayloadKeys.push(payloadKey);
@@ -1258,9 +1243,10 @@ function resetWorkflowTriggerBacklog_() {
 
 function scheduleNextRejectionArcStep_(arcStateKey, arcState) {
   if (!arcState || !Array.isArray(arcState.futureSteps) || arcState.futureSteps.length === 0) return false;
-  var next = arcState.futureSteps.shift();
+  var next = arcState.futureSteps[0];
   if (!next) return false;
   scheduleRejectionArcStepTrigger_(arcStateKey, arcState, next);
+  arcState.futureSteps.shift();
   return true;
 }
 
@@ -1350,7 +1336,7 @@ function processRejectionArcStep(e) {
   var arcStateKey = null;
   try {
     if (!triggerId) throw new Error('Missing triggerUid for processRejectionArcStep');
-    payloadKey = props.getProperty('rejection_arc_trigger_' + triggerId);
+    payloadKey = workflowPayloadKey_('rejection_arc_trigger_', triggerId);
     if (!payloadKey) throw new Error('No rejection arc payload key for trigger ' + triggerId);
     var payloadJson = props.getProperty(payloadKey);
     if (!payloadJson) throw new Error('No rejection arc payload for key ' + payloadKey);
@@ -1359,7 +1345,7 @@ function processRejectionArcStep(e) {
     if (!arcStateKey) throw new Error('Arc payload missing arcStateKey');
 
     var arcStateJson = props.getProperty(arcStateKey);
-    if (!arcStateJson) throw new Error('No arc state for ' + arcStateKey);
+    if (!arcStateJson) { props.deleteProperty(payloadKey); props.deleteProperty('rejection_arc_trigger_' + triggerId); deleteTrigger(triggerId); return; }
     var arcState = JSON.parse(arcStateJson);
 
     var config = getRejectionArcConfig_();
@@ -1369,12 +1355,15 @@ function processRejectionArcStep(e) {
     if (payload.stepId) {
       step = (config.steps || []).find(function(s) { return s.id === payload.stepId; }) || null;
     }
-    if (!step && typeof payload.stepIndex === 'number') {
+    if (!payload.stepId && typeof payload.stepIndex === 'number') {
       step = config.steps[payload.stepIndex] || null;
     }
     if (!step) throw new Error('Scheduled rejection arc step not found in current config');
 
-    arcState = executeRejectionArcStep_(step, arcState);
+    if (!(arcState.sentSteps || []).some(function(sent) { return sent.id === step.id; })) {
+      arcState = executeRejectionArcStep_(step, arcState);
+      saveRejectionArcState_(arcStateKey, arcState);
+    }
 
     if (Array.isArray(arcState.scheduledStepPayloadKeys)) {
       arcState.scheduledStepPayloadKeys = arcState.scheduledStepPayloadKeys.filter(function(k) { return k !== payloadKey; });
@@ -1394,14 +1383,16 @@ function processRejectionArcStep(e) {
       saveRejectionArcState_(arcStateKey, arcState);
     }
   } catch (error) {
-    notifyAdmin_('processRejectionArcStep failed', error);
-    Logger.log('Error in processRejectionArcStep: ' + error);
-  } finally {
-    if (payloadKey) props.deleteProperty(payloadKey);
-    if (triggerId) {
-      props.deleteProperty('rejection_arc_trigger_' + triggerId);
-      deleteTrigger(triggerId);
+    if (triggerId && payloadKey && props.getProperty(payloadKey)) {
+      retryWorkflowJob_(triggerId, 'processRejectionArcStep', payloadKey, error, arcStateKey);
+      return;
     }
+    Logger.log('Ignoring expired rejection job: ' + error);
+  }
+  if (payloadKey) props.deleteProperty(payloadKey);
+  if (triggerId) {
+    props.deleteProperty('rejection_arc_trigger_' + triggerId);
+    deleteTrigger(triggerId);
   }
 }
 
@@ -1456,6 +1447,7 @@ function listActiveRejectionArcs_() {
 
 function cancelRejectionArcTriggerByPayloadKey_(payloadKey) {
   if (!payloadKey) return;
+  cancelQueuedWorkflowJobs_('processRejectionArcStep', payloadKey);
   var props = PropertiesService.getScriptProperties();
   var all = props.getProperties();
   Object.keys(all).forEach(function(key) {
@@ -1539,14 +1531,17 @@ function advanceRejectionArcNow_(arcId) {
     if (payload.stepId) {
       step = (config.steps || []).find(function(s) { return s.id === payload.stepId; }) || null;
     }
-    if (!step && typeof payload.stepIndex === 'number') {
+    if (!payload.stepId && typeof payload.stepIndex === 'number') {
       step = config.steps[payload.stepIndex] || null;
     }
     if (!step) {
       return { success: false, error: 'Step not found in current config', arcId: arcId };
     }
 
-    arcState = executeRejectionArcStep_(step, arcState);
+    if (!(arcState.sentSteps || []).some(function(sent) { return sent.id === step.id; })) {
+      arcState = executeRejectionArcStep_(step, arcState);
+      saveRejectionArcState_(arcStateKey, arcState);
+    }
 
     if (Array.isArray(arcState.scheduledStepPayloadKeys)) {
       arcState.scheduledStepPayloadKeys = arcState.scheduledStepPayloadKeys.filter(function(k) { return k !== payloadKey; });
@@ -1690,33 +1685,38 @@ function manualRejectSubmission_(submissionId) {
   };
 }
 
-function schedulePublishTrigger_(submissionId, formData, review) {
-  autoWorkflowMaintenance_();
+function scheduleAcceptedFilm_(formData, submissionId, review) {
+  if (!submissionId) throw new Error('Cannot schedule publication without a submission ID.');
   const props = PropertiesService.getScriptProperties();
-  const publishTime = new Date(Date.now() + CONFIG.PUBLISH_DELAY_HOURS_AFTER_ACCEPTANCE * 60 * 60 * 1000);
-  const publishPayloadKey =
-    'publish_' + submissionId + '_' + Math.random().toString(36).slice(2, 8);
-
-  props.setProperty(publishPayloadKey, JSON.stringify({
-    submissionId: submissionId,
-    title: formData && formData.title ? formData.title : '',
-    review: review || '',
-    scheduledAt: publishTime.toISOString()
-  }));
-
-  const publishTrigger = ScriptApp.newTrigger('publishAcceptedSubmission')
-    .timeBased()
-    .at(publishTime)
-    .create();
-
-  props.setProperty('publish_trigger_' + publishTrigger.getUniqueId(), publishPayloadKey);
-  Logger.log(
-    'Scheduled publish for ' + submissionId + ' at ' + publishTime.toISOString() +
-    ' (+' + CONFIG.PUBLISH_DELAY_HOURS_AFTER_ACCEPTANCE + 'h after acceptance email)'
-  );
+  const key = 'publish_queued_' + submissionId;
+  const previous = props.getProperty(key);
+  const payload = previous ? JSON.parse(previous) : {
+    submissionId: submissionId, title: formData.title || '', review: review || '', acceptanceSent: false
+  };
+  if (!previous) props.setProperty(key, JSON.stringify(payload));
+  let jobId = findQueuedWorkflowJob_('publishAcceptedSubmission', key);
+  if (!jobId) jobId = queueWorkflowJob_('publishAcceptedSubmission', key, Date.now() + CONFIG.PUBLISH_DELAY_HOURS_AFTER_ACCEPTANCE * 3600000);
+  if (!payload.acceptanceSent) {
+    sendAcceptanceEmail(formData, payload.review, true);
+    payload.acceptanceSent = true;
+    payload.scheduledAt = new Date(Date.now() + CONFIG.PUBLISH_DELAY_HOURS_AFTER_ACCEPTANCE * 3600000).toISOString();
+    props.setProperty(key, JSON.stringify(payload));
+  }
+  const job = readWorkflowJob_(jobId);
+  job.due = new Date(payload.scheduledAt).getTime();
+  props.setProperty('workflow_job_' + jobId, JSON.stringify(job));
+  const film = getFilmBySubmissionId_(submissionId);
+  if (!film) throw new Error('Could not mark the scheduled publication in Admin.');
+  if (film.pending && film.scheduledPublishAt !== payload.scheduledAt) {
+    updateFilmWorkflowStatus_(film._id && film._id.$oid ? film._id.$oid : String(film._id),
+      { scheduledPublishAt: payload.scheduledAt });
+  }
+  Logger.log('Acceptance sent; publication scheduled for ' + payload.scheduledAt);
 }
 
 function findSubmissionTriggerId_(submissionId) {
+  const queued = findQueuedWorkflowJob_('processSubmission', submissionId);
+  if (queued) return queued;
   var props = PropertiesService.getScriptProperties();
   var all = props.getProperties();
   var liveTriggers = ScriptApp.getProjectTriggers();
@@ -1792,7 +1792,7 @@ function resumeSubmission_(submissionId) {
   var pausedJson = props.getProperty('paused_' + submissionId);
   var paused = {};
   try { paused = pausedJson ? JSON.parse(pausedJson) : {}; } catch (_) {}
-  var remainingMs = Math.max(60 * 1000, Number(paused.remainingMs || 0));
+  var remainingMs = Number(paused.remainingMs || 0);
   if (!remainingMs) {
     remainingMs = Math.round(
       (Math.random() * (CONFIG.MAX_DELAY_HOURS - CONFIG.MIN_DELAY_HOURS) + CONFIG.MIN_DELAY_HOURS)
@@ -1800,13 +1800,8 @@ function resumeSubmission_(submissionId) {
     );
   }
 
-  var scheduledAt = new Date(Date.now() + remainingMs);
-  var trigger = ScriptApp.newTrigger('processSubmission')
-    .timeBased()
-    .at(scheduledAt)
-    .create();
-
-  props.setProperty('trigger_' + trigger.getUniqueId(), submissionId);
+  var scheduledAt = new Date(Date.now() + Math.max(60000, remainingMs));
+  var triggerId = queueWorkflowJob_('processSubmission', submissionId, scheduledAt.getTime());
   props.deleteProperty('paused_' + submissionId);
 
   return {
@@ -1814,7 +1809,7 @@ function resumeSubmission_(submissionId) {
     submissionId: submissionId,
     scheduledDecisionAt: scheduledAt.toISOString(),
     remainingMs: remainingMs,
-    triggerId: trigger.getUniqueId()
+    triggerId: triggerId
   };
 }
 
@@ -1829,7 +1824,7 @@ function processSubmission(e) {
       return;
     }
 
-    submissionId = props.getProperty('trigger_' + triggerId);
+    submissionId = workflowPayloadKey_('trigger_', triggerId);
     if (!submissionId) {
       Logger.log('Ignoring stale processSubmission trigger with no submission ID: ' + triggerId);
       deleteTrigger(triggerId);
@@ -1840,40 +1835,46 @@ function processSubmission(e) {
     if (!formDataJson) throw new Error('No submission data for ' + submissionId);
 
     const formData = JSON.parse(formDataJson);
+    const film = getFilmBySubmissionId_(submissionId, true);
+    if (!film || film.pending !== true) {
+      props.deleteProperty(submissionId);
+      props.deleteProperty('decision_' + submissionId);
+      props.deleteProperty('trigger_' + triggerId);
+      deleteTrigger(triggerId);
+      return;
+    }
     Logger.log('Processing: ' + (formData.title || '(no title)'));
 
-    const isAccepted = Math.random() < CONFIG.ACCEPTANCE_RATE;
-    if (isAccepted) {
+    const decisionKey = 'decision_' + submissionId;
+    let decision = props.getProperty(decisionKey);
+    if (!decision) {
+      decision = Math.random() < CONFIG.ACCEPTANCE_RATE ? 'accept' : 'reject';
+      props.setProperty(decisionKey, decision);
+    }
+    if (decision === 'accept') {
       handleAcceptance(formData, submissionId);
     } else {
       handleRejection(formData, submissionId);
     }
   } catch (error) {
-    notifyAdmin_('processSubmission failed', error);
-    Logger.log('Error in processSubmission: ' + error);
-  } finally {
-    if (submissionId) props.deleteProperty(submissionId);
-    if (triggerId) {
-      props.deleteProperty('trigger_' + triggerId);
-      deleteTrigger(triggerId);
+    if (triggerId && submissionId && props.getProperty(submissionId)) {
+      retryWorkflowJob_(triggerId, 'processSubmission', submissionId, error);
+      return;
     }
+    Logger.log('Ignoring expired decision job: ' + error);
+  }
+  if (submissionId) {
+    props.deleteProperty(submissionId);
+    props.deleteProperty('decision_' + submissionId);
+  }
+  if (triggerId) {
+    props.deleteProperty('trigger_' + triggerId);
+    deleteTrigger(triggerId);
   }
 }
 
 function handleAcceptance(formData, submissionId) {
-  const review = generateReview(formData);
-  const approved = approveInMongo(submissionId, review);
-  if (!approved || approved.success !== true) {
-    throw new Error('approveInMongo failed during acceptance for ' + submissionId);
-  }
-  sendAcceptanceEmail(formData, review);
-  sendOwnerFilmLiveAlert_(Object.assign({}, formData, {
-    slug: approved.slug || formData.slug || '',
-    email: approved.email || formData.email || '',
-    title: approved.title || formData.title || '',
-    director: approved.director || formData.director || ''
-  }));
-  Logger.log('Acceptance email sent; film published immediately: ' + (formData.title || '(no title)'));
+  scheduleAcceptedFilm_(formData, submissionId, generateReview(formData));
 }
 
 function handleRejection(formData, submissionId) {
@@ -1890,7 +1891,7 @@ function publishAcceptedSubmission(e) {
   try {
     if (!triggerId) throw new Error('Missing triggerUid for publishAcceptedSubmission');
 
-    publishPayloadKey = props.getProperty('publish_trigger_' + triggerId);
+    publishPayloadKey = workflowPayloadKey_('publish_trigger_', triggerId);
     if (!publishPayloadKey) throw new Error('No publish payload key for trigger ' + triggerId);
 
     const payloadJson = props.getProperty(publishPayloadKey);
@@ -1898,6 +1899,11 @@ function publishAcceptedSubmission(e) {
 
     const payload = JSON.parse(payloadJson);
     if (!payload.submissionId) throw new Error('Publish payload missing submissionId');
+    if (payload.acceptanceSent === false) throw new Error('Waiting for acceptance email before publication.');
+    if (payload.scheduledAt && new Date(payload.scheduledAt).getTime() > Date.now()) {
+      const job = readWorkflowJob_(triggerId);
+      if (job) { job.due = new Date(payload.scheduledAt).getTime(); props.setProperty('workflow_job_' + triggerId, JSON.stringify(job)); return; }
+    }
 
     const approved = approveInMongo(payload.submissionId, payload.review || '');
     if (!approved || approved.success !== true) {
@@ -1920,14 +1926,16 @@ function publishAcceptedSubmission(e) {
     shouldDeletePayload = true;
     Logger.log('Published after delayed acceptance: ' + (payload.title || payload.submissionId));
   } catch (error) {
-    notifyAdmin_('publishAcceptedSubmission failed', error);
-    Logger.log('Error in publishAcceptedSubmission: ' + error);
-  } finally {
-    if (shouldDeletePayload && publishPayloadKey) props.deleteProperty(publishPayloadKey);
-    if (triggerId) {
-      props.deleteProperty('publish_trigger_' + triggerId);
-      deleteTrigger(triggerId);
+    if (triggerId && publishPayloadKey && props.getProperty(publishPayloadKey)) {
+      retryWorkflowJob_(triggerId, 'publishAcceptedSubmission', publishPayloadKey, error);
+      return;
     }
+    Logger.log('Ignoring expired publish job: ' + error);
+  }
+  if (shouldDeletePayload && publishPayloadKey) props.deleteProperty(publishPayloadKey);
+  if (triggerId) {
+    props.deleteProperty('publish_trigger_' + triggerId);
+    deleteTrigger(triggerId);
   }
 }
 
@@ -2157,7 +2165,6 @@ function getApiSecret_() {
  * POST a pending submission to MongoDB immediately on form receipt
  */
 function savePendingToMongo(formData, submissionId, tracker) {
-  try {
     tracker = tracker || {};
     const pendingFilm = {
       submissionId: submissionId,
@@ -2191,7 +2198,7 @@ function savePendingToMongo(formData, submissionId, tracker) {
       autoDecisionMaxHours: CONFIG.MAX_DELAY_HOURS
     };
 
-    UrlFetchApp.fetch(CONFIG.API_BASE + '/films', {
+    const response = UrlFetchApp.fetch(CONFIG.API_BASE + '/films', {
       method: 'post',
       headers: {
         'Content-Type': 'application/json',
@@ -2201,10 +2208,22 @@ function savePendingToMongo(formData, submissionId, tracker) {
       muteHttpExceptions: true
     });
 
-    Logger.log('Pending submission saved to MongoDB: ' + formData.title);
-  } catch (error) {
-    Logger.log('Failed to save pending submission to MongoDB: ' + error);
-    // Non-fatal — auto-processing will still proceed
+    const status = response.getResponseCode();
+    if (status !== 200 && status !== 201) throw new Error('Pending submission not saved (HTTP ' + status + ').');
+    const data = JSON.parse(response.getContentText());
+    if (!data.success || !data.id) throw new Error('Pending submission response did not confirm a record.');
+    return String(data.id);
+}
+
+function updateFilmWorkflowStatus_(mongoId, updates) {
+  const response = UrlFetchApp.fetch(CONFIG.API_BASE + '/admin?action=update&id=' + encodeURIComponent(mongoId), {
+    method: 'put',
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': getAdminPassword_() },
+    payload: JSON.stringify(updates),
+    muteHttpExceptions: true
+  });
+  if (response.getResponseCode() !== 200 || !JSON.parse(response.getContentText()).success) {
+    throw new Error('Workflow status could not be saved in Admin.');
   }
 }
 
@@ -2234,6 +2253,8 @@ function approveInMongo(submissionId, review) {
     }
 
     const mongoId = film._id && film._id.$oid ? film._id.$oid : String(film._id);
+
+    if (film.live === true && film.accepted === true) return Object.assign({}, film, { success: true });
 
     const approveRes = UrlFetchApp.fetch(CONFIG.API_BASE + '/admin?action=approve&id=' + mongoId, {
       method: 'put',
@@ -2265,7 +2286,7 @@ function approveInMongo(submissionId, review) {
   }
 }
 
-function getFilmBySubmissionId_(submissionId) {
+function getFilmBySubmissionId_(submissionId, requireResponse) {
   try {
     const adminPassword = getAdminPassword_();
     const listRes = UrlFetchApp.fetch(CONFIG.API_BASE + '/admin?action=list', {
@@ -2280,6 +2301,7 @@ function getFilmBySubmissionId_(submissionId) {
     const data = JSON.parse(listRes.getContentText());
     return (data.films || []).find(function(f) { return f.submissionId === submissionId; }) || null;
   } catch (error) {
+    if (requireResponse) throw error;
     Logger.log('Failed to fetch film by submissionId: ' + error);
     return null;
   }
@@ -2317,9 +2339,7 @@ function getOwnerAlertRecipients_() {
   var props = PropertiesService.getScriptProperties();
   var recipients = [];
   var email = normalizeEmail_(props.getProperty('OWNER_ALERT_EMAIL') || CONFIG.OWNER_ALERT_EMAIL);
-  var sms = normalizeEmail_(props.getProperty('OWNER_SMS_EMAIL'));
   if (email) recipients.push(email);
-  if (sms && recipients.indexOf(sms) === -1) recipients.push(sms);
   return recipients;
 }
 
@@ -2396,8 +2416,7 @@ function deleteFromMongo(submissionId) {
 function sendSubmissionReceivedEmail(formData) {
   var recipient = normalizeEmail_(formData.email);
   if (!recipient) {
-    Logger.log('Skipping submission received email: missing/invalid recipient');
-    return;
+    throw new Error('Missing/invalid recipient email (submission receipt).');
   }
 
   var title = formData.title || 'your film';
@@ -2419,10 +2438,18 @@ function sendSubmissionReceivedEmail(formData) {
     + 'Your submission has been received. One of our jurors will watch it soon, and we’ll get back to you once a decision has been made.\n\n'
     + 'Best regards,\nThe Shorts of the Year Team\n\nwww.shortsoftheyear.com | @shortsoftheyear';
 
-  sendEmailWithBcc_(recipient, subject, plainBody, htmlBody);
+  var configured = PropertiesService.getScriptProperties().getProperty('SUBMISSION_RECEIPT_BCC') || '';
+  var bcc = Array.from(new Set(configured.split(',').map(function(address) {
+    return normalizeEmail_(address).toLowerCase();
+  }).filter(function(address) {
+    return address && address !== recipient.toLowerCase();
+  }))).join(',');
+  var message = { to: recipient, subject: subject, body: plainBody, htmlBody: htmlBody, name: CONFIG.SENDER_NAME };
+  if (bcc) message.bcc = bcc;
+  MailApp.sendEmail(message);
 }
 
-function sendAcceptanceEmail(formData, review) {
+function sendAcceptanceEmail(formData, review, scheduled) {
   var recipient = normalizeEmail_(formData.email);
   if (!recipient) throw new Error("Missing/invalid recipient email (acceptance).");
 
@@ -2434,7 +2461,8 @@ function sendAcceptanceEmail(formData, review) {
     + "<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;\">"
     + "<p>Dear " + escapeHtml_(director) + ",</p>"
     + "<p>Congratulations! We're thrilled to inform you that \"<strong>" + escapeHtml_(title) + "</strong>\" has been selected for Shorts of the Year.</p>"
-    + "<p>Your film is now featured on our website at <a href=\"https://www.shortsoftheyear.com\">www.shortsoftheyear.com</a>.</p>"
+    + (scheduled ? '<p>Your film will be published in about 12 hours. We will email you the link when it is live.</p>'
+      : '<p>Your film is featured on <a href="https://shortsoftheyear.com">Shorts of the Year</a>.</p>')
     + "<p>Keep your eyes peeled for your review to be featured on the site soon.</p>"
     + "<p>As an official selection, you can use our laurel on your poster and promotional materials!</p>"
     + "<div style=\"text-align: center; margin: 20px 0;\">"
@@ -2449,7 +2477,8 @@ function sendAcceptanceEmail(formData, review) {
   var plainBody = ""
     + "Dear " + director + ",\n\n"
     + "Congratulations! We're thrilled to inform you that \"" + title + "\" has been selected for Shorts of the Year.\n\n"
-    + "Your film is now featured on our website at www.shortsoftheyear.com.\n\n"
+    + (scheduled ? 'Your film will be published in about 12 hours. We will email you the link when it is live.\n\n'
+      : 'Your film is featured on https://shortsoftheyear.com.\n\n')
     + "Keep your eyes peeled for your review to be featured on the site soon.\n\n"
     + "As an official selection, you can use our laurel on your poster and promotional materials!\n\n"
     + "We'll also be sharing your film on our social media channels. If you have a Twitter/Instagram handle you'd like us to tag, please reply to this email.\n\n"
@@ -2510,6 +2539,32 @@ function extractFormData(e) {
   return data;
 }
 
+function normalizeSubmissionFilmLink_(value) {
+  const url = String(value || '').trim();
+  const parts = url.match(/^https?:\/\/([a-z0-9.-]+)(\/[^?#\s]*)(?:\?([^#\s]*))?(?:#[^\s]*)?$/i);
+  if (!parts) return '';
+
+  const host = parts[1].toLowerCase();
+  const path = parts[2];
+  const query = parts[3] || '';
+  let id;
+  if (host === 'youtu.be') {
+    id = path.match(/^\/([\w-]{11})\/?$/);
+  } else if (/^(?:(?:www|m)\.)?youtube\.com$/.test(host)) {
+    id = /^\/watch\/?$/.test(path)
+      ? query.match(/(?:^|&)v=([\w-]{11})(?:&|$)/)
+      : path.match(/^\/(?:embed|shorts|live)\/([\w-]{11})\/?$/);
+  } else if (/^(?:(?:www|player)\.)?vimeo\.com$/.test(host)) {
+    const video = (host === 'player.vimeo.com'
+      ? /^\/video\/(\d+)\/?$/
+      : /^\/(\d+)(?:\/([a-zA-Z0-9]+))?\/?$/).exec(path);
+    if (!video) return '';
+    const hash = query.match(/(?:^|&)h=([a-zA-Z0-9]+)(?:&|$)/);
+    return 'https://vimeo.com/' + video[1] + (video[2] ? '/' + video[2] : hash ? '/' + hash[1] : '');
+  }
+  return id ? 'https://www.youtube.com/watch?v=' + id[1] : '';
+}
+
 function assignFromQuestion_(question, answerRaw, data) {
   const q = String(question || '').toLowerCase();
   const answer = Array.isArray(answerRaw) ? answerRaw.join(', ').trim() : String(answerRaw || '').trim();
@@ -2522,7 +2577,7 @@ function assignFromQuestion_(question, answerRaw, data) {
   else if (q.includes('genre'))                        data.genre = answer;
   else if (q.includes('runtime'))                      data.runtime = answer;
   else if (q.includes('email') || q.includes('e-mail')) data.email = answer;
-  else if (q.includes('link'))                         data.filmLink = answer;
+  else if (q.trim().replace(/\s+/g, ' ') === 'link to film')                         data.filmLink = answer;
   else if (q.includes('password'))                     { /* Do not persist submission passwords */ }
   else if (q.includes('twitter') || q.includes('handle')) data.twitter = answer;
   else if (q.includes('premiere'))                     data.onlinePremiere = answer;
@@ -2653,7 +2708,113 @@ function randomChoice(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+// One clock trigger services queued work; old one-shot triggers can finish normally.
+const WORKFLOW_HANDLERS_ = {
+  finishIntake_: finishIntake_,
+  processSubmission: processSubmission,
+  processRejectionArcStep: processRejectionArcStep,
+  publishAcceptedSubmission: publishAcceptedSubmission
+};
+
+function ensureWorkflowWorker_() {
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty('WORKFLOW_WORKER_ID')) return;
+  const existing = ScriptApp.getProjectTriggers().find(function(trigger) {
+    return trigger.getHandlerFunction() === 'runWorkflowQueue';
+  });
+  const worker = existing || ScriptApp.newTrigger('runWorkflowQueue').timeBased().everyMinutes(5).create();
+  props.setProperty('WORKFLOW_WORKER_ID', worker.getUniqueId());
+}
+
+function queueWorkflowJob_(handler, payloadKey, due) {
+  const props = PropertiesService.getScriptProperties();
+  const id = findQueuedWorkflowJob_(handler, payloadKey) || Utilities.getUuid();
+  props.setProperty('workflow_job_' + id, JSON.stringify({ handler: handler, payloadKey: payloadKey, due: due, attempts: 0 }));
+  ensureWorkflowWorker_();
+  return id;
+}
+
+function readWorkflowJob_(id) {
+  const raw = PropertiesService.getScriptProperties().getProperty('workflow_job_' + id);
+  return raw ? JSON.parse(raw) : null;
+}
+
+function workflowPayloadKey_(legacyPrefix, id) {
+  const job = readWorkflowJob_(id);
+  return job ? job.payloadKey : PropertiesService.getScriptProperties().getProperty(legacyPrefix + id);
+}
+
+function queuedWorkflowJobs_() {
+  const all = PropertiesService.getScriptProperties().getProperties();
+  return Object.keys(all).filter(function(key) { return key.indexOf('workflow_job_') === 0; }).map(function(key) {
+    try { return Object.assign(JSON.parse(all[key]), { id: key.slice('workflow_job_'.length) }); }
+    catch (_) { return null; }
+  }).filter(Boolean);
+}
+
+function findQueuedWorkflowJob_(handler, payloadKey) {
+  const match = queuedWorkflowJobs_().find(function(job) {
+    return job.handler === handler && job.payloadKey === payloadKey;
+  });
+  return match ? match.id : '';
+}
+
+function cancelQueuedWorkflowJobs_(handler, payloadKey) {
+  const props = PropertiesService.getScriptProperties();
+  queuedWorkflowJobs_().forEach(function(job) {
+    if (job.handler === handler && job.payloadKey === payloadKey) props.deleteProperty('workflow_job_' + job.id);
+  });
+}
+
+function retryWorkflowJob_(id, handler, payloadKey, error, arcStateKey) {
+  const props = PropertiesService.getScriptProperties();
+  const job = readWorkflowJob_(id) || { handler: handler, payloadKey: payloadKey, attempts: 0 };
+  job.attempts += 1;
+  job.due = Date.now() + Math.min(60, 5 * Math.pow(2, job.attempts - 1)) * 60000;
+  props.setProperty('workflow_job_' + id, JSON.stringify(job));
+  if (arcStateKey) {
+    const raw = props.getProperty(arcStateKey);
+    if (raw) {
+      const arc = JSON.parse(raw);
+      (arc.scheduledSteps || []).forEach(function(step) {
+        if (step.payloadKey === payloadKey) step.runAt = new Date(job.due).toISOString();
+      });
+      saveRejectionArcState_(arcStateKey, arc);
+    }
+  }
+  ensureWorkflowWorker_();
+  deleteNativeTrigger_(id);
+  if (job.attempts === 1 || job.attempts === 5) notifyAdmin_(handler + ' scheduled for retry', error);
+}
+
+function runWorkflowQueue(e) {
+  if (!e || !e.triggerUid) return;
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(500)) return;
+  try {
+    const now = Date.now();
+    const deadline = now + 3 * 60000;
+    const jobs = queuedWorkflowJobs_().filter(function(job) { return job.due <= now; })
+      .sort(function(a, b) { return a.due - b.due; });
+    for (let i = 0; i < jobs.length && i < 12 && Date.now() < deadline; i++) {
+      const job = jobs[i];
+      if (!readWorkflowJob_(job.id)) continue;
+      const handler = Object.prototype.hasOwnProperty.call(WORKFLOW_HANDLERS_, job.handler) ? WORKFLOW_HANDLERS_[job.handler] : null;
+      if (!handler) continue;
+      try { handler({ triggerUid: job.id }); }
+      catch (error) { retryWorkflowJob_(job.id, job.handler, job.payloadKey, error); }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function deleteTrigger(triggerId) {
+  PropertiesService.getScriptProperties().deleteProperty('workflow_job_' + triggerId);
+  deleteNativeTrigger_(triggerId);
+}
+
+function deleteNativeTrigger_(triggerId) {
   ScriptApp.getProjectTriggers().forEach(function(trigger) {
     if (trigger.getUniqueId() === triggerId) ScriptApp.deleteTrigger(trigger);
   });
