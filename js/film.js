@@ -2,6 +2,10 @@
 
 const urlParams = new URLSearchParams(window.location.search);
 const filmId = urlParams.get('id');
+const legacyFilmSlugs = new Map([
+    ['backstage-1793912893925', 'backstage'],
+    ['the-ghost-in-the-barn-1793858116324', 'the-ghost-in-the-barn']
+]);
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!filmId) {
@@ -14,7 +18,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadFilmData() {
     try {
         const data = await fetchFilmsData();
-        const film = (data.films || []).find(f => f.slug === filmId);
+        const films = data.films || [];
+        const alias = legacyFilmSlugs.get(filmId);
+        const film = films.find(f => f.slug === filmId) || (alias && films.find(f => f.slug === alias));
 
         if (!film || !film.live) {
             window.location.href = '/';
