@@ -624,202 +624,237 @@
     #toast.success { border-color: rgba(82,201,122,0.4); color: var(--green); }
     #toast.error { border-color: rgba(224,82,82,0.4); color: var(--red); }
 
-    @media (max-width: 600px) {
-      .admin-shell {
-        grid-template-columns: 1fr;
-      }
-      .admin-sidebar {
-        position: static;
-        height: auto;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-        padding: 0.75rem;
-      }
-      .sidebar-brand {
-        margin-bottom: 0.65rem;
-        padding-bottom: 0.75rem;
-      }
-      .tabs {
-        display: flex;
-        gap: 0.45rem;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 0.2rem;
-      }
-      .tab-btn {
-        width: auto;
-        flex: 0 0 auto;
-      }
-      .sidebar-footer {
-        grid-template-columns: 1fr 1fr;
-        margin-top: 0.75rem;
-      }
-      .panel-heading,
-      .metric-strip {
-        padding-left: 1rem;
-        padding-right: 1rem;
-      }
-      .metric-strip {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      header, .toolbar, .table-wrap { padding-left: 1rem; padding-right: 1rem; }
-      header {
-        padding-top: 0.9rem;
-        padding-bottom: 0.9rem;
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 0.85rem;
-      }
-      header > div {
-        width: 100%;
-        flex-wrap: wrap;
-      }
-      header span {
-        order: 1;
-      }
-      header #refreshAllBtn,
-      header #logoutBtn {
-        flex: 1 1 0;
-        justify-content: center;
-        min-height: 42px;
-      }
-      .tabs {
-        padding: 0 0.75rem;
-      }
-      .tab-btn {
-        padding: 0.9rem 0.95rem;
-      }
-      .toolbar {
-        gap: 0.75rem;
-        margin-left: 1rem;
-        margin-right: 1rem;
-      }
-      .toolbar > * {
-        width: 100%;
-      }
-      .toolbar .btn,
-      .toolbar .search-input,
-      .toolbar .filter-select {
-        width: 100%;
-        min-height: 44px;
-      }
-      .count-badge {
-        margin-left: 0;
-        width: 100%;
-      }
-      .form-grid { grid-template-columns: 1fr; }
-      .panel-section { padding-left: 1rem; padding-right: 1rem; }
-      .arc-step-body { grid-template-columns: 1fr; }
-      .arc-delay-grid { grid-template-columns: 1fr; }
-      .arc-updated { margin-left: 0; width: 100%; }
-      .table-wrap {
-        margin-left: 1rem;
-        margin-right: 1rem;
-        padding-top: 1rem;
-      }
-      table {
-        min-width: 760px;
-      }
-      .actions {
-        gap: 0.4rem;
-      }
-      .actions .btn {
-        min-height: 40px;
-      }
-      .td-title strong,
-      .sub-logline {
-        max-width: none;
-      }
-      .modal {
-        max-height: calc(100vh - 1.5rem);
-        padding: 1.1rem;
-        border-radius: 10px;
-      }
-      .modal h2 {
-        font-size: 1rem;
-        margin-bottom: 1rem;
-      }
-      .modal-actions,
-      .confirm-actions {
-        flex-direction: column-reverse;
-      }
-      .modal-actions .btn,
-      .confirm-actions .btn {
-        width: 100%;
-        justify-content: center;
-        min-height: 44px;
-      }
-      .confirm-box {
-        padding: 1.1rem;
-      }
-      .arc-shell-head,
-      .arc-meta-row,
-      .arc-step-head,
-      .arc-step-footer {
-        padding-left: 0.9rem;
-        padding-right: 0.9rem;
-      }
-      .arc-step-body {
-        padding: 0.9rem;
-      }
-      .arc-step-controls {
-        width: 100%;
-      }
-      .arc-step-controls .arc-toggle {
-        width: 100%;
-      }
-      .arc-step-footer .btn {
-        width: 100%;
-        justify-content: center;
-        min-height: 42px;
-      }
-      #toast {
-        left: 1rem;
-        right: 1rem;
-        bottom: 1rem;
-      }
-    }
+    .mobile-reorder,
+    .reorder-hint-mobile { display: none; }
 
     @media (max-width: 900px) {
-      .admin-shell {
-        grid-template-columns: 1fr;
-      }
+      .admin-shell { grid-template-columns: minmax(0, 1fr); }
       .admin-sidebar {
         position: static;
         height: auto;
-        border-right: none;
+        min-width: 0;
+        border-right: 0;
         border-bottom: 1px solid var(--border);
       }
-      .sidebar-footer {
-        margin-top: 0.9rem;
-        grid-template-columns: 1fr 1fr;
-      }
-      .tabs {
-        display: flex;
-        overflow-x: auto;
-      }
+      .sidebar-brand { padding: 0.25rem 0 0.75rem; margin-bottom: 0.65rem; }
+      .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
       .tab-btn {
-        width: auto;
-        flex: 0 0 auto;
-      }
-      .metric-strip {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .toolbar {
-        align-items: stretch;
-      }
-      .search-input {
-        width: min(100%, 320px);
-      }
-      .filter-select {
         min-width: 0;
+        min-height: 44px;
+        padding: 0.5rem 0.65rem;
+        white-space: normal;
+        text-align: left;
+        color: #b5b5b5;
       }
+      .tab-count { flex: none; }
+      .sidebar-footer { margin-top: 0.65rem; padding-top: 0.65rem; grid-template-columns: 1fr 1fr; }
+      .admin-main > header { display: none; }
+      .panel-heading { align-items: flex-start; }
+      .panel-heading p { line-height: 1.45; }
+      .metric-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .metric-card span { display: block; }
+      .toolbar { align-items: stretch; }
+      .toolbar .search-input { flex: 1 1 15rem; min-width: 0; }
+      .filter-select { min-width: 0; }
+      .modal { max-width: 92vw; }
+      .post-preview-grid { grid-template-columns: minmax(0, 1fr); }
+
+      /* Keep table semantics and the existing row handlers while laying out cards. */
+      .admin-panel .table-wrap { overflow: visible; border: 0; background: none; }
+      #panelSubmissions .table-wrap { overflow: visible; }
+      .table-wrap table { min-width: 0; }
+      .table-wrap thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+      .table-wrap tbody { display: block; }
+      .table-wrap tbody > tr {
+        display: grid;
+        min-width: 0;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface);
+        padding: 0.85rem;
+        gap: 0.7rem;
+        align-items: start;
+      }
+      .table-wrap tbody > tr:last-child { border-bottom: 1px solid var(--border); }
+      .table-wrap tbody > tr + tr { margin-top: 0.65rem; }
+      .table-wrap tbody td {
+        min-width: 0;
+        width: auto;
+        padding: 0;
+        overflow-wrap: anywhere;
+      }
+      .table-wrap td[data-mobile-label]::before {
+        content: attr(data-mobile-label);
+        display: block;
+        color: #a5a5a5;
+        font: 500 0.68rem/1.3 var(--font);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin-bottom: 0.2rem;
+      }
+      #filmsTable tbody td:nth-child(8) { width: auto; }
+      #subsTable td { overflow-wrap: anywhere; }
+      #filmsTable tbody > tr {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-areas: "thumb title title" "genre runtime status" "date reorder reorder" "actions actions actions";
+      }
+      #subsTable .submission-main-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-areas: "thumb title title" "genre runtime date" "logline logline logline" "actions actions actions";
+        border-radius: 10px 10px 0 0;
+        padding-bottom: 0.65rem;
+      }
+      #subsTable .submission-tracker-row {
+        display: block;
+        margin-top: 0;
+        border-top: 0;
+        border-radius: 0 0 10px 10px;
+        padding-top: 0;
+      }
+      #subsTable .submission-tracker-cell { padding: 0; }
+      #subsTable .submission-tracker { display: grid; gap: 0.55rem; }
+      #subsTable .tracker-line { max-width: none; font-size: 0.85rem; }
+      .tracker-note { font-size: 0.78rem; color: #aaa; }
+      .table-wrap .td-thumb { grid-area: thumb; }
+      .table-wrap .td-title { grid-area: title; }
+      .table-wrap .td-genre { grid-area: genre; }
+      .table-wrap .td-runtime { grid-area: runtime; }
+      .table-wrap .td-status { grid-area: status; }
+      .table-wrap .td-date { grid-area: date; align-self: center; }
+      .table-wrap .td-logline { grid-area: logline; }
+      .table-wrap .td-actions { grid-area: actions; }
+      .table-wrap .td-drag { grid-area: reorder; justify-self: end; align-self: center; }
+      #filmsTable tr:not(.row-draggable) .td-drag { display: none; }
+      .table-wrap .td-thumb img,
+      #subsTable .td-thumb img { width: min(100%, 120px); height: auto; aspect-ratio: 16 / 9; }
+      .table-wrap .td-title strong,
+      #subsTable .td-title strong { max-width: none; white-space: normal; overflow: visible; font-size: 1rem; font-weight: 650; line-height: 1.3; }
+      .table-wrap .td-title small,
+      #subsTable .td-title small { display: block; white-space: normal; overflow: visible; font-size: 0.85rem; line-height: 1.4; color: #b5b5b5; margin-top: 0.2rem; }
+      .sub-logline { font-size: 0.875rem; color: #b5b5b5; }
+      #filmsTable .actions,
+      #subsTable .actions,
+      #arcTrackerTable .actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.1rem), 1fr));
+        gap: 0.45rem;
+        padding-top: 0.65rem;
+        border-top: 1px solid var(--border);
+      }
+      #filmsTable .actions .btn,
+      #subsTable .actions .btn,
+      #arcTrackerTable .actions .btn {
+        width: 100%;
+        min-height: 44px;
+        padding: 0.45rem;
+        justify-content: center;
+        font-size: 0.85rem;
+        line-height: 1.25;
+        white-space: normal;
+        text-align: center;
+      }
+      #filmsTable .actions .btn-edit { color: var(--text); }
+      .drag-handle { display: none; }
+      .mobile-reorder { display: flex; gap: 0.35rem; }
+      .mobile-reorder .btn { min-width: 44px; min-height: 44px; padding: 0; justify-content: center; }
+      .reorder-hint-mobile:not([hidden]) { display: block; color: #aaa; font-size: 0.82rem; padding: 0 2rem 0.7rem; }
+      #arcTrackerTable tbody > tr {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas: "title title" "progress countdown" "next last" "random random" "actions actions";
+      }
+      #arcTrackerTable .td-progress { grid-area: progress; }
+      #arcTrackerTable .td-countdown { grid-area: countdown; font-size: 0.88rem; color: var(--text); }
+      #arcTrackerTable .td-next { grid-area: next; }
+      #arcTrackerTable .td-last { grid-area: last; }
+      #arcTrackerTable .td-random { grid-area: random; }
+    }
+
+    @media (max-width: 600px) {
+      #loginScreen { min-height: 100dvh; padding: 1rem; }
+      .login-box { padding: 2rem 1.25rem; }
+      .admin-sidebar { padding: 0.8rem 0.85rem; }
+      .sidebar-brand p { display: none; }
+      .sidebar-footer .btn,
+      .toolbar .btn,
+      .arc-step-controls .btn,
+      .arc-step-footer .btn,
+      .arc-field-tools .btn { min-height: 44px; justify-content: center; }
+      .panel-heading { padding: 1rem 0.85rem 0.5rem; }
+      .metric-strip { padding: 0.6rem 0.85rem 0.85rem; gap: 0.45rem; }
+      .metric-card { display: grid; grid-template-rows: 1fr auto; padding: 0.5rem; }
+      .metric-card span { font-size: 0.64rem; }
+      .metric-card strong { font-size: 1rem; margin-top: 0.2rem; }
+      .toolbar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+        margin: 0 0.85rem 0.75rem;
+        padding: 0.55rem;
+      }
+      .toolbar .search-input,
+      #addFilmBtn,
+      .toolbar .count-badge { grid-column: 1 / -1; width: 100%; margin: 0; }
+      .toolbar .filter-select,
+      .toolbar .search-input { min-height: 44px; }
+      #panelFilms .toolbar { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      #panelFilms .search-input { grid-column: span 3; }
+      #panelFilms .filter-select { grid-column: span 2; }
+      #addFilmBtn { grid-column: span 1; }
+      #panelRejectionTracker .toolbar { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+      #panelRejectionTracker .count-badge { grid-column: auto; }
+      .table-wrap { margin: 0 0.85rem 1rem; }
+      .reorder-hint-mobile { padding-inline: 0.85rem; }
+      .state-msg { padding: 2rem 0.75rem; }
+      .panel-section { padding: 0.5rem 0.85rem 1rem; }
+      .form-grid,
+      .arc-step-body { grid-template-columns: minmax(0, 1fr); }
+      .arc-delay-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .arc-field, .form-group, .post-fields { min-width: 0; }
+      .arc-field :is(input, textarea, select),
+      .form-group :is(input, textarea, select),
+      .post-fields textarea,
+      .toolbar :is(input, select) { min-width: 0; font-size: 1rem; }
+      .form-group input,
+      .form-group select,
+      .arc-field input,
+      .arc-field select { min-height: 44px; }
+      .arc-steps,
+      .arc-step-body { padding: 0.65rem; }
+      .arc-shell-head, .arc-meta-row, .arc-step-head, .arc-step-footer { padding-inline: 0.7rem; }
+      .arc-updated { margin-left: 0; width: 100%; }
+      .arc-step-controls { width: 100%; }
+      .arc-step-controls .arc-toggle { flex: 1 0 100%; min-height: 44px; }
+      .arc-step-footer .btn { flex: 1 1 8rem; white-space: normal; text-align: center; }
+      body:has(.modal-backdrop.open, .confirm-backdrop.open) { overflow: hidden; }
+      .modal-backdrop { padding: 0; }
       .modal {
-        max-width: 92vw;
+        max-width: none;
+        height: 100%;
+        max-height: 100dvh;
+        padding: max(1rem, env(safe-area-inset-top)) 1rem 0;
+        border: 0;
+        border-radius: 0;
+        overscroll-behavior: contain;
       }
-      .post-preview-grid {
-        grid-template-columns: 1fr;
+      .modal h2 { margin-bottom: 1rem; overflow-wrap: anywhere; }
+      .modal-actions {
+        position: sticky;
+        bottom: 0;
+        margin: 1rem -1rem 0;
+        padding: 0.7rem 1rem max(0.7rem, env(safe-area-inset-bottom));
+        background: var(--surface);
       }
+      .modal-actions .btn,
+      .confirm-actions .btn { flex: 1 1 0; min-height: 44px; min-width: 0; padding-inline: 0.5rem; justify-content: center; text-align: center; }
+      .confirm-box { padding: 1rem; max-height: calc(100dvh - 2rem); overflow-y: auto; overflow-wrap: anywhere; }
+      #toast { left: 0.85rem; right: 0.85rem; bottom: max(1rem, env(safe-area-inset-bottom)); overflow-wrap: anywhere; }
     }
   </style>
 </head>
@@ -901,16 +936,17 @@
         <option value="hidden">Hidden</option>
       </select>
     </div>
+    <p class="reorder-hint-mobile" id="mobileReorderHint" hidden>Reorder with the arrows. First live film is the homepage hero.</p>
     <div class="table-wrap">
       <div id="tableState" class="state-msg">Loading films…</div>
-      <table id="filmsTable" style="display:none">
-        <thead>
+      <table id="filmsTable" role="table" aria-label="Films" style="display:none">
+        <thead role="rowgroup">
           <tr>
             <th></th><th></th><th>Title / Director</th><th>Genre</th>
             <th>Runtime</th><th>Status</th><th>Date</th><th>Actions</th>
           </tr>
         </thead>
-        <tbody id="filmsBody"></tbody>
+        <tbody id="filmsBody" role="rowgroup"></tbody>
       </table>
     </div>
   </div>
@@ -928,14 +964,14 @@
     </div>
     <div class="table-wrap">
       <div id="subTableState" class="state-msg">Loading submissions…</div>
-      <table id="subsTable" style="display:none">
-        <thead>
+      <table id="subsTable" role="table" aria-label="Submissions" style="display:none">
+        <thead role="rowgroup">
           <tr>
             <th></th><th>Title / Director</th><th>Genre</th><th>Runtime</th>
             <th>Logline</th><th>Submitted</th><th>Actions</th>
           </tr>
         </thead>
-        <tbody id="subsBody"></tbody>
+        <tbody id="subsBody" role="rowgroup"></tbody>
       </table>
     </div>
   </div>
@@ -997,8 +1033,8 @@
     </div>
     <div class="table-wrap">
       <div id="arcTrackerState" class="state-msg">Open the tab to load active arcs…</div>
-      <table id="arcTrackerTable" style="display:none">
-        <thead>
+      <table id="arcTrackerTable" role="table" aria-label="Rejection tracker" style="display:none">
+        <thead role="rowgroup">
           <tr>
             <th>Film / Submitter</th>
             <th>Progress</th>
@@ -1009,7 +1045,7 @@
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody id="arcTrackerBody"></tbody>
+        <tbody id="arcTrackerBody" role="rowgroup"></tbody>
       </table>
     </div>
   </div>
@@ -1334,6 +1370,16 @@ function getVisibleRejectionTrackerArcs_(arcs) {
   });
 }
 
+function layoutAdminRow(row, cells) {
+  row.setAttribute('role', 'row');
+  cells.forEach(([name, label], index) => {
+    const cell = row.cells[index];
+    cell.setAttribute('role', 'cell');
+    if (name) cell.classList.add('td-' + name);
+    if (label) cell.dataset.mobileLabel = label;
+  });
+}
+
 function renderRejectionTracker(arcs) {
   const state = document.getElementById('arcTrackerState');
   const table = document.getElementById('arcTrackerTable');
@@ -1391,6 +1437,7 @@ function renderRejectionTracker(arcs) {
     const tdCountdown = document.createElement('td');
     tdCountdown.className = 'mono-small';
     tdCountdown.textContent = arc.nextStepAt ? formatCountdownTo(arc.nextStepAt) : '—';
+    if (arc.nextStepAt) tdCountdown.dataset.arcCountdownAt = arc.nextStepAt;
     tr.appendChild(tdCountdown);
 
     const tdLast = document.createElement('td');
@@ -1429,6 +1476,10 @@ function renderRejectionTracker(arcs) {
     tdActions.appendChild(actions);
     tr.appendChild(tdActions);
 
+    layoutAdminRow(tr, [
+      ['title'], ['progress', 'Progress'], ['next', 'Next step'], ['countdown', 'Countdown'],
+      ['last', 'Last sent'], ['random', 'Random name'], ['actions']
+    ]);
     body.appendChild(tr);
   });
 }
@@ -1436,9 +1487,12 @@ function renderRejectionTracker(arcs) {
 function ensureTrackerCountdownTicker_() {
   if (trackerCountdownIntervalId) return;
   trackerCountdownIntervalId = setInterval(() => {
-    if (!rejectionTrackerLoaded) return;
-    if (!Array.isArray(rejectionTrackerArcs) || rejectionTrackerArcs.length === 0) return;
-    renderRejectionTracker(rejectionTrackerArcs);
+    if (!rejectionTrackerLoaded || activeTab !== 'rejectionTracker') return;
+    // Keep buttons and keyboard focus in place while the clock updates.
+    document.querySelectorAll('#arcTrackerBody [data-arc-countdown-at]').forEach(cell => {
+      const text = formatCountdownTo(cell.dataset.arcCountdownAt);
+      if (cell.textContent !== text) cell.textContent = text;
+    });
   }, 1000);
 }
 
@@ -2150,6 +2204,8 @@ function renderFilmsTable(list) {
   document.getElementById('metricLiveFilms').textContent = liveFilms;
   document.getElementById('metricHiddenFilms').textContent = Math.max(0, films.length - liveFilms);
   document.getElementById('metricPostedFilms').textContent = postedFilms;
+  const reorderEnabled = list.length > 0 && canReorderFilmsInCurrentView();
+  document.getElementById('mobileReorderHint').hidden = !reorderEnabled;
 
   if (list.length === 0) {
     document.getElementById('tableState').style.display = 'block';
@@ -2160,16 +2216,14 @@ function renderFilmsTable(list) {
 
   document.getElementById('tableState').style.display = 'none';
   document.getElementById('filmsTable').style.display = 'table';
-  const reorderEnabled = canReorderFilmsInCurrentView();
   document.getElementById('filmCountLabel').innerHTML = `${films.length} film${films.length !== 1 ? 's' : ''}${reorderEnabled ? '<span class="reorder-hint">Drag to reorder · top live film = homepage hero</span>' : ''}`;
-  list.forEach(film => body.appendChild(createFilmRow(film)));
+  list.forEach((film, index) => body.appendChild(createFilmRow(film, index, reorderEnabled)));
 }
 
-function createFilmRow(film) {
+function createFilmRow(film, index, reorderEnabled) {
   const tr = document.createElement('tr');
   const mongoId = film._id?.$oid || film._id?.toString() || film._id;
   tr.dataset.id = mongoId;
-  const reorderEnabled = canReorderFilmsInCurrentView();
   if (reorderEnabled) {
     tr.classList.add('row-draggable');
     tr.draggable = true;
@@ -2186,6 +2240,22 @@ function createFilmRow(film) {
   dragHandle.className = 'drag-handle';
   dragHandle.textContent = reorderEnabled ? '⋮⋮' : '';
   tdDrag.appendChild(dragHandle);
+  if (reorderEnabled) {
+    const reorder = document.createElement('div');
+    reorder.className = 'mobile-reorder';
+    for (const [offset, direction, symbol] of [[-1, 'up', '↑'], [1, 'down', '↓']]) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'btn btn-edit';
+      button.textContent = symbol;
+      button.setAttribute('aria-label', `Move ${film.title || 'film'} ${direction}`);
+      button.dataset.moveFilm = String(offset);
+      button.disabled = index + offset < 0 || index + offset >= films.length;
+      button.addEventListener('click', () => moveFilmByOffset(mongoId, offset));
+      reorder.appendChild(button);
+    }
+    tdDrag.appendChild(reorder);
+  }
   tr.appendChild(tdDrag);
 
   const tdThumb = document.createElement('td');
@@ -2275,6 +2345,10 @@ function createFilmRow(film) {
   tdActions.appendChild(actions);
   tr.appendChild(tdActions);
 
+  layoutAdminRow(tr, [
+    ['drag'], ['thumb'], ['title'], ['genre', 'Genre'], ['runtime', 'Runtime'],
+    ['status', 'Status'], ['date', 'Date'], ['actions']
+  ]);
   return tr;
 }
 
@@ -2676,7 +2750,7 @@ function onFilmRowDrop(e) {
   targetRow.classList.remove('row-drop-target');
   const targetId = targetRow.dataset.id;
   const sourceId = draggedFilmId || (e.dataTransfer && e.dataTransfer.getData('text/plain'));
-  if (!sourceId || !targetId || sourceId === targetId) return;
+  if (savingReorder || !sourceId || !targetId || sourceId === targetId) return;
   if (!moveFilmInOrder(sourceId, targetId)) return;
   applyFilters();
   void saveFilmOrder();
@@ -2696,6 +2770,19 @@ function moveFilmInOrder(sourceId, targetId) {
   films.splice(targetIdx, 0, moved);
   films.forEach((film, idx) => { film.sortOrder = idx; });
   return true;
+}
+
+function moveFilmByOffset(id, offset) {
+  if (savingReorder || !canReorderFilmsInCurrentView()) return;
+  const index = films.findIndex(film => getFilmId(film) === id);
+  const target = index < 0 ? null : films[index + offset];
+  if (!target || !moveFilmInOrder(id, getFilmId(target))) return;
+  applyFilters();
+  const row = Array.from(document.getElementById('filmsBody').rows).find(row => row.dataset.id === id);
+  const button = row?.querySelector(`[data-move-film="${offset}"]:not(:disabled)`) ||
+    row?.querySelector('[data-move-film]:not(:disabled)');
+  button?.focus({ preventScroll: true });
+  void saveFilmOrder();
 }
 
 async function saveFilmOrder() {
@@ -2980,6 +3067,10 @@ function createSubRow(sub) {
   tdActions.appendChild(actions);
   tr.appendChild(tdActions);
 
+  layoutAdminRow(tr, [
+    ['thumb'], ['title'], ['genre', 'Genre'], ['runtime', 'Runtime'], ['logline', 'Logline'],
+    ['date', 'Submitted'], ['actions']
+  ]);
   // Click anywhere on submission row (except action buttons) to view full details.
   tr.style.cursor = 'pointer';
   tr.addEventListener('click', (e) => {
@@ -2994,6 +3085,7 @@ function createSubRow(sub) {
   tdTracker.colSpan = 7;
   tdTracker.appendChild(createSubmissionTracker(sub));
   trackerTr.appendChild(tdTracker);
+  layoutAdminRow(trackerTr, [[]]);
   trackerTr.style.cursor = 'pointer';
   trackerTr.addEventListener('click', () => {
     openEditModal(sub, { submissionReview: true, titlePrefix: 'Review Submission' });
